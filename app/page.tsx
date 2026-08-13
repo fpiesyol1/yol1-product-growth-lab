@@ -1,15 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "futuro";
-type MovementAction = "Revisar" | "Lo reconozco" | "Dividir" | "Crear solicitud de cobro";
+type Theme = "dark" | "light";
+type MovementAction = "OK" | "Revisar" | "Dividir" | "Cobrar";
+type PendingView = "personas" | "grupos";
+type SplitMode = "equal" | "custom";
+type ChatMessage = { role: "user" | "assistant"; text: string };
+type CollectDraft = {
+  step: number;
+  expense: string;
+  amount: number;
+  split: SplitMode;
+  contacts: string[];
+  participants: string[];
+  custom: Record<string, number>;
+  newContact: string;
+};
 
 const tabLabels: Record<Tab, string> = {
   inicio: "Inicio",
   finanzas: "Mis finanzas",
   cartola: "Cartola",
-  cobrar: "Cobrar",
+  cobrar: "Cobrar y pagar",
   ahorrar: "Ahorrar",
   ganar: "Ganar",
   futuro: "Experimentos",
@@ -19,85 +33,127 @@ const movements = [
   { id: "disney-bci", date: "05 AGO", time: "10:43", name: "Disney+", code: "TX-81672", bank: "BCI", amount: -11990, hint: "Mismo monto y comercio en dos fuentes", tone: "warning", ownTransfer: false },
   { id: "disney-mach", date: "05 AGO", time: "10:42", name: "Disney+", code: "TX-81665", bank: "MACH", amount: -11990, hint: "Posible duplicado; falta confirmar", tone: "warning", ownTransfer: false },
   { id: "adam", date: "04 AGO", time: "13:16", name: "Dr. Adam", code: "TX-80811", bank: "BCI", amount: -70000, hint: "Podría ser un gasto compartido", tone: "info", ownTransfer: false },
-  { id: "own", date: "02 AGO", time: "09:31", name: "Transferencia propia", code: "TX-79845", bank: "BCI", amount: 17500, hint: "Excluida del resumen consolidado", tone: "muted", ownTransfer: true },
+  { id: "own", date: "02 AGO", time: "09:31", name: "Transferencia propia", code: "TX-79845", bank: "BCI", amount: 17500, hint: "Clasificación simulada y revisable", tone: "muted", ownTransfer: true },
   { id: "liguria", date: "01 AGO", time: "21:06", name: "Rest. Liguria", code: "TX-79122", bank: "BCI", amount: -41600, hint: "Beneficio público encontrado", tone: "good", ownTransfer: false },
 ];
+
+const initialDraft: CollectDraft = {
+  step: 0,
+  expense: "Cena de equipo",
+  amount: 48000,
+  split: "equal",
+  contacts: ["Tú", "Josefa", "Martín", "Camila"],
+  participants: ["Tú", "Josefa", "Martín"],
+  custom: { Tú: 16000, Josefa: 16000, Martín: 16000, Camila: 0 },
+  newContact: "",
+};
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt={compact ? "YOL1" : "YOL1"} /></div>;
+  return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
 }
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("inicio");
-  const [source, setSource] = useState("Todas");
+  const [theme, setTheme] = useState<Theme>("dark");
+  const [source, setSource] = useState("General");
   const [selectedMovement, setSelectedMovement] = useState<string | null>(null);
-  const [notice, setNotice] = useState("Prototipo exploratorio con datos sintéticos: no conecta bancos, no mueve dinero ni representa capacidades disponibles o roadmap.");
-  const [collectStep, setCollectStep] = useState(0);
-  const [prefillExpense, setPrefillExpense] = useState("Cena de equipo");
+  const [notice, setNotice] = useState("");
+  const [archivedCards, setArchivedCards] = useState<string[]>([]);
+  const [collectDraft, setCollectDraft] = useState<CollectDraft>(initialDraft);
+  const [pendingView, setPendingView] = useState<PendingView>("personas");
 
-  const go = (next: Tab, message?: string) => {
-    setTab(next);
-    if (message) setNotice(message);
+  useEffect(() => {
+    const stored = window.localStorage.getItem("yol1-lab-theme");
+    const systemTheme: Theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    setTheme(stored === "light" || stored === "dark" ? stored : systemTheme);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+  }, [theme]);
+
+  const chooseTheme = (next: Theme) => {
+    setTheme(next);
+    window.localStorage.setItem("yol1-lab-theme", next);
   };
 
-  const openLedger = (filter = "Todas", selected?: string) => {
+  const notify = (message: string) => setNotice(message);
+  const go = (next: Tab, message?: string) => {
+    setTab(next);
+    if (message) notify(message);
+  };
+
+  const openLedger = (filter = "General", selected?: string) => {
     setSource(filter);
     setSelectedMovement(selected ?? null);
-    go("cartola", filter === "Todas" ? "Mostrando todas las fuentes ficticias." : `Mostrando movimientos ficticios de ${filter}.`);
+    go("cartola");
   };
 
   const openCollect = (expense?: string) => {
-    if (expense) setPrefillExpense(expense);
-    setCollectStep(expense ? 1 : 0);
-    go("cobrar", expense ? `Preparamos “${expense}” para dividir o crear una solicitud. Aún no se envía nada.` : undefined);
+    if (expense) setCollectDraft((draft) => ({ ...draft, step: 1, expense }));
+    go("cobrar");
+  };
+
+  const archiveCard = (id: string, label: string) => {
+    setArchivedCards((cards) => [...cards, id]);
+    notify(`${label}: marcado OK. No volverá a proponerse durante esta sesión demo.`);
+  };
+
+  const handleMovementAction = (action: MovementAction, movement: typeof movements[number]) => {
+    if (action === "Dividir" || action === "Cobrar") {
+      openCollect(movement.name);
+      notify(`${movement.name}: reparto preparado con datos ficticios.`);
+      return;
+    }
+    notify(action === "OK" ? `${movement.name}: marcado OK en esta sesión.` : `${movement.name}: detalle abierto para revisar.`);
   };
 
   const activeTitle = tabLabels[tab];
 
   return (
-    <main className="lab-shell">
+    <main className="lab-shell" data-theme={theme}>
       <section className="lab-intro">
         <div className="brand-plate"><Brand /><span>PRODUCT GROWTH LAB · 01</span></div>
         <div className="editorial-copy">
           <p className="eyebrow">FINANZAS QUE AYUDAN A VIVIR</p>
           <h1>Tu plata,<br /><span>más clara.</span></h1>
-          <p className="lede">Encuentra dónde pierdes plata o desaprovechas beneficios y decide qué hacer.</p>
+          <p className="lede">Entiende tus finanzas y simplifica tu vida financiera.</p>
           <div className="editorial-rule"><span>YOL1 explica</span><span>Tú decides</span><span>Nada se ejecuta</span></div>
         </div>
         <figure className="life-shot"><img src="/yol1-life.jpg" alt="Una mano sintiendo el aire desde una ventana en movimiento" /><figcaption>Plata para vivir. No vivir para administrar plata.</figcaption></figure>
         <div className="module-map" aria-label="Módulos del MVP">
-          {(Object.keys(tabLabels) as Tab[]).map((item) => (
-            <button key={item} className={tab === item ? "module-active" : ""} onClick={() => go(item)}>{tabLabels[item]}</button>
-          ))}
+          {(Object.keys(tabLabels) as Tab[]).map((item) => <button key={item} className={tab === item ? "module-active" : ""} onClick={() => go(item)}>{tabLabels[item]}</button>)}
         </div>
-        <div className="lab-status" role="status"><span className="status-dot" /><span>{notice}</span></div>
+        <div className="lab-status"><span className="status-dot" /><span>Ejemplo con datos ficticios · sin bancos, pagos ni envíos reales.</span></div>
       </section>
 
       <section className="phone-wrap" aria-label={`YOL1 — ${activeTitle}`}>
         <span className="phone-halo" aria-hidden="true" />
         <div className="phone">
           <div className="phone-notch" />
-          <header className="app-top"><Brand compact /><span className="app-section">{activeTitle}</span><span className="demo-pill">DATOS FICTICIOS</span></header>
+          <header className="app-top">
+            <Brand compact />
+            <span className="app-section">{activeTitle}</span>
+            <div className="header-actions"><span className="demo-pill">DATOS FICTICIOS</span><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}>{theme === "dark" ? "☀" : "◐"}</button></div>
+          </header>
           <div className={`app-content app-${tab}`}>
-            {tab === "inicio" && <Start onMove={go} onCollect={openCollect} />}
-            {tab === "finanzas" && <Finances onLedger={openLedger} onNotice={setNotice} />}
-            {tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} onAction={(action, movement) => {
-              if (action === "Dividir" || action === "Crear solicitud de cobro") openCollect(movement.name);
-              else setNotice(`${movement.name}: quedó marcado como “${action}” en esta demo. Puedes cambiarlo cuando quieras.`);
-            }} />}
-            {tab === "cobrar" && <Collect step={collectStep} setStep={setCollectStep} initialExpense={prefillExpense} onNotice={setNotice} />}
-            {tab === "ahorrar" && <Save onNotice={setNotice} onLedger={openLedger} />}
+            {tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
+            {tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
+            {tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} onAction={handleMovementAction} onNotice={notify} />}
+            {tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} />}
+            {tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
             {tab === "ganar" && <ComingSoon onBack={() => go("inicio")} />}
-            {tab === "futuro" && <Future onNotice={setNotice} />}
+            {tab === "futuro" && <Future onNotice={notify} />}
           </div>
+          {notice && <div className="phone-toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Cerrar confirmación">×</button></div>}
           <nav className="bottom-nav" aria-label="Navegación principal">
             <NavButton icon="⌂" label="Inicio" current={tab === "inicio"} onClick={() => go("inicio")} />
             <NavButton icon="↗" label="Finanzas" current={tab === "finanzas" || tab === "cartola"} onClick={() => go("finanzas")} />
-            <NavButton icon="÷" label="Cobrar" current={tab === "cobrar"} onClick={() => openCollect()} />
+            <NavButton icon="⇄" label="Cobrar/pagar" current={tab === "cobrar"} onClick={() => go("cobrar")} />
             <NavButton icon="✦" label="Ahorrar" current={tab === "ahorrar"} onClick={() => go("ahorrar")} />
-            <NavButton icon="•••" label="Más" current={tab === "ganar" || tab === "futuro"} onClick={() => go("futuro")} />
+            <NavButton icon="•••" label="Experimentos" current={tab === "ganar" || tab === "futuro"} onClick={() => go("futuro")} />
           </nav>
         </div>
       </section>
@@ -109,140 +165,178 @@ function NavButton({ icon, label, current, onClick }: { icon: string; label: str
   return <button className={current ? "nav-active" : ""} onClick={onClick}><span aria-hidden="true">{icon}</span><small>{label}</small></button>;
 }
 
-function Start({ onMove, onCollect }: { onMove: (target: Tab, message?: string) => void; onCollect: (expense?: string) => void }) {
-  const [showConsent, setShowConsent] = useState(false);
+function Start({ archived, onArchive, onMove, onCollect, onLedger, onNotice }: { archived: string[]; onArchive: (id: string, label: string) => void; onMove: (target: Tab) => void; onCollect: (expense?: string) => void; onLedger: (filter?: string, selected?: string) => void; onNotice: (message: string) => void }) {
+  const [chatInput, setChatInput] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([{ role: "assistant", text: "Hola, Felipe. Puedo ayudarte a entender el mes, ordenar pendientes o revisar una oportunidad del ejemplo." }]);
+  const actionCards = [
+    { id: "disney", tag: "CARGO DUDOSO", title: "Disney+ aparece dos veces", detail: "Mismo monto · 1 minuto", amount: "$11.990", tone: "alert", third: "Ver cargos", review: () => onLedger("General", "disney-bci"), act: () => onLedger("General", "disney-bci") },
+    { id: "maria", tag: "POR COBRAR", title: "María te debe del almuerzo", detail: "Pendiente desde el viernes", amount: "$18.000", tone: "social", third: "Cobrar", review: () => onMove("cobrar"), act: () => onMove("cobrar") },
+    { id: "camila", tag: "POR PAGAR", title: "Le debes a Camila", detail: "Depto agosto · @camila", amount: "$42.000", tone: "social", third: "Pagar", review: () => onMove("cobrar"), act: () => onMove("cobrar") },
+    { id: "benefit", tag: "BENEFICIO", title: "Tu tarjeta tiene restaurantes con descuento", detail: "BCI Visa · ejemplo de esta semana", amount: "20%", tone: "benefit", third: "Ver beneficio", review: () => onMove("ahorrar"), act: () => onMove("ahorrar") },
+    { id: "liguria", tag: "PARA DIVIDIR", title: "La cuenta de Liguria parece compartida", detail: "Boleta mayor a tu consumo habitual", amount: "$41.600", tone: "split", third: "Dividir", review: () => onLedger("General", "liguria"), act: () => onCollect("Liguria") },
+  ];
+  const visibleCards = actionCards.filter((card) => !archived.includes(card.id));
+
+  const answer = (question: string) => {
+    const normalized = question.toLowerCase();
+    let response = "Puedo cruzar los datos ficticios del ejemplo para explicarte movimientos, pendientes y oportunidades. Tú decides qué revisar.";
+    if (normalized.includes("mes") || normalized.includes("cambió")) response = "Agosto deja un resultado de +$830.000: $2.450.000 de ingresos menos $1.620.000 de egresos clasificados. Las transferencias propias están excluidas por una regla revisable.";
+    else if (normalized.includes("debo") || normalized.includes("pagar")) response = "En el ejemplo le debes $42.000 a Camila por Depto agosto. Puedes abrir Cobrar y pagar, revisar el detalle y simular un recordatorio o inicio de pago.";
+    else if (normalized.includes("cobrar") || normalized.includes("deben")) response = "Te deben $228.000: Josefa $210.000 y María $18.000. Puedo ordenarlo por persona o grupo y preparar un mensaje simulado.";
+    else if (normalized.includes("restaurante") || normalized.includes("beneficio") || normalized.includes("descuento")) response = "Vimos gasto reciente en restaurantes y un beneficio ficticio de 20% asociado a la BCI Visa del ejemplo. Antes de usarlo, revisa día, locales y tope.";
+    else if (normalized.includes("ahorrar") || normalized.includes("oportunidad")) response = "Hay hasta $28.000 potenciales en el ejemplo: cargos por revisar, un beneficio de tarjeta y una alternativa de plan móvil. Son rangos, no ahorro garantizado.";
+    else if (normalized.includes("revisar") || normalized.includes("cargo") || normalized.includes("disney")) response = "Hay dos cargos Disney+ con el mismo monto y un minuto de diferencia. Es una señal, no una conclusión: abre la cartola para comparar código, hora y fuente.";
+    else if (normalized.includes("liguria") || normalized.includes("dividir")) response = "La boleta ficticia de Liguria fue $41.600, mayor que tu consumo individual habitual en el ejemplo. Puedo preparar un reparto; no contactaré ni cobraré a nadie.";
+    setMessages((current) => [...current, { role: "user", text: question }, { role: "assistant", text: response }]);
+    setChatInput("");
+  };
+
+  const submitChat = (event: FormEvent) => {
+    event.preventDefault();
+    if (chatInput.trim()) answer(chatInput.trim());
+  };
+
   return <>
-    <div className="demo-banner"><strong>PROTOTIPO · DATOS SINTÉTICOS</strong><span>No conecta bancos, no mueve dinero ni representa capacidades disponibles o roadmap.</span></div>
-    <section className="start-hero">
-      <div><p className="kicker">TU PLATA, BAJO CONTROL</p><h2 className="value-hero">Encuentra dónde <span>pierdes plata</span> o desaprovechas beneficios.</h2></div>
-      <div className="signal-object" aria-hidden="true"><small>SEÑAL</small><strong>$11.990</strong><span>?</span></div>
-    </section>
-    <p className="body-copy start-copy">YOL1 te muestra la evidencia. Tú decides qué hacer. Nada se ejecuta ni mueve dinero.</p>
-    <div className="entry-choices">
-      <button className="entry-primary" onClick={() => onMove("finanzas", "Exploras un ejemplo con datos 100% ficticios y cero datos tuyos.")}><span>01</span><strong>Explorar ejemplo</strong><small>Cero datos personales</small><b>→</b></button>
-      <button className="entry-secondary" onClick={() => setShowConsent(!showConsent)}><span>02</span><strong>Simular con mi información</strong><small>Consentimiento también simulado</small><b>{showConsent ? "−" : "+"}</b></button>
-    </div>
-    {showConsent && <section className="consent-preview"><strong>Antes de usar una fuente</strong><p>Te explicaríamos qué datos se usarían, para qué y por cuánto tiempo. Aquí no se carga ni conecta nada.</p><button onClick={() => onMove("finanzas", "Consentimiento simulado: seguimos con datos ficticios; no se conectó ni cargó información.")}>Seguir con datos ficticios →</button></section>}
-    <p className="choice-label">OTRAS RUTAS DEL PROTOTIPO</p>
-    <div className="secondary-paths">
-      <button className="path-card" onClick={() => onMove("finanzas", "Partimos por entender el mes. Ninguna cuenta real fue conectada.")}><span className="path-icon">↗</span><span><strong>Entender el mes</strong><small>Fuentes y hallazgos</small></span><b>→</b></button>
-      <button className="path-card" onClick={() => onCollect()}><span className="path-icon">÷</span><span><strong>Ordenar pendientes</strong><small>Repartir o solicitar</small></span><b>→</b></button>
-      <button className="path-card" onClick={() => onMove("ahorrar", "Busquemos oportunidades con evidencia, sin prometer ahorros.")}><span className="path-icon">✦</span><span><strong>Ver oportunidades</strong><small>Evidencia y rangos</small></span><b>→</b></button>
-      <button className="path-card secondary" onClick={() => onMove("ganar")}><span className="path-icon">＋</span><span><strong>Ganar</strong><small>Próximamente</small></span><b>→</b></button>
-    </div>
-    <button className="text-link" onClick={() => onMove("futuro")}>Ayúdanos a priorizar experimentos →</button>
-  </>;
-}
-
-function Finances({ onLedger, onNotice }: { onLedger: (filter?: string, selected?: string) => void; onNotice: (message: string) => void }) {
-  const [insight, setInsight] = useState<"duplicate" | "split" | null>(null);
-  return <>
-    <section className="finance-hero">
-      <div className="section-heading"><p className="kicker">AGOSTO · EJEMPLO</p><button className="help-button" onClick={() => onNotice("Los totales consolidan las fuentes demo y excluyen transferencias propias.")} aria-label="Cómo se calcula">?</button></div>
-      <span className="finance-label">Resultado del mes</span><strong className="net-amount">+$830.000</strong><p>Ingresos menos egresos clasificados. No es saldo bancario.</p>
-      <div className="money-line" aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
-    </section>
-    <div className="source-strip" aria-label="Fuentes ficticias">
-      <button className="source-card" onClick={() => onLedger("BCI")}><span className="source-logo">BCI</span><span><strong>Cuenta corriente</strong><small>Al día · hace 8 min</small></span><b>→</b></button>
-      <button className="source-card" onClick={() => onLedger("MACH")}><span className="source-logo">M</span><span><strong>Cuenta digital</strong><small>Al día · hace 12 min</small></span><b>→</b></button>
-    </div>
-    <div className="source-actions"><button onClick={() => onNotice("Simulación: aquí explicaríamos qué datos se usarían y pediríamos tu consentimiento. No se conecta ningún banco.")}>＋ Simular banco</button><button onClick={() => onNotice("Simulación: una cartola podría aportar información sin acceso permanente. No se carga ningún archivo.")}>↑ Simular cartola</button><button onClick={() => onLedger("Todas")}>Ver cartola →</button></div>
-    <div className="metrics"><Metric label="Ingresos" value="$2.450.000" tone="aqua" note="2 fuentes" /><Metric label="Egresos" value="$1.620.000" tone="coral" note="sin transferencias propias" /><Metric label="Por cobrar" value="$560.000" tone="acid" note="3 pendientes" /><Metric label="Por pagar" value="$42.000" tone="yellow" note="1 pendiente" /></div>
-    <section className="calculation-card"><div><strong>Cómo calculamos este resumen</strong><button onClick={() => onNotice("En un producto real podrías corregir fuentes, periodo o reglas; aquí solo simulamos el cambio.")}>Corregir</button></div><dl><div><dt>Fuentes</dt><dd>BCI + MACH demo</dd></div><div><dt>Periodo</dt><dd>1–12 ago 2026</dd></div><div><dt>Actualización</dt><dd>12 ago · 20:31</dd></div><div><dt>Criterio</dt><dd>Ingresos y egresos, excluyendo movimientos clasificados como transferencia propia</dd></div></dl></section>
-    <div className="exclusion-note"><strong>$17.500 excluidos</strong><span>Clasificación simulada y revisable: “transferencia propia”.</span><button onClick={() => onNotice("Clasificación marcada para corregir. Nada cambia sin tu confirmación.")}>Corregir</button></div>
-    <div className="insight-heading"><span>01</span><h3>Cosas para revisar</h3><small>Explicables. Corregibles.</small></div>
-    <button className="issue-card primary-issue" onClick={() => setInsight(insight === "duplicate" ? null : "duplicate")}><span className="issue-tag warn-bg">REVISA</span><span><strong>Disney+ aparece dos veces</strong><small>Mismo monto · 1 minuto de diferencia</small></span><b>{insight === "duplicate" ? "−" : "→"}</b></button>
-    {insight === "duplicate" && <Evidence title="Posible duplicado" certainty="Certeza media" source="BCI + MACH · 5 ago" rule="Mismo comercio y monto con 1 minuto de diferencia. Podrían ser dos compras válidas." action="Ver ambos movimientos" onAction={() => onLedger("Todas", "disney-bci")} />}
-    <button className="issue-card" onClick={() => setInsight(insight === "split" ? null : "split")}><span className="issue-tag info-bg">REPARTE</span><span><strong>Dr. Adam podría dividirse</strong><small>Marcado antes como gasto compartido</small></span><b>{insight === "split" ? "−" : "→"}</b></button>
-    {insight === "split" && <Evidence title="Gasto posiblemente compartido" certainty="Certeza baja" source="BCI · 4 ago" rule="La sugerencia viene de una clasificación anterior. Confírmala antes de preparar una solicitud." action="Abrir movimiento" onAction={() => onLedger("BCI", "adam")} />}
-  </>;
-}
-
-function Metric({ label, value, tone, note }: { label: string; value: string; tone: string; note: string }) {
-  return <div className="metric"><small>{label}</small><strong className={tone}>{value}</strong><span>{note}</span></div>;
-}
-
-function Evidence({ title, certainty, source, rule, action, onAction }: { title: string; certainty: string; source: string; rule: string; action: string; onAction: () => void }) {
-  return <section className="evidence"><div><span className="evidence-label">QUÉ VIMOS</span><strong>{title}</strong></div><dl><div><dt>Evidencia</dt><dd>{rule}</dd></div><div><dt>Origen</dt><dd>{source}</dd></div><div><dt>Certeza</dt><dd>{certainty}</dd></div></dl><button onClick={onAction}>{action} →</button></section>;
-}
-
-function Ledger({ source, setSource, selected, setSelected, onAction }: { source: string; setSource: (source: string) => void; selected: string | null; setSelected: (id: string | null) => void; onAction: (action: MovementAction, movement: typeof movements[number]) => void }) {
-  const filtered = useMemo(() => movements.filter((movement) => source === "Todas" || movement.bank === source), [source]);
-  return <>
-    <div className="section-heading"><div><p className="kicker">EVIDENCIA</p><h2 className="compact-title">Cartola completa</h2></div><span className="count-pill">{filtered.length}</span></div>
-    <p className="body-copy top-gap">Fecha, código, monto y fuente. Sin imágenes ni adornos.</p>
-    <div className="filter-row" aria-label="Filtrar por fuente">{["Todas", "BCI", "MACH"].map((filter) => <button key={filter} className={source === filter ? "filter-active" : ""} onClick={() => setSource(filter)}>{filter}</button>)}</div>
-    <div className="table-head"><span>FECHA</span><span>MOVIMIENTO / CÓDIGO</span><span>MONTO</span></div>
-    <div className="ledger">
-      {filtered.map((movement) => <article className={selected === movement.id ? "movement selected" : "movement"} key={movement.id}>
-        <button className="row-main" onClick={() => setSelected(selected === movement.id ? null : movement.id)} aria-expanded={selected === movement.id}>
-          <time>{movement.date}<small>{movement.time}</small></time><span><strong>{movement.name}</strong><small className={movement.tone}>{movement.bank} · {movement.code}</small></span><b className={movement.amount > 0 ? "positive" : ""}>{movement.amount > 0 ? "+" : "−"} {money.format(Math.abs(movement.amount))}</b>
-        </button>
-        <p className={`movement-hint ${movement.tone}`}>{movement.hint}</p>
-        {selected === movement.id && <div className="row-actions">
-          {(["Revisar", "Lo reconozco", "Dividir", "Crear solicitud de cobro"] as MovementAction[]).map((action) => <button key={action} onClick={() => onAction(action, movement)}>{action}</button>)}
-        </div>}
+    <section className="home-value"><p className="kicker">TU PLATA, MÁS SIMPLE</p><h2>Entiende tus finanzas.<br /><span>Simplifica tu vida.</span></h2></section>
+    <div className="home-section-title"><div><span>{visibleCards.length.toString().padStart(2, "0")}</span><h3>Tienes {visibleCards.length === 1 ? "una cosa" : `${visibleCards.length} cosas`} para revisar</h3></div></div>
+    {visibleCards.length ? <div className="action-carousel" aria-label="Acciones pendientes">
+      {visibleCards.map((card) => <article className={`action-card action-${card.tone}`} key={card.id}>
+        <div className="action-card-top"><span>{card.tag}</span><b>{card.amount}</b></div><h3>{card.title}</h3><p>{card.detail}</p>
+        <div className="action-buttons"><button onClick={() => onArchive(card.id, card.title)}>OK</button><button onClick={card.review}>Revisar</button><button onClick={card.act}>{card.third}</button></div>
       </article>)}
-    </div>
-    <div className="exclusion-note"><strong>Regla revisable</strong><span>TX-79845 está clasificada en esta simulación como transferencia propia y se excluye del resumen.</span><button onClick={() => setSelected("own")}>Corregir</button></div>
+    </div> : <div className="all-clear"><strong>Todo revisado por ahora.</strong><span>Puedes seguir preguntándole a YOL1.</span></div>}
+
+    <section className="finance-chat">
+      <div className="chat-heading"><div><span className="chat-orb">Y</span><div><small>CONVERSACIÓN DE EJEMPLO</small><h3>Pregúntale a YOL1</h3></div></div><span>Respuestas simuladas</span></div>
+      <div className="chat-suggestions">{["¿Qué cambió este mes?", "¿A quién le debo?", "¿Quién me debe?", "¿Qué beneficio tengo?", "¿Cuánto podría ahorrar?", "¿Qué pasó con Disney+?"].map((suggestion) => <button key={suggestion} onClick={() => answer(suggestion)}>{suggestion}</button>)}</div>
+      <div className="chat-thread">{messages.slice(-6).map((message, index) => <p key={`${message.role}-${index}`} className={message.role}>{message.text}</p>)}</div>
+      <form className="chat-compose" onSubmit={submitChat}><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Escribe una pregunta…" aria-label="Pregunta financiera de demo" /><button type="button" className="mic-button" onClick={() => onNotice("Micrófono visual: no graba audio en esta demo.")} aria-label="Micrófono de demo">●</button><button type="submit" aria-label="Enviar pregunta">↑</button></form>
+    </section>
   </>;
 }
 
-function Collect({ step, setStep, initialExpense, onNotice }: { step: number; setStep: (step: number) => void; initialExpense: string; onNotice: (message: string) => void }) {
-  const [expense, setExpense] = useState(initialExpense);
-  const [amount, setAmount] = useState(48000);
-  const [split, setSplit] = useState<"equal" | "custom">("equal");
-  const [custom, setCustom] = useState([16000, 20000, 12000]);
-  const people = ["Tú", "Josefa", "Martín"];
-  const equalAmount = Math.round(amount / people.length);
-  const assigned = custom.reduce((sum, value) => sum + value, 0);
-
-  if (step === 0) return <>
-    <section className="collect-hero"><div><p className="kicker">UTILIDAD SECUNDARIA · EXPERIMENTO</p><h2 className="compact-title">Ordena lo pendiente, sin hacer show.</h2></div><div className="avatar-stack" aria-label="Tres personas ficticias"><span>J</span><span>M</span><span>＋1</span></div><p className="amount-highlight"><small>POR COBRAR</small>$560.000</p></section>
-    <div className="collect-actions"><button onClick={() => { setExpense("Cena de equipo"); setStep(1); }}>＋ Registrar gasto</button><button onClick={() => setStep(1)}>Repartir gasto</button></div>
-    <p className="privacy-note">Simulación evidente: nada se envía hasta que revises montos y mensaje.</p>
-    <div className="insight-heading compact-heading"><span>03</span><h3>Pendientes</h3><small>Personas, no cuentas.</small></div>
-    {[{ title: "Viaje a Pucón", meta: "3 personas", amount: "$210.000" }, { title: "Almuerzo viernes", meta: "María · vence hoy", amount: "$18.000" }, { title: "Depto agosto", meta: "2 personas", amount: "$332.000" }].map((debt) => <button className="debt" key={debt.title} onClick={() => onNotice(`${debt.title}: abriríamos el detalle antes de preparar un recordatorio. No se envió nada.`)}><span><strong>{debt.title}</strong><small>{debt.meta}</small></span><span><b>{debt.amount}</b><small>Ver detalle ›</small></span></button>)}
-  </>;
-
-  return <>
-    <button className="back-link" onClick={() => setStep(step - 1)}>← {step === 1 ? "Volver a pendientes" : "Atrás"}</button>
-    <div className="progress" aria-label={`Paso ${step} de 4`}><span style={{ width: `${Math.min(step, 4) * 25}%` }} /></div>
-    {step === 1 && <section className="flow-step"><p className="kicker">PASO 1 DE 4</p><h2 className="compact-title">Registra el gasto</h2><label>¿Qué pagaste?<input value={expense} onChange={(event) => setExpense(event.target.value)} /></label><label>Monto total<input type="number" min="0" value={amount} onChange={(event) => setAmount(Number(event.target.value))} /></label><p className="helper">Este registro vive solo en la demo y puedes corregirlo.</p><button className="primary-action" onClick={() => setStep(2)}>Elegir participantes →</button></section>}
-    {step === 2 && <section className="flow-step"><p className="kicker">PASO 2 DE 4</p><h2 className="compact-title">¿Quiénes participaron?</h2><div className="participants">{people.map((person, index) => <label key={person}><input type="checkbox" defaultChecked /><span className="avatar">{person[0]}</span><strong>{person}</strong><small>{index === 0 ? "Pagaste tú" : "Incluido"}</small></label>)}</div><button className="primary-action" onClick={() => setStep(3)}>Definir división →</button></section>}
-    {step === 3 && <section className="flow-step"><p className="kicker">PASO 3 DE 4</p><h2 className="compact-title">Divide {money.format(amount)}</h2><div className="segmented"><button className={split === "equal" ? "selected-option" : ""} onClick={() => setSplit("equal")}>En partes iguales</button><button className={split === "custom" ? "selected-option" : ""} onClick={() => setSplit("custom")}>Montos distintos</button></div><div className="split-list">{people.map((person, index) => <label key={person}><span>{person}</span>{split === "equal" ? <strong>{money.format(equalAmount)}</strong> : <input type="number" min="0" value={custom[index]} onChange={(event) => { const next = [...custom]; next[index] = Number(event.target.value); setCustom(next); }} />}</label>)}</div>{split === "custom" && <p className={assigned === amount ? "sum-ok" : "sum-warn"}>Asignado: {money.format(assigned)} de {money.format(amount)} {assigned === amount ? "✓" : "· ajusta la diferencia"}</p>}<button className="primary-action" disabled={split === "custom" && assigned !== amount} onClick={() => setStep(4)}>Revisar solicitud →</button></section>}
-    {step === 4 && <section className="flow-step"><p className="kicker">PASO 4 DE 4</p><h2 className="compact-title">Confirma antes de preparar la solicitud</h2><div className="summary-card"><span>{expense}</span><strong>{money.format(amount)}</strong><small>{split === "equal" ? "División en partes iguales" : "División personalizada"}</small></div><div className="split-list compact">{people.slice(1).map((person, index) => <div key={person}><span>{person}</span><strong>{money.format(split === "equal" ? equalAmount : custom[index + 1])}</strong></div>)}</div><div className="consent-box"><strong>Esto es una simulación</strong><span>El siguiente paso prepara un link ficticio. No cobra, inicia ni recibe pagos reales.</span></div><button className="primary-action" onClick={() => setStep(5)}>Confirmar y preparar link simulado →</button></section>}
-    {step === 5 && <section className="flow-step success-step"><span className="success-mark">✓</span><p className="kicker">LINK DEMO CREADO</p><h2 className="compact-title">Listo para compartir.</h2><p className="body-copy">Revisa el mensaje. WhatsApp se muestra como canal, pero no abriremos ni enviaremos nada.</p><div className="fake-link">yol1.demo/cobro/cena-48k <button onClick={() => onNotice("Link ficticio copiado para efectos de la demo.")}>Copiar</button></div><div className="message-preview">Hola, te comparto tu parte de {expense}: <strong>{money.format(split === "equal" ? equalAmount : custom[1])}</strong>. Este enlace es una simulación de YOL1.</div><button className="whatsapp-action" onClick={() => onNotice("WhatsApp simulado: no se abrió la app ni se envió un mensaje.")}>Preparar en WhatsApp · Demo</button><button className="text-link centered" onClick={() => setStep(0)}>Volver a pendientes</button></section>}
-  </>;
-}
-
-function Save({ onNotice, onLedger }: { onNotice: (message: string) => void; onLedger: (filter?: string, selected?: string) => void }) {
-  const [open, setOpen] = useState<string | null>("duplicate");
-  const opportunities = [
-    { id: "duplicate", tag: "CARGO DUDOSO", title: "Dos cargos de Disney+", value: "$0–$11.990 estimados", tone: "warn-bg", signal: "Mismo comercio y monto con un minuto de diferencia.", source: "BCI + MACH · 5 ago", certainty: "Media", estimate: "$0 si ambos son válidos; hasta $11.990 si confirmas un duplicado", reversible: "Solo revisar y marcar; YOL1 no disputa ni recupera fondos", disclosure: "Sin compensación en esta simulación", action: "Ver movimientos" },
-    { id: "benefit", tag: "BENEFICIO", title: "20% en restaurantes", value: "$0–$12.000 estimados", tone: "good-bg", signal: "Beneficio público del emisor para compras los jueves.", source: "Sitio público del beneficio · demo", certainty: "Alta si cumples todas las condiciones", estimate: "Entre $0 y $12.000 según compra, día y tope", reversible: "Revisar condiciones; no se compra ni activa nada", disclosure: "Sin compensación en esta simulación", action: "Revisar condiciones" },
-    { id: "alternative", tag: "RECURRENCIA", title: "Plan móvil posiblemente ineficiente", value: "$0–$4.000/mes estimados", tone: "info-bg", signal: "Alternativa ficticia con precio de lista menor y prestaciones comparables.", source: "Comparación demo · sin datos personales", certainty: "Media; precio y cobertura sujetos a condiciones", estimate: "Entre $0 y $4.000 mensuales después de validar condiciones", reversible: "Solo comparar; YOL1 no cambia proveedores", disclosure: "Sin compensación en esta simulación", action: "Comparar" },
+function Finances({ onLedger, onMove, onNotice }: { onLedger: (filter?: string, selected?: string) => void; onMove: (target: Tab) => void; onNotice: (message: string) => void }) {
+  const sources = [
+    { id: "BCI", logo: "BCI", name: "Cuenta corriente", detail: "Actualizada hace 8 min" },
+    { id: "MACH", logo: "M", name: "Cuenta digital", detail: "Actualizada hace 12 min" },
   ];
   return <>
-    <section className="save-heading"><p className="kicker">OPORTUNIDADES COTIDIANAS</p><h2 className="compact-title">Primero la evidencia.<br /><span>Después, tú.</span></h2><p className="body-copy">Señales para evaluar. Nunca promesas de ahorro.</p></section>
-    <div className="independence"><span>TRANSPARENCIA COMERCIAL</span><strong>YOL1 no recibe compensación en esta simulación.</strong><small>Cualquier relación comercial futura se declarará en cada recomendación.</small></div>
-    <div className="opportunity-list">{opportunities.map((item, index) => <article key={item.id} className={`opportunity opportunity-${item.id} ${open === item.id ? "opportunity-open" : ""}`}><button onClick={() => setOpen(open === item.id ? null : item.id)}><span className="opportunity-index">0{index + 1}</span><span><span className={`issue-tag ${item.tone}`}>{item.tag}</span><strong>{item.title}</strong><small>{item.value}</small></span><b>{open === item.id ? "−" : "+"}</b></button>{open === item.id && <div className="opportunity-detail"><dl><div><dt>Evidencia</dt><dd>{item.signal}</dd></div><div><dt>Fuente</dt><dd>{item.source}</dd></div><div><dt>Certeza</dt><dd>{item.certainty}</dd></div><div><dt>Estimación</dt><dd>{item.estimate}</dd></div><div><dt>Acción</dt><dd>{item.reversible}</dd></div><div><dt>Disclosure</dt><dd>{item.disclosure}</dd></div></dl><button onClick={() => item.id === "duplicate" ? onLedger("Todas", "disney-bci") : onNotice(`${item.action}: pediremos confirmación; no se contrata, compra ni cambia nada.`)}>{item.action} →</button></div>}</article>)}</div>
+    <section className="finance-hero compact-finance"><p className="kicker">AGOSTO · EJEMPLO</p><span>Resultado del mes</span><strong>+$830.000</strong><small>Ingresos menos egresos clasificados · no es saldo bancario</small></section>
+    <div className="control-heading"><h3>Tus cuentas</h3></div>
+    <div className="source-carousel" aria-label="Fuentes ficticias registradas">{sources.map((item) => <button className="source-card" key={item.id} onClick={() => onLedger(item.id)}><span className="source-logo">{item.logo}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span><b>→</b></button>)}</div>
+    <div className="accounts-under"><div className="source-actions"><button onClick={() => onNotice("Agregar banco es una simulación: no se conecta ninguna cuenta.")}>＋ Agregar banco</button><button onClick={() => onNotice("Agregar cartola es una simulación: no se carga ningún archivo.")}>↑ Agregar cartola</button></div><button className="ledger-link" onClick={() => onLedger("General")}>∑ Ver cartola general →</button></div>
+    <div className="metrics"><Metric label="Ingresos" value="$2.450.000" note="Este mes" onClick={() => onLedger("Ingresos")} /><Metric label="Egresos" value="$1.620.000" note="Este mes" onClick={() => onLedger("Egresos")} /><Metric label="Por cobrar" value="$228.000" note="2 personas" onClick={() => onMove("cobrar")} /><Metric label="Por pagar" value="$42.000" note="1 persona" onClick={() => onMove("cobrar")} /></div>
+    <section className="recent-movements"><div className="control-heading"><h3>Últimos movimientos</h3><button onClick={() => onLedger("General")}>Ver todos</button></div>{movements.slice(0, 4).map((movement) => <button className="recent-row" key={movement.id} onClick={() => onLedger("General", movement.id)}><time>{movement.time}</time><span><strong>{movement.name}</strong><small>{movement.bank}</small></span><b className={movement.amount > 0 ? "positive" : ""}>{movement.amount > 0 ? "+" : "−"}{money.format(Math.abs(movement.amount))}</b></button>)}</section>
+    <button className="finance-rule" onClick={() => onNotice("Criterio marcado para revisar; nada cambia sin confirmación.")}>Ejemplo · BCI + MACH · agosto · transferencias propias excluidas por regla revisable</button>
   </>;
+}
+
+function Metric({ label, value, note, onClick }: { label: string; value: string; note: string; onClick: () => void }) {
+  return <button className="metric" onClick={onClick}><small>{label}</small><strong>{value}</strong><span>{note} →</span></button>;
+}
+
+function Ledger({ source, setSource, selected, setSelected, onAction, onNotice }: { source: string; setSource: (source: string) => void; selected: string | null; setSelected: (id: string | null) => void; onAction: (action: MovementAction, movement: typeof movements[number]) => void; onNotice: (message: string) => void }) {
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const filtered = useMemo(() => movements.filter((movement) => {
+    if (source === "General") return true;
+    if (source === "Ingresos") return movement.amount > 0 && !movement.ownTransfer;
+    if (source === "Egresos") return movement.amount < 0;
+    return movement.bank === source;
+  }), [source]);
+  const ledgerTitle = source === "General" ? "Cartola general" : source === "Ingresos" || source === "Egresos" ? `${source} del mes` : `Cartola ${source}`;
+  const reviewMovement = (movement: typeof movements[number]) => { setSelected(movement.id); onAction("Revisar", movement); };
+  return <>
+    <div className="section-heading"><div><p className="kicker">PRECISIÓN Y EVIDENCIA</p><h2 className="compact-title">{ledgerTitle}</h2></div><span className="count-pill">{filtered.length}</span></div>
+    <div className="filter-row" aria-label="Navegar cartolas">{["General", "BCI", "MACH"].map((filter) => <button key={filter} className={source === filter ? "filter-active" : ""} onClick={() => { setSource(filter); setSelected(null); }}>{filter}</button>)}</div>
+    <div className="table-head"><span>FECHA</span><span>MOVIMIENTO / CÓDIGO</span><span>MONTO</span></div>
+    <div className="ledger">{filtered.map((movement) => {
+      const thirdAction: MovementAction = movement.amount > 0 && !movement.ownTransfer ? "Cobrar" : "Dividir";
+      return <article className={selected === movement.id ? "movement selected" : "movement"} key={movement.id}>
+        <button className="row-main" onClick={() => setSelected(selected === movement.id ? null : movement.id)} aria-expanded={selected === movement.id}><time>{movement.date}<small>{movement.time}</small></time><span><strong>{movement.name}</strong><small className={movement.tone}>{movement.bank} · {movement.code}</small></span><b className={movement.amount > 0 ? "positive" : ""}>{movement.amount > 0 ? "+" : "−"}{money.format(Math.abs(movement.amount))}</b></button>
+        <p className={`movement-hint ${movement.tone}`}>{movement.hint}</p>
+        <div className="row-actions"><button onClick={() => onAction("OK", movement)}>OK</button><button onClick={() => reviewMovement(movement)}>Revisar</button><button onClick={() => onAction(thirdAction, movement)}>{thirdAction}</button></div>
+        {selected === movement.id && <section className="movement-assistant"><div><span>Y</span><div><small>ASISTENTE DEMO</small><strong>{movement.name === "Disney+" ? "Hay una coincidencia que vale revisar" : "Revisa el contexto antes de decidir"}</strong></div></div><p>{movement.name === "Disney+" ? "Vimos el mismo comercio y monto con un minuto de diferencia en dos fuentes. Podrían ser compras válidas. Revisa tu suscripción, forma de pago y condiciones antes de marcar una acción." : "Esta señal usa datos ficticios y no ejecuta cambios. Puedes dejar una nota para recordarte el siguiente paso."}</p><label>Nota propia<input value={notes[movement.id] ?? ""} onChange={(event) => setNotes({ ...notes, [movement.id]: event.target.value })} placeholder="Ej.: revisar suscripción" /></label><button onClick={() => onNotice(`Nota guardada solo en esta sesión para ${movement.name}.`)}>Guardar nota demo</button></section>}
+      </article>;
+    })}</div>
+    <div className="ledger-rule"><strong>Regla revisable</strong><span>TX-79845 está clasificada en esta simulación como transferencia propia.</span><button onClick={() => setSelected("own")}>Revisar</button></div>
+  </>;
+}
+
+function Collect({ draft, setDraft, view, setView, onNotice }: { draft: CollectDraft; setDraft: (draft: CollectDraft | ((draft: CollectDraft) => CollectDraft)) => void; view: PendingView; setView: (view: PendingView) => void; onNotice: (message: string) => void }) {
+  const [selectedPending, setSelectedPending] = useState<string | null>(null);
+  const [settled, setSettled] = useState<string[]>([]);
+  const [sharePreview, setSharePreview] = useState<{ name: string; alias?: string; amount: string; direction: "collect" | "pay" } | null>(null);
+  const update = (patch: Partial<CollectDraft>) => setDraft((current) => ({ ...current, ...patch }));
+  const peopleRows = [
+    { id: "josefa", name: "Josefa", alias: "@josefa", direction: "collect" as const, amount: "$210.000", meta: "Viaje a Pucón" },
+    { id: "maria", name: "María", alias: "@maria", direction: "collect" as const, amount: "$18.000", meta: "Almuerzo viernes" },
+    { id: "camila", name: "Camila", alias: "@camila", direction: "pay" as const, amount: "$42.000", meta: "Depto agosto" },
+  ];
+  const groupRows = [
+    { id: "pucon", name: "Viaje a Pucón", alias: undefined, direction: "collect" as const, amount: "$210.000", meta: "Josefa · Martín · tú" },
+    { id: "almuerzo", name: "Almuerzo viernes", alias: undefined, direction: "collect" as const, amount: "$18.000", meta: "María" },
+    { id: "depto", name: "Depto agosto", alias: undefined, direction: "pay" as const, amount: "$42.000", meta: "Camila" },
+  ];
+  const rows = (view === "personas" ? peopleRows : groupRows).filter((row) => !settled.includes(row.id));
+  const receivableRows = rows.filter((row) => row.direction === "collect");
+  const payableRows = rows.filter((row) => row.direction === "pay");
+  const participants = draft.participants;
+  const equalAmount = Math.round(draft.amount / Math.max(participants.length, 1));
+  const assigned = participants.reduce((sum, person) => sum + (draft.custom[person] ?? 0), 0);
+
+  if (draft.step === 0) return <>
+    <section className="collect-hero"><p className="kicker">COBRAR Y PAGAR · EJEMPLO</p><h2 className="compact-title">Lo pendiente,<br />por ambos lados.</h2><div className="pending-totals"><span><small>ME DEBEN</small><strong>$228.000</strong></span><span><small>LE DEBO</small><strong>$42.000</strong></span></div></section>
+    <div className="pending-view"><button className={view === "personas" ? "selected-option" : ""} onClick={() => setView("personas")}>Por persona</button><button className={view === "grupos" ? "selected-option" : ""} onClick={() => setView("grupos")}>Por grupo / gasto</button></div>
+    <div className="pending-board">
+      <section className="pending-lane"><div className="lane-heading"><div><small>POR COBRAR</small><strong>$228.000</strong></div><button onClick={() => setDraft({ ...initialDraft, step: 1 })}>＋ Nuevo gasto</button></div><div className="pending-lane-track">{receivableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio preparado para ${row.name}. No se envió nada.`)}>Recordar</button><button onClick={() => setSharePreview({ name: row.name, alias: row.alias, amount: row.amount, direction: "collect" })}>Enviar cobro</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: marcado “ya me pagaron”. YOL1 buscará una coincidencia solo en las cartolas ficticias.`); }}>Ya me pagaron</button></div>}</article>)}</div></section>
+      <section className="pending-lane"><div className="lane-heading"><div><small>POR PAGAR</small><strong>$42.000</strong></div><button onClick={() => onNotice("Pago pendiente de ejemplo creado. No se cargó ni transfirió dinero.")}>＋ Nuevo pendiente</button></div><div className="pending-lane-track">{payableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio personal creado para pagar a ${row.name}.`)}>Recordarme</button><button onClick={() => setSharePreview({ name: row.name, alias: row.alias, amount: row.amount, direction: "pay" })}>Simular pago</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pago marcado en el ejemplo; queda sujeto a conciliación ficticia.`); }}>Ya pagué</button></div>}</article>)}</div></section>
+    </div>
+    <div className="reconcile-note"><span>↻</span><p><strong>Conciliación de ejemplo</strong>Cuando marcas un pago, YOL1 busca una coincidencia en las cartolas ficticias antes de cerrarlo.</p></div>
+    {sharePreview && <section className="share-sheet"><div className="share-sheet-head"><div><small>{sharePreview.direction === "collect" ? "MENSAJE SIMULADO" : "INICIO DE PAGO SIMULADO"}</small><strong>{sharePreview.name} {sharePreview.alias}</strong></div><button onClick={() => setSharePreview(null)}>×</button></div><div className="fake-whatsapp"><span>WA</span><p>{sharePreview.direction === "collect" ? `Hola ${sharePreview.name}, me debes ${sharePreview.amount} del pendiente que compartimos. ¿Lo revisamos?` : `Hola ${sharePreview.name}, tengo pendiente pagarte ${sharePreview.amount}. Estoy revisando el detalle antes de confirmar.`}</p></div>{sharePreview.alias && <div className="yol1-direct"><span>Y</span><p>Como tiene alias YOL1, también podrías dejarle el pendiente dentro de YOL1.</p></div>}<button className="share-confirm" onClick={() => { onNotice("Simulación confirmada. No se abrió WhatsApp, no se envió el mensaje y no se movió dinero."); setSharePreview(null); }}>Confirmar simulación</button><p className="privacy-note">Vista ficticia: no abre WhatsApp, no envía mensajes y no inicia un pago real.</p></section>}
+  </>;
+
+  const goBack = () => update({ step: Math.max(0, draft.step - 1) });
+  return <>
+    <button className="back-link" onClick={goBack}>← {draft.step === 1 ? "Volver a pendientes" : "Atrás"}</button>
+    <div className="progress" aria-label={`Paso ${Math.min(draft.step, 4)} de 4`}><span style={{ width: `${Math.min(draft.step, 4) * 25}%` }} /></div>
+    {draft.step === 1 && <section className="flow-step"><p className="kicker">PASO 1 DE 4</p><h2 className="compact-title">Nuevo gasto</h2><label>¿Qué pagaste?<input value={draft.expense} onChange={(event) => update({ expense: event.target.value })} /></label><label>Monto total<input type="number" min="0" value={draft.amount} onChange={(event) => update({ amount: Number(event.target.value) })} /></label><button className="primary-action" onClick={() => update({ step: 2 })}>Elegir personas →</button></section>}
+    {draft.step === 2 && <section className="flow-step"><p className="kicker">PASO 2 DE 4</p><h2 className="compact-title">¿Quiénes participaron?</h2><div className="participants">{draft.contacts.map((person) => <label key={person}><input type="checkbox" checked={participants.includes(person)} onChange={() => update({ participants: participants.includes(person) ? participants.filter((item) => item !== person) : [...participants, person] })} /><span className="avatar">{person[0]}</span><strong>{person}</strong><small>{person === "Tú" ? "Pagaste tú" : "Contacto demo"}</small></label>)}</div><div className="new-contact"><input value={draft.newContact} onChange={(event) => update({ newContact: event.target.value })} placeholder="Crear contacto demo" /><button onClick={() => { const name = draft.newContact.trim(); if (!name) return; update({ contacts: [...draft.contacts, name], participants: [...participants, name], custom: { ...draft.custom, [name]: 0 }, newContact: "" }); onNotice(`${name}: contacto ficticio agregado.`); }}>＋</button></div><button className="primary-action" disabled={participants.length < 2} onClick={() => update({ step: 3 })}>Definir división →</button></section>}
+    {draft.step === 3 && <section className="flow-step"><p className="kicker">PASO 3 DE 4</p><h2 className="compact-title">Divide {money.format(draft.amount)}</h2><div className="segmented"><button className={draft.split === "equal" ? "selected-option" : ""} onClick={() => update({ split: "equal" })}>Partes iguales</button><button className={draft.split === "custom" ? "selected-option" : ""} onClick={() => update({ split: "custom" })}>Montos distintos</button></div><div className="split-list">{participants.map((person) => <label key={person}><span>{person}</span>{draft.split === "equal" ? <strong>{money.format(equalAmount)}</strong> : <input type="number" min="0" value={draft.custom[person] ?? 0} onChange={(event) => update({ custom: { ...draft.custom, [person]: Number(event.target.value) } })} />}</label>)}</div>{draft.split === "custom" && <p className={assigned === draft.amount ? "sum-ok" : "sum-warn"}>Asignado: {money.format(assigned)} de {money.format(draft.amount)} {assigned === draft.amount ? "✓" : "· ajusta la diferencia"}</p>}<button className="primary-action" disabled={draft.split === "custom" && assigned !== draft.amount} onClick={() => update({ step: 4 })}>Revisar reparto →</button></section>}
+    {draft.step === 4 && <section className="flow-step"><p className="kicker">PASO 4 DE 4</p><h2 className="compact-title">Confirma el reparto</h2><div className="summary-card"><span>{draft.expense}</span><strong>{money.format(draft.amount)}</strong><small>{draft.split === "equal" ? "Partes iguales" : "Montos personalizados"}</small></div><div className="split-list compact">{participants.filter((person) => person !== "Tú").map((person) => <div key={person}><span>{person}</span><strong>{money.format(draft.split === "equal" ? equalAmount : draft.custom[person] ?? 0)}</strong></div>)}</div><div className="consent-box"><strong>Confirmación de demo</strong><span>Guardar ordena el reparto solo durante esta sesión. No cobra, paga ni contacta a nadie.</span></div><button className="primary-action" onClick={() => { update({ step: 5 }); onNotice("Reparto demo guardado. Nada fue cobrado ni enviado."); }}>Guardar reparto demo →</button></section>}
+    {draft.step === 5 && <section className="success-step"><span className="success-mark">✓</span><p className="kicker">REPARTO GUARDADO</p><h2 className="compact-title">Quedó ordenado.</h2><p>El estado vive solo durante esta sesión demo. No existe link, pago ni mensaje real.</p><button className="primary-action" onClick={() => update({ step: 0 })}>Volver a pendientes</button></section>}
+  </>;
+}
+
+function Save({ onNotice, onLedger, onCollect }: { onNotice: (message: string) => void; onLedger: (filter?: string, selected?: string) => void; onCollect: (expense?: string) => void }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const [hidden, setHidden] = useState<string[]>([]);
+  const [purchasePreview, setPurchasePreview] = useState(false);
+  const swipeStart = useRef<number | null>(null);
+  const opportunities = [
+    { id: "duplicate", tag: "REVISAR", title: "Dos cargos de Disney+", value: "$0–$11.990 estimados", tone: "warn-bg", signal: "Mismo comercio y monto con un minuto de diferencia.", source: "BCI + MACH · 5 ago", certainty: "Media", estimate: "$0 si ambos son válidos; hasta $11.990 si confirmas un duplicado", reversible: "Solo revisar y marcar; YOL1 no disputa ni recupera fondos", disclosure: "YOL1 no recibe compensación en esta simulación; cualquier relación futura se declarará aquí.", action: "Ver movimientos" },
+    { id: "benefit", tag: "BENEFICIO BCI", title: "20% en restaurantes · BCI Visa", value: "$0–$12.000 estimados", tone: "good-bg", signal: "En el ejemplo comiste recientemente en Liguria y tienes una tarjeta BCI Visa con un beneficio ficticio esta semana.", source: "Locales de ejemplo: Liguria, Baco y Ambrosía · jueves · tope ficticio $12.000", certainty: "Alta solo si se cumplen día, local, tarjeta y tope", estimate: "Entre $0 y $12.000 según compra y condiciones", reversible: "Revisar locales y condiciones; no se activa ni compra nada", disclosure: "YOL1 no recibe compensación en esta simulación; cualquier relación futura se declarará aquí.", action: "Revisar beneficio" },
+    { id: "alternative", tag: "CUENTAS Y SERVICIOS", title: "Tu plan móvil podría costar menos", value: "$0–$4.000/mes estimados", tone: "info-bg", signal: "Una alternativa ficticia tiene menor precio de lista y prestaciones comparables.", source: "Comparación demo · sin datos personales", certainty: "Media; precio, cobertura y permanencia deben verificarse", estimate: "Entre $0 y $4.000 mensuales después de validar condiciones", reversible: "Comparar primero; YOL1 no cambia proveedores", disclosure: "YOL1 no recibe compensación en esta simulación; cualquier relación futura se declarará aquí.", action: "Simular compra" },
+    { id: "split", tag: "PARA DIVIDIR", title: "Liguria podría haber sido compartido", value: "$41.600 · gasto observado", tone: "info-bg", signal: "El monto supera tu consumo individual habitual en restaurantes dentro del ejemplo.", source: "Cartola BCI ficticia · 1 ago", certainty: "Baja; solo tú sabes si pagaste por otras personas", estimate: "No es ahorro: podría convertirse en un pendiente por cobrar", reversible: "Preparar un reparto y confirmarlo antes de guardar", disclosure: "YOL1 no contactará ni cobrará a nadie.", action: "Sí, dividir" },
+  ];
+  const dismiss = (id: string, title: string) => { setHidden([...hidden, id]); setOpen(null); onNotice(`${title}: ignorado durante esta sesión. Puedes recuperarlo al recargar.`); };
+  const act = (id: string, action: string) => {
+    if (id === "duplicate") return onLedger("General", "disney-bci");
+    if (id === "split") return onCollect("Liguria");
+    if (id === "alternative") return setPurchasePreview(true);
+    onNotice(`${action}: condiciones ficticias abiertas; no se activó ni compró nada.`);
+  };
+  return <><section className="save-heading"><p className="kicker">POTENCIAL DE ESTE EJEMPLO</p><strong className="saving-total">$0–$28.000</strong><h2 className="compact-title">Ya entendimos cómo se mueve tu plata.<br /><span>Ahora te guiamos para hacerla rendir mejor.</span></h2><p>Rango estimado, no ahorro real ni garantizado.</p></section><div className="opportunity-list">{opportunities.filter((item) => !hidden.includes(item.id)).map((item, index) => <article key={item.id} className={`opportunity ${open === item.id ? "opportunity-open" : ""}`} onPointerDown={(event) => { swipeStart.current = event.clientX; }} onPointerUp={(event) => { if (swipeStart.current !== null && event.clientX - swipeStart.current < -70) dismiss(item.id, item.title); swipeStart.current = null; }}><button className="opportunity-toggle" onClick={() => setOpen(open === item.id ? null : item.id)}><span className="opportunity-index">0{index + 1}</span><span><span className={`issue-tag ${item.tone}`}>{item.tag}</span><strong>{item.title}</strong><small>{item.value}</small></span><b>{open === item.id ? "−" : "+"}</b></button><button className="opportunity-dismiss" onClick={() => dismiss(item.id, item.title)} aria-label={`Ignorar ${item.title}`}>×</button>{open === item.id && <div className="opportunity-detail"><dl><div><dt>Evidencia</dt><dd>{item.signal}</dd></div><div><dt>Fuente</dt><dd>{item.source}</dd></div><div><dt>Certeza</dt><dd>{item.certainty}</dd></div><div><dt>Estimación</dt><dd>{item.estimate}</dd></div><div><dt>Acción</dt><dd>{item.reversible}</dd></div><div><dt>Disclosure</dt><dd>{item.disclosure}</dd></div></dl><div className="opportunity-actions"><button onClick={() => act(item.id, item.action)}>{item.action} →</button><button onClick={() => dismiss(item.id, item.title)}>Ignorar</button></div></div>}</article>)}</div>{purchasePreview && <section className="purchase-sheet"><div><p className="kicker">COMPRA SIMULADA</p><button onClick={() => setPurchasePreview(false)}>×</button></div><h3>Plan móvil alternativo</h3><strong>$14.990 / mes</strong><ul><li>Precio y prestaciones ficticias</li><li>Falta revisar cobertura y permanencia</li><li>YOL1 no recibe compensación en esta simulación</li></ul><button onClick={() => { setPurchasePreview(false); onNotice("Simulación cerrada: no se abrió un comercio, no se contrató el plan y no se inició un pago real."); }}>Confirmar simulación</button><small>No abre un comercio ni inicia un pago real.</small></section>}<p className="swipe-hint">Desliza una oportunidad hacia la izquierda para descartarla.</p></>;
 }
 
 function ComingSoon({ onBack }: { onBack: () => void }) {
-  return <section className="empty-state"><span className="empty-icon">＋</span><p className="kicker">GANAR</p><h2>Próximamente</h2><p>Este módulo todavía no tiene flujo. Lo construiremos solo cuando exista una propuesta concreta, verificable y alineada con YOL1.</p><button className="primary-action" onClick={onBack}>Volver al inicio</button></section>;
+  return <section className="empty-state"><span className="empty-icon">＋</span><p className="kicker">GANAR</p><h2>Próximamente</h2><p>Este módulo no tiene flujo ni representa una capacidad disponible.</p><button className="primary-action" onClick={onBack}>Volver al inicio</button></section>;
 }
 
 function Future({ onNotice }: { onNotice: (message: string) => void }) {
   const [votes, setVotes] = useState<Record<string, boolean>>({});
   const capabilities = [
-    { id: "alerts", title: "Alertas que tú controlas", detail: "Elegir qué señales importan y con qué frecuencia recibirlas.", status: "POR EXPLORAR" },
-    { id: "compare", title: "Comparar con referencias agregadas", detail: "Solo existiría con muestra suficiente y población comparable visible.", status: "POR EXPLORAR" },
+    { id: "alerts", title: "Alertas que tú controlas", detail: "Elegir qué señales importan y con qué frecuencia recibirlas." },
+    { id: "compare", title: "Comparar con referencias agregadas", detail: "Solo existiría con muestra suficiente y población comparable visible." },
   ];
-  return <>
-    <section className="future-heading"><p className="kicker">EXPERIMENTOS POR EXPLORAR</p><h2 className="compact-title">¿Qué te serviría<br />de verdad?</h2><p className="body-copy">Ideas ya conversadas para aprender antes de construir. No son roadmap, fechas ni capacidades disponibles.</p></section>
-    <div className="roadmap-list">{capabilities.map((item, index) => <article key={item.id}><span className="experiment-number">0{index + 1}</span><div><span className="experiment-status">{item.status}</span><h3>{item.title}</h3><p>{item.detail}</p></div><button className={votes[item.id] ? "voted" : ""} onClick={() => { setVotes({ ...votes, [item.id]: !votes[item.id] }); onNotice(votes[item.id] ? "Quitaste tu apoyo en esta demo." : "Feedback guardado solo durante esta sesión demo."); }}>{votes[item.id] ? "✓ Me interesa" : "Me interesa"}</button></article>)}</div>
-    <section className="scope-box"><strong>Fuera de este MVP</strong><p>No estamos desarrollando banca, remesas, pagos reales ni una capa operativa de propuestas. Primero validamos comprensión, utilidad y confianza.</p></section>
-  </>;
+  return <><section className="future-heading"><p className="kicker">EXPERIMENTOS POR EXPLORAR</p><h2 className="compact-title">¿Qué te serviría<br />de verdad?</h2><p>Ideas para aprender antes de construir. No son roadmap ni capacidades disponibles.</p></section><div className="roadmap-list">{capabilities.map((item, index) => <article key={item.id}><span className="experiment-number">0{index + 1}</span><div><span className="experiment-status">POR EXPLORAR</span><h3>{item.title}</h3><p>{item.detail}</p></div><button className={votes[item.id] ? "voted" : ""} onClick={() => { setVotes({ ...votes, [item.id]: !votes[item.id] }); onNotice(votes[item.id] ? "Feedback retirado en esta sesión." : "Feedback guardado durante esta sesión demo."); }}>{votes[item.id] ? "✓ Me interesa" : "Me interesa"}</button></article>)}</div><section className="scope-box"><strong>Fuera de este MVP</strong><p>No estamos desarrollando banca, remesas, pagos reales ni una capa operativa de propuestas.</p></section></>;
 }

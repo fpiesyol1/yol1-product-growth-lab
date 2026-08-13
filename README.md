@@ -1,20 +1,20 @@
 # YOL1 Product Growth Lab
 
-Prototipo exploratorio para recorrer y discutir la experiencia cotidiana de YOL1 con datos sintéticos. **No conecta bancos, no mueve dinero y no representa capacidades disponibles ni un roadmap comprometido.**
+Prototipo exploratorio con datos ficticios para recorrer una experiencia cotidiana de YOL1. **No conecta bancos, no carga cartolas, no mueve dinero, no envía mensajes y no representa capacidades disponibles ni un roadmap comprometido.**
 
-La propuesta que explora esta versión es: **“Encuentra dónde pierdes plata o desaprovechas beneficios y decide qué hacer”**. YOL1 detecta señales, explica evidencia y recomienda; la persona confirma cada acción.
+La propuesta que explora esta versión es: **“Con YOL1 entiendes tus finanzas y simplificas tu vida financiera.”** YOL1 detecta señales, explica evidencia y recomienda; la persona decide y confirma.
 
-## Qué incluye esta primera versión
+## Qué incluye
 
-- **Inicio:** “Tu plata, bajo control”, dos formas de entrada —explorar con ejemplo o probar con información propia de forma simulada— y elección de tarea sin datos obligatorios.
-- **Mis Finanzas:** fuentes demo con estado, consolidados con criterios visibles, por cobrar/pagar y hallazgos explicables.
-- **Cartola:** fuentes navegables, movimientos con fecha, hora, código, monto y banco; acciones Revisar, Lo reconozco, Dividir y Crear solicitud de cobro.
-- **Ahorrar:** journey prioritario cargo dudoso → beneficio desaprovechado → cuenta recurrente ineficiente. Cada oportunidad muestra evidencia, certeza, rango estimado, acción reversible y disclosure.
-- **Cobrar/Repartir:** utilidad secundaria que prueba gasto, participantes, división igual o distinta, confirmación, link y WhatsApp simulados. No cobra ni inicia pagos.
+- **Inicio:** propuesta de valor ampliada, cinco pendientes de ejemplo —cargo dudoso, por cobrar, por pagar, beneficio y gasto posiblemente compartido— y una conversación financiera simulada con respuestas contextuales.
+- **Mis Finanzas:** resultado mensual, carrusel de cuentas, acceso a cartola general, cuatro métricas accionables y últimos movimientos compactos.
+- **Cartola:** cartola General, BCI o MACH; fecha, hora, código y monto; acciones consistentes OK, Revisar y Dividir/Cobrar. Revisar abre un asistente contextual y permite guardar una nota solo durante la sesión.
+- **Cobrar y pagar:** separa por cobrar y por pagar en carriles independientes, por persona o grupo. Incluye aliases, recordatorios, estados “ya pagado” y vistas simuladas de mensaje/inicio de pago; el reparto conserva su borrador durante la sesión.
+- **Ahorrar:** presenta potencial estimado y cuatro oportunidades: cargo dudoso, beneficio por tarjeta, cuenta/servicio y gasto posiblemente compartido. Se pueden abrir, ignorar o descartar con gesto lateral.
 - **Ganar:** solo “Próximamente”.
-- **Experimentos por explorar:** feedback local sobre ideas ya conversadas, sin prometer fechas ni disponibilidad.
+- **Experimentos:** feedback local sobre ideas ya conversadas, sin fechas ni disponibilidad.
 
-El detalle de arquitectura, journeys, criterios de aceptación, límites y gates de aprendizaje está en [`MVP-SPEC.md`](./MVP-SPEC.md). Las reglas visuales del laboratorio están en [`PRODUCT-DESIGN.md`](./PRODUCT-DESIGN.md).
+La app inicia en modo oscuro. El selector del header cambia a modo claro y guarda la elección en el navegador. Si no existe elección, usa la preferencia del sistema.
 
 ## Cómo probar
 
@@ -25,48 +25,36 @@ npm install
 npm run dev
 ```
 
-Abre la dirección local que aparece en la terminal. Recorridos recomendados:
+Abre `http://localhost:3000`. Recorridos sugeridos:
 
-1. Inicio → Explorar ejemplo → Disney+ aparece dos veces → Ver movimientos → Revisar o Lo reconozco.
-2. Inicio → Encontrar oportunidades → beneficio → evidencia, certeza, rango y acción.
-3. Inicio → Ordenar pendientes → Registrar gasto → participantes → división → confirmar → link simulado.
-4. Inicio → Simular con mi información → leer consentimiento simulado → continuar con datos ficticios.
+1. Inicio → Disney+ → Revisar → asistente contextual → dejar nota.
+2. Inicio → OK en una tarjeta → confirmar que desaparece y aparece feedback visible.
+3. Inicio → conversación demo → probar preguntas sobre mes, deudas, beneficios y ahorro.
+4. Finanzas → Ingresos/Egresos → detalle filtrado; Por cobrar/Por pagar → módulo social.
+5. Cobrar y pagar → abrir Josefa/Camila → simular cobro o pago → verificar el guardrail; alternar persona/grupo sin mover toda la pantalla.
+6. Ahorrar → beneficio BCI, plan móvil o Liguria → revisar evidencia → simular o ignorar.
+7. Cambiar entre oscuro y claro en Inicio, Finanzas, Cartola y Cobrar y pagar.
 
-Para verificar que la versión compila y conserva los guardrails:
+Para verificar build y guardrails:
 
 ```bash
 npm test
 ```
 
-## Cómo se organiza el Lab
+## Organización
 
-- `app/page.tsx`: prototipo navegable y datos sintéticos.
-- `app/globals.css`: estética básica del Lab, responsive y estados interactivos.
-- `app/layout.tsx`: metadatos del sitio.
-- `public/og.png`: tarjeta social del prototipo.
-- `public/yol1-icon.png`, `public/yol1-wordmark-dark.png` y `public/yol1-life.jpg`: activos oficiales tomados del brandbook local para esta demo.
-- `MVP-SPEC.md`: arquitectura de información, alcance, journeys y aprendizaje.
-- `PRODUCT-DESIGN.md`: criterio visual y de experiencia vigente.
-- `tests/`: comprobaciones mínimas de contenido y seguridad de la demo.
-
-La estética toma del brandbook YOL1 el contraste Night/cream, acid concentrado, aqua interactivo y ritmo editorial. El producto es móvil-first; en desktop se presenta dentro de un teléfono protagonista. Esta traducción no reemplaza un design system oficial.
+- `app/page.tsx`: navegación, estado de sesión, temas, datos ficticios e interacciones.
+- `app/globals.css`: tokens semánticos, modos oscuro/claro, responsive y estados.
+- `app/layout.tsx`: metadatos.
+- `MVP-SPEC.md`: alcance, journeys, aceptación y límites.
+- `PRODUCT-DESIGN.md`: sistema visual, tokens y roles de acento.
+- `QA-CIERRE.md`: verificación manual y técnica.
+- `tests/product-guardrails.test.mjs`: checks livianos de seguridad y contrato UI.
 
 ## Publicación
 
-Antes de publicar, Felipe revisa los cambios locales. Este trabajo no hace commit ni push.
-
-Después de aprobar:
-
-1. Ejecutar `npm test`.
-2. Revisar el diff y crear un commit descriptivo.
-3. Hacer push al repositorio conectado.
-4. Vercel generará la publicación según la configuración ya vinculada al repositorio.
-5. Recorrer los journeys prioritarios en la URL publicada y verificar que los rótulos de prototipo sigan visibles.
-
-Para que la tarjeta social use la URL pública correcta, configurar `NEXT_PUBLIC_SITE_URL` en Vercel con el dominio final (por ejemplo, `https://tu-dominio.vercel.app`).
-
-No agregar secretos, credenciales, datos personales, proveedores bancarios ni llaves de pago a este repositorio.
+Felipe revisa antes de publicar. Este trabajo no hace commit, push ni despliegue. No agregar secretos, datos personales, proveedores, autenticación ni llaves de pago.
 
 ## Qué demuestra y qué no
 
-La versión navegable permite probar comprensión y usabilidad inicial. No demuestra demanda, product-market fit, economics, readiness operacional o regulatoria. Los siguientes gates de aprendizaje son E2 comprensión, E3 acción voluntaria y E4 resultado/retorno.
+La navegación permite probar comprensión y usabilidad. No demuestra demanda, product-market fit, economics ni readiness operacional o regulatoria. Los gates declarados son E2 comprensión, E3 acción voluntaria y E4 resultado/retorno.

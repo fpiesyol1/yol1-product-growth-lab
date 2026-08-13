@@ -5,6 +5,75 @@ Estado: **prototipo exploratorio con datos sintéticos; no canon**
 
 No conecta bancos, no mueve dinero y no representa capacidades disponibles, roadmap, wedge, producto validado ni readiness.
 
+## Iteración de feedback directo — 13 de agosto de 2026
+
+- Inicio agranda “Tu plata, más simple” y muestra cinco pendientes sintéticos: cargo dudoso, por cobrar, por pagar, beneficio y gasto para dividir. Se retiró “Desliza para ver más”.
+- “Pregúntale a YOL1” crece como interfaz y responde desde reglas de demo a seis tipos de pregunta; sigue sin IA ni audio reales.
+- Finanzas recupera cartola general bajo las cuentas, métricas accionables y últimos movimientos densos; “Agregar banco/cartola” declara que no conecta ni carga nada.
+- Cobrar y pagar separa carriles horizontales por cobrar/pagar, agrega aliases, recordatorios, conciliación ficticia y previews que niegan explícitamente envío, WhatsApp y pago reales.
+- Ahorrar abre con `$0–$28.000` potenciales, agrega beneficio BCI ficticio, cuenta/servicio, Liguria para dividir, descarte lateral y compra simulada con confirmación.
+- El gesto diagonal mantiene geometría común y cambia solo su acento semántico por módulo.
+
+Verificación técnica: build Next.js/TypeScript exitoso; **6 tests, 6 aprobados, 0 fallidos**; `git diff --check` sin errores. La política del navegador integrado bloqueó la inspección automatizada de `localhost`, por lo que esta iteración no agrega una afirmación nueva de QA visual automatizada; la vista continúa disponible en `http://localhost:3000` para revisión directa de Felipe.
+
+## Batch producto + tema dual — agosto 2026
+
+Resultado funcional:
+
+- Modo oscuro inicial y modo claro manual; ambos usan tokens de fondo, superficie, texto, borde, foco, selección, sombra y confirmación. La elección se guarda localmente y, sin elección previa, se respeta la preferencia del sistema.
+- Inicio incluye propuesta de valor, carrusel “Tienes cosas por revisar”, acciones OK/Revisar/Dividir-Cobrar y chat financiero contextual de demo. El micrófono no graba.
+- Mis Finanzas usa resultado mensual compacto, carrusel de fuentes, acceso a Cartola BCI/MACH y Cartola general; se retiraron hallazgos duplicados y el bloque “Cómo calculamos”.
+- Cartola ofrece General/BCI/MACH, tabla densa, OK/Revisar/Dividir-Cobrar y asistente contextual con nota local.
+- Cobrar y pagar muestra “me deben”/“le debo”, vistas por persona y grupo, un CTA Nuevo gasto y creación de contactos ficticios. El borrador se conserva al navegar durante la sesión.
+- Las confirmaciones viven dentro del teléfono y son visibles en móvil.
+
+QA interactiva:
+
+- `390 × 844`, oscuro: Inicio, bandeja y chat sin overflow.
+- `390 × 844`, claro: OK retira la tarjeta Disney y muestra confirmación visible sobre la navegación inferior.
+- Chat: pregunta “¿A quién le debo?” devuelve respuesta contextual dentro de la app.
+- Finanzas claro: dos fuentes en carrusel, cartola general disponible, sin “Cosas para revisar” ni “Cómo calculamos”.
+- Cartola claro: General/BCI/MACH; Disney seleccionado muestra OK/Revisar/Dividir, evidencia y campo de nota.
+- Cobrar y pagar claro: totales en ambos sentidos y selector por persona/grupo.
+- Persistencia de sesión: se escribió “Cumple Josefa”, avanzó al paso 2, se navegó a Finanzas y al volver el paso 2 y el texto seguían disponibles.
+- `1440 × 1000`, claro: siete módulos recorridos sin overflow horizontal de documento ni app.
+- `1440 × 1000`, oscuro: Inicio completo inspeccionado; jerarquía, carrusel, chat y selector de tema visibles.
+
+Verificación técnica del batch: build Next.js y TypeScript exitosos; **6 tests, 6 aprobados, 0 fallidos**.
+
+## Iteración de acentos semánticos
+
+Se aplicó la matriz aprobada sin cambiar journeys ni features:
+
+- Inicio: Acid dominante; rosa limitado a un punto y una franja suave secundaria.
+- Mis Finanzas: resultado, halo y ritmo gráfico en aqua/petróleo; coral solo en anomalía.
+- Cartola: selección en aqua/navy; alertas permanecen coral.
+- Cobrar/Repartir: neón suave `#FF8FB4` en personas y contexto social; CTAs en Acid.
+- Ahorrar: Acid para valor/acción y amarillo para “cargo dudoso” por revisar.
+- Ganar: rosa dominante y Acid editorial, sin agregar flujo.
+- Experimentos: violeta suave en números, gesto y feedback seleccionado; el texto sigue negando roadmap.
+
+QA exacta:
+
+- `390 × 844`: Inicio, Finanzas, Cartola seleccionada, Cobrar, Ahorrar y Experimentos inspeccionados visualmente; sin overflow horizontal.
+- `1440 × 1000`: los siete módulos recorridos; todos sin overflow horizontal interno ni de documento.
+- Se corrigieron tintas transparentes que inicialmente se mezclaban con el chasis Night; los fondos finales usan tintas opacas suaves para conservar contraste.
+- Contraste comprobado visualmente con texto Night sobre `#FF8FB4` y violeta; rosa no aparece en clases de alerta ni datos críticos.
+
+## Iteración de Inicio — foco editorial
+
+Inicio entra directo al ejemplo **“Dos cargos. Un minuto.”**. Se retiraron por completo “Explorar ejemplo”, “Simular con mi información”, el consentimiento introductorio y el banner largo. La pantalla conserva una única señal persistente, **“DATOS FICTICIOS”**, una acción protagonista —“Ver qué pasó”— y tres rutas secundarias.
+
+La simplificación transversal retiró ayuda redundante de Inicio, Cartola y Ahorrar. Los guardrails permanecen junto a las decisiones materiales: “Simular banco/cartola”, regla de consolidación revisable, confirmación del link ficticio, WhatsApp demo, evidencia, certeza, acción reversible y disclosure comercial dentro de cada oportunidad.
+
+QA de esta iteración:
+
+- `1440 × 1000`: Inicio completo, sin overflow horizontal ni scroll interno; teléfono protagonista y jerarquía editorial legible.
+- `390 × 844`: Inicio completo sin scroll ni overflow; CTA principal y navegación inferior visibles.
+- Journey principal validado: Inicio → Ver qué pasó → Cartola con Disney+ seleccionado y acciones Revisar, Lo reconozco, Dividir y Crear solicitud de cobro.
+- Mis Finanzas, Cobrar y Ahorrar revisados en móvil sin overflow; las acciones materiales mantienen el contexto de simulación.
+- No se integró rosado ni se agregaron funcionalidades.
+
 ## QA visual responsive
 
 Se recorrieron Inicio, Mis Finanzas, Cartola, Cobrar/Repartir, Ahorrar, Ganar y Experimentos en:
@@ -16,7 +85,7 @@ La revisión exacta en ambos viewports fue contrastada por Estrategia YOL1 y que
 
 También se recorrieron los estados interactivos críticos:
 
-- Entrada “Probar con mi información” y consentimiento simulado.
+- Entrada directa al hallazgo ficticio desde Inicio.
 - Cartola con movimiento abierto y acciones Revisar, Lo reconozco, Dividir y Crear solicitud de cobro.
 - Cobrar/Repartir completo: gasto → participantes → montos distintos → confirmación → link demo → WhatsApp demo.
 - Ahorrar con evidencia, fuente, certeza, estimación, acción reversible y disclosure.
@@ -59,7 +128,7 @@ Pruebas ejecutadas:
 /Users/felipepies/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/product-guardrails.test.mjs
 ```
 
-Resultado: **3 tests, 3 aprobados, 0 fallidos**.
+Resultado: **4 tests, 4 aprobados, 0 fallidos**.
 
 ## Inventario exacto del cierre
 

@@ -6,7 +6,7 @@ YOL1 se explora como un asistente financiero cotidiano y explicable. Esta versi�
 
 Principios que gobiernan todos los módulos:
 
-- **Valor antes que datos:** cada camino puede recorrerse con una demo; una posible conexión solo se simula y su consentimiento aparece cuando desbloquearía una mejora concreta.
+- **Valor antes que datos:** la experiencia entra directo a un ejemplo; una posible conexión solo se simula y su consentimiento aparece cuando desbloquearía una mejora concreta.
 - **Evidencia antes que conclusiones:** cada hallazgo declara qué lo activó, de qué fuente viene y cuánta certeza tiene.
 - **Control de la persona:** las acciones son confirmables, corregibles o reversibles; una sugerencia nunca se presenta como hecho consumado.
 - **Privacidad por defecto:** el Lab usa datos ficticios y no ejecuta conexiones, cargas, pagos ni envíos reales.
@@ -17,10 +17,10 @@ Principios que gobiernan todos los módulos:
 
 La navegación principal está organizada por la intención de la persona, no por productos financieros:
 
-1. **Inicio:** escoger entre explorar con ejemplo (cero datos) o probar con información propia (carga/conexión y consentimiento simulados), y luego elegir una tarea.
+1. **Inicio:** comprender qué hace YOL1, resolver señales de una bandeja y conversar con un chat financiero de demo.
 2. **Mis Finanzas:** entender el mes, las fuentes y los pendientes.
 3. **Cartola:** inspeccionar la evidencia y actuar sobre un movimiento.
-4. **Cobrar:** registrar, repartir y preparar una solicitud simulada.
+4. **Cobrar y pagar:** ordenar lo que te deben y lo que debes, y registrar/repartir un gasto ficticio.
 5. **Ahorrar:** evaluar oportunidades transparentes y verificables.
 6. **Ganar:** placeholder “Próximamente”.
 7. **Experimentos por explorar:** vitrina y feedback sin fechas, disponibilidad ni promesas; no construye banca ni remesas.
@@ -29,41 +29,41 @@ La navegación principal está organizada por la intención de la persona, no po
 
 ### Inicio
 
-**Trabajo a resolver:** elegir un camino útil en menos de cinco segundos.
+**Trabajo a resolver:** entender qué hace YOL1 y resolver una señal cotidiana sin buscarla en varios módulos.
 
-Incluye “Tu plata, bajo control” como paraguas y el hero “Encuentra dónde pierdes plata o desaprovechas beneficios y decide qué hacer”. Ofrece **Explorar con ejemplo** y **Probar con mi información**. El segundo muestra una simulación de consentimiento antes de seguir con datos ficticios. No incluye registro, conexión, carga real ni cuestionario obligatorio.
+Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal cuenta los pendientes visibles e incluye cinco situaciones sintéticas: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. **OK** archiva durante la sesión; **Revisar** abre evidencia o detalle; la tercera acción lleva al destino pertinente. La conversación acepta texto o seis sugerencias y responde contextualmente desde reglas de demo; el micrófono es solo visual y no graba.
 
-**Aceptación:** la persona entiende que está en un prototipo, distingue los dos modos de entrada y puede entrar a cualquier módulo; ningún camino usa datos reales ni promete personalización sin una fuente.
+**Aceptación:** una acción responde con confirmación visible en móvil y desktop; OK retira una tarjeta durante la sesión; Revisar y la tercera acción tienen destino útil; ningún camino usa datos, IA ni audio reales. Una eventual IA real requiere endpoint de servidor, credencial protegida, límites y disclosure propio.
 
 ### Mis Finanzas
 
 **Trabajo a resolver:** entender de dónde vienen los números y qué merece atención.
 
-Incluye fuentes con estado, ingreso/egreso consolidado, clasificaciones simuladas de transferencias propias, por cobrar/pagar y hallazgos con evidencia y certeza. Todo consolidado muestra fuentes, periodo, última actualización, criterio usado y opción de corregir. “Simular banco” y “Simular cartola” son demostraciones informativas con consentimiento simulado, no integraciones.
+Incluye resultado mensual compacto, carrusel horizontal de cuentas, ingreso/egreso consolidado, por cobrar/pagar y últimos movimientos en filas densas. Cada métrica abre su detalle; por cobrar/pagar lleva al módulo correspondiente. **Ver cartola general** queda debajo de las cuentas. **Agregar banco** y **Agregar cartola** solo confirman que no existe integración ni carga.
 
-**Aceptación:** cada total explica su alcance; cada regla se puede marcar para corregir; cada hallazgo abre una ficha con regla, fuentes y acción; una fuente puede navegar a su cartola.
+**Aceptación:** resultado no se confunde con saldo; fuentes se recorren horizontalmente; cada fuente y la cartola general tienen destino; Finanzas no duplica la bandeja de Inicio.
 
 ### Cartola completa
 
 **Trabajo a resolver:** inspeccionar movimientos y convertirlos en acciones concretas.
 
-Incluye filtros por fuente, fecha, hora, código, monto y banco; no usa imágenes de movimientos. Las acciones permitidas son Revisar, Lo reconozco, Dividir y Crear solicitud de cobro.
+Incluye navegación General/BCI/MACH, fecha, hora, código, monto y fuente. Cada fila ofrece **OK, Revisar y Dividir/Cobrar**. Revisar abre un asistente contextual de demo que explica evidencia y permite guardar una nota local de sesión; no entrega resultados garantizados ni enlaces externos.
 
-**Aceptación:** se puede filtrar por fuente, seleccionar un movimiento y confirmar una acción simulada; una transferencia propia aparece como clasificación simulada/revisable, no como verdad.
+**Aceptación:** se puede cambiar de cartola, confirmar cualquier acción y ver feedback; Disney abre evidencia contextual; una transferencia propia permanece como clasificación revisable.
 
-### Cobrar / Repartir
+### Cobrar y pagar
 
-**Trabajo a resolver:** transformar un gasto en montos claros por persona y preparar el cobro.
+**Trabajo a resolver:** entender lo pendiente en ambos sentidos y transformar un gasto en montos claros por persona.
 
-Es una utilidad secundaria y experimento de frecuencia, no el corazón de la tesis. Flujo: gasto → participantes → división igual o distinta → resumen por cobrar → link simulado → WhatsApp simulado. El link solo prepara una solicitud; no cobra. No hay pago, iniciación real ni envío externo.
+La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos carriles horizontales independientes: **Por cobrar** y **Por pagar**. Personas con YOL1 pueden mostrar un alias ficticio `@nombre`. Cada pendiente se abre sin mover el resto de la pantalla y permite simular recordatorio, mensaje de cobro o inicio de pago, además de marcar “ya me pagaron/ya pagué”; esos estados quedan sujetos a conciliación contra cartolas ficticias. **Nuevo gasto** conserva el flujo gasto → contacto → división → confirmación y su borrador al navegar.
 
-**Aceptación:** se puede completar el flujo con datos ficticios, alternar división igual/personalizada, volver atrás y llegar a una vista de enlace de pago claramente marcado como demo.
+**Aceptación:** se alternan las dos vistas; se puede completar y corregir el reparto; navegar a otro módulo y volver conserva el paso y datos durante la sesión; nunca se ofrece ejecución real.
 
 ### Ahorrar
 
 **Trabajo a resolver:** encontrar oportunidades cotidianas sin promesas opacas.
 
-Prioriza, en este orden: cargo dudoso → beneficio desaprovechado → cuenta recurrente ineficiente. Cada tarjeta explica evidencia, fuente, certeza, ahorro estimado/rango, acción reversible y disclosure. Esta demo usa la declaración de transparencia comercial definida arriba.
+Abre con un rango grande de potencial estimado, no garantizado. Prioriza cargo dudoso → beneficio desaprovechado por tarjeta → cuenta o servicio posiblemente ineficiente → gasto posiblemente compartido. Cada tarjeta explica evidencia, fuente, certeza, estimación, acción reversible y disclosure. Puede descartarse con botón o gesto lateral; plan y división abren simulaciones explícitas, nunca una compra o cobro real.
 
 **Aceptación:** ninguna tarjeta afirma ahorro garantizado ni fraude; la persona puede abrir la explicación y decidir qué hacer.
 
@@ -79,7 +79,7 @@ Vitrina de ideas ya conversadas y feedback simulado, sin fechas, fases, disponib
 
 ### Journey A — cargo dudoso
 
-Inicio → Explorar con ejemplo → hallazgo “Disney+ aparece dos veces” → explicación de evidencia y certeza → Cartola filtrada → Revisar o Lo reconozco.
+Inicio → tarjeta Disney+ → Revisar → Cartola general con Disney+ → asistente contextual → guardar nota u OK.
 
 ### Journey B — beneficio desaprovechado
 
@@ -91,7 +91,7 @@ Inicio → Ahorrar → plan móvil posiblemente ineficiente → revisar comparac
 
 ### Journey secundario — repartir y solicitar
 
-Inicio o Cartola → Cobrar/Repartir → definir gasto y participantes → elegir división → confirmar montos → preparar link simulado → preparar mensaje de WhatsApp. Cada transición permanece reversible y no ejecuta un cobro.
+Inicio o Cartola → Cobrar y pagar → Nuevo gasto → seleccionar/crear contacto ficticio → dividir → confirmar → guardar reparto de sesión. Cada transición permanece reversible y no cobra, paga ni envía mensajes.
 
 ## 5. Datos y límites de la demo
 
@@ -101,6 +101,7 @@ Inicio o Cartola → Cobrar/Repartir → definir gasto y participantes → elegi
 - No se construye score crediticio. Cualquier evaluación futura debe mostrar evidencia, regla y nivel de certeza.
 - Open finance, subadquirencia, iniciación de pagos, MCP e infraestructura compartida no se presentan como construidos ni propios; son, a lo sumo, candidatos por evaluar.
 - Directo y Embebido quedan fuera de la selección de producto: son motions comparables y este Lab no declara un ganador.
+- El modo oscuro es inicial; el modo claro se puede elegir. La preferencia vive solo en `localStorage`, no requiere cuenta ni autenticación.
 
 ## 6. Siguiente etapa del Lab
 
