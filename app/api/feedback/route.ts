@@ -5,7 +5,8 @@ import { countRecentFeedback, isFeedbackStorageConfigured, listFeedback, saveFee
 
 export const runtime = "nodejs";
 
-const screens = new Set(["Inicio", "Mis finanzas", "Cartola", "Cobrar y pagar", "Ahorrar", "Ganar", "Experimentos"]);
+const screens = new Set(["Inicio", "Mis finanzas", "Cartola", "Cobrar y pagar", "Ahorrar", "Ganar", "Experimentos", "Mi banco"]);
+const products = new Set(["Acompañante financiero", "Onboarding y KYC progresivo", "Home Banking", "Tarjetas", "Remesas", "Construir mi propio producto"]);
 const kinds = new Set(["like", "improve", "idea"]);
 const ratings = new Set<ChatReviewRating>(["unrated", "useful", "improve"]);
 const statuses = new Set<SharedFeedbackStatus>(["new", "approve", "wrong", "discard"]);
@@ -38,6 +39,15 @@ function authorized(request: Request) {
   return timingSafeEqual(expectedHash, providedHash);
 }
 
+function isKnownFeedbackContext(value: string) {
+  if (screens.has(value)) return true;
+  const [product, screen, ...rest] = value.split(" · ");
+  // Un producto puede tener subpantallas nuevas antes de que el catálogo del
+  // servidor las conozca. Validamos el producto publicado y conservamos la
+  // etiqueta de pantalla como contexto editorial; no es un permiso ni una ruta.
+  return rest.length === 0 && Boolean(screen) && products.has(product);
+}
+
 function normalizeInput(value: unknown): SharedFeedbackInput | null {
   if (!value || typeof value !== "object") return null;
   const body = value as Record<string, unknown>;
@@ -48,11 +58,11 @@ function normalizeInput(value: unknown): SharedFeedbackInput | null {
 
   const input: SharedFeedbackInput = { source, idempotencyKey, sessionId, website: clean(body.website, 100) };
   if (source === "feedback") {
-    const screen = clean(body.screen, 40);
+    const screen = clean(body.screen, 100);
     const kind = clean(body.kind, 20);
     const message = clean(body.message, 700);
     const topics = clean(body.topics, 180);
-    if (!screens.has(screen) || !kinds.has(kind) || ((kind === "improve" || kind === "idea") && !message)) return null;
+    if (!isKnownFeedbackContext(screen) || !kinds.has(kind) || ((kind === "improve" || kind === "idea") && !message)) return null;
     return { ...input, screen, kind: kind as SharedFeedbackInput["kind"], message, topics };
   }
 
