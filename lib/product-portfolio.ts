@@ -31,8 +31,8 @@ export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
 ];
 
 export const EMPTY_STATE_LIBRARY = [
-  { id: "paper", icon: "✎", eyebrow: "FELIPE, TE TENEMOS IDENTIFICADO", title: "Felipe no hizo la pega.", body: "Perdón por las molestias. Ya estamos apurando al equipo para que deje de pavear.", gesture: "scribble" },
-  { id: "dog", icon: "", eyebrow: "PAUSA CON MOVIMIENTO", title: "Hasta el perro sabe esperar una versión aprobada.", body: "Esta idea sigue jugando en borrador. Nada de lo que ves implica disponibilidad.", gesture: "dog" },
+  { id: "paper", icon: "✎", eyebrow: "FELIPE, TE TENEMOS IDENTIFICADO", title: "Alguien no hizo la pega…", body: "Perdón por las molestias. Ya estamos apurando al equipo para que deje de pavear.", gesture: "scribble" },
+  { id: "dog", icon: "", eyebrow: "PAUSA CON MOVIMIENTO", title: "Aún no está listo esto.", body: "Pero para que no esperes solo, acá tenemos un perro feliz que te hará compañía.", gesture: "dog" },
   { id: "cat", icon: "", eyebrow: "SORY, NO HICE LA PEGA", title: "Pero acá hay un gato tecleando.", body: "Nos pareció suficientemente útil mientras Felipe termina de armar esta parte.", gesture: "cat" },
   { id: "robot", icon: "", eyebrow: "IDEAS EN ORDEN", title: "Un robot está ordenando los post-its.", body: "Tu idea después podrá pasar de conversación a propuesta, pantalla y revisión.", gesture: "robot" },
   { id: "coffee", icon: "", eyebrow: "TARJETAS EN ESPERA", title: "Las tarjetas todavía están en modo avión.", body: "Por ahora no hay nada que tocar. Apenas exista algo aprobado, aparece acá.", gesture: "coffee" },

@@ -265,9 +265,9 @@ test("portfolio mantiene exactamente seis productos y solo publica el Acompañan
   assert.equal((portfolio.match(/published: false/g) ?? []).length, 5);
   assert.match(page, /NO PUBLICADO/);
   assert.doesNotMatch(page, /Volver al Acompañante financiero/);
-  assert.match(portfolio, /EMPTY_STATE_LIBRARY[\s\S]*Hasta el perro sabe esperar/);
+  assert.match(portfolio, /EMPTY_STATE_LIBRARY[\s\S]*perro feliz que te hará compañía/i);
   assert.match(portfolio, /acá hay un gato tecleando/i);
-  assert.match(portfolio, /Felipe no hizo la pega/i);
+  assert.match(portfolio, /Alguien no hizo la pega/i);
   assert.match(portfolio, /Aún no desciframos por completo cómo lo queremos construir/i);
   assert.match(portfolio, /ChatGPT o Claude/);
   assert.match(portfolio, /Un robot está ordenando los post-its/i);
