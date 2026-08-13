@@ -69,7 +69,7 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 
 ## Pantallas actuales
 
-- Inicio: propuesta de valor ampliada, cinco pendientes accionables y conversación financiera simulada.
+- Inicio: propuesta de valor ampliada, cinco pendientes accionables y conversación financiera con selector IA/demo. Consentimiento y privacidad se concentran dentro del chat, sin crear un banner global.
 - Mis Finanzas: resultado compacto, carrusel de cuentas, métricas con destino, cartola general y últimos movimientos densos.
 - Cartola: tabla densa General/BCI/MACH, tres acciones por fila y asistente contextual de demo.
 - Cobrar y pagar: bandejas apiladas 50/50 — por cobrar arriba y por pagar abajo — con scroll interno independiente, persona/grupo, aliases y reparto persistente durante sesión. El contenedor principal no desplaza cabecera, selector ni navegación. En móvil pequeño se reduce la densidad de encabezados sin convertir las bandejas en carrusel o columnas laterales.
@@ -78,6 +78,7 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 - Ganar: tratamiento editorial “Próximamente”, sin flujo.
 - Experimentos por explorar: feedback sin fechas, disponibilidad ni promesas de roadmap.
 - Feedback del Lab: tarjeta editorial de baja intensidad en el lateral desktop; en móvil se presenta como hoja sobre el teléfono. Usa violeta como señal de exploración, conserva superficies Night/Mist y no compite con Acid, aqua o rosa de los módulos.
+- Bandeja `/review`: superficie editorial interna, sin marco de teléfono y sin competir con la experiencia B2C. Violeta identifica origen/aprendizaje, amarillo indica pendiente o Equivocado, Acid confirma Aprobar y Descartar usa tinta neutra; coral queda reservado para errores operativos. El editor de Equivocado aparece solo cuando se necesita explicar la corrección.
 
 ## Patrón de feedback transversal
 

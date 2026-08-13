@@ -2,13 +2,15 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { localFeedbackIntake, type FeedbackKind } from "../lib/feedback-intake";
+import { localChatFeedbackIntake, type ChatFeedbackRating } from "../lib/chat-feedback";
+import { submitChatResponse, submitGeneralFeedback } from "../lib/shared-feedback-client";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "futuro";
 type Theme = "dark" | "light";
 type MovementAction = "OK" | "Revisar" | "Dividir" | "Cobrar";
 type PendingView = "personas" | "grupos";
 type SplitMode = "equal" | "custom";
-type ChatMessage = { role: "user" | "assistant"; text: string };
+type ChatMessage = { id: string; role: "user" | "assistant"; text: string; mode?: "ai" | "demo"; feedback?: ChatFeedbackRating; knowledgeVersion?: string };
 type MessagePreview = { name: string; alias?: string; amount: string; expense: string; direction: "collect" | "pay" };
 type CollectDraft = {
   step: number;
@@ -199,6 +201,7 @@ function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; op
   const [message, setMessage] = useState("");
   const [topics, setTopics] = useState("");
   const [confirmation, setConfirmation] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const requiresMessage = kind !== "like";
   const prompts: Record<FeedbackKind, { label: string; placeholder: string }> = {
     like: { label: "¿Qué te gustó? (opcional)", placeholder: "Ej.: entendí rápido qué revisar" },
@@ -206,11 +209,20 @@ function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; op
     idea: { label: "¿Qué deberíamos considerar?", placeholder: "Describe la idea o situación que falta contemplar" },
   };
 
-  const submitFeedback = (event: FormEvent) => {
+  const submitFeedback = async (event: FormEvent) => {
     event.preventDefault();
     if (requiresMessage && !message.trim()) return;
-    localFeedbackIntake.submit({ screen, kind, message: message.trim(), topics: topics.trim() });
-    setConfirmation(`Registrado en esta sesión · ${screen}`);
+    const input = { screen, kind, message: message.trim(), topics: topics.trim() };
+    localFeedbackIntake.submit(input);
+    setSubmitting(true);
+    try {
+      const shared = await submitGeneralFeedback(input);
+      setConfirmation(shared ? `Enviado a la bandeja compartida · ${screen}` : `Guardado localmente · ${screen}`);
+    } catch {
+      setConfirmation(`Guardado en este navegador; la bandeja compartida aún no está disponible.`);
+    } finally {
+      setSubmitting(false);
+    }
     setMessage("");
     setTopics("");
   };
@@ -233,8 +245,8 @@ function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; op
       ] as [FeedbackKind, string][]).map(([value, label]) => <button type="button" key={value} className={kind === value ? "selected" : ""} onClick={() => { setKind(value); setConfirmation(""); }}>{label}</button>)}</div>
       <label>{prompts[kind].label}<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={prompts[kind].placeholder} required={requiresMessage} maxLength={700} /></label>
       <label>Temas clave (opcional)<input value={topics} onChange={(event) => setTopics(event.target.value)} placeholder="Ej.: claridad, confianza, navegación" maxLength={180} /></label>
-      <p className="feedback-privacy">Demo local: no se envía nada todavía. No incluyas datos financieros ni personales.</p>
-      <button className="feedback-submit" type="submit" disabled={requiresMessage && !message.trim()}>Guardar feedback local</button>
+      <p className="feedback-privacy">Se guarda para revisión cuando la bandeja compartida está activa. No incluyas datos financieros ni personales.</p>
+      <button className="feedback-submit" type="submit" disabled={submitting || (requiresMessage && !message.trim())}>{submitting ? "Enviando…" : "Enviar feedback"}</button>
       {confirmation && <p className="feedback-confirmation" role="status">✓ {confirmation}</p>}
     </form>}
   </aside>;
@@ -246,7 +258,25 @@ function NavButton({ icon, label, current, onClick }: { icon: string; label: str
 
 function Start({ archived, onArchive, onMove, onCollect, onLedger, onNotice }: { archived: string[]; onArchive: (id: string, label: string) => void; onMove: (target: Tab) => void; onCollect: (expense?: string) => void; onLedger: (filter?: string, selected?: string) => void; onNotice: (message: string) => void }) {
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([{ role: "assistant", text: "Hola, Felipe. Puedo ayudarte a entender el mes, ordenar pendientes o revisar una oportunidad del ejemplo." }]);
+  const [messages, setMessages] = useState<ChatMessage[]>([{ id: "welcome", role: "assistant", text: "Hola. Puedo ayudarte a entender el mes, ordenar pendientes o revisar una oportunidad del ejemplo.", mode: "demo" }]);
+  const [chatBusy, setChatBusy] = useState(false);
+  const [aiConfigured, setAiConfigured] = useState(false);
+  const [aiChoice, setAiChoice] = useState<"pending" | "ai" | "demo">("pending");
+  const sessionId = useRef("");
+
+  useEffect(() => {
+    sessionId.current = window.sessionStorage.getItem("yol1-lab-chat-session") || window.crypto.randomUUID();
+    window.sessionStorage.setItem("yol1-lab-chat-session", sessionId.current);
+    const storedChoice = window.sessionStorage.getItem("yol1-lab-ai-choice");
+    fetch("/api/chat")
+      .then((response) => response.json())
+      .then((status: { configured?: boolean }) => {
+        const configured = status.configured === true;
+        setAiConfigured(configured);
+        setAiChoice(configured && storedChoice === "ai" ? "ai" : configured && storedChoice === "demo" ? "demo" : configured ? "pending" : "demo");
+      })
+      .catch(() => setAiChoice("demo"));
+  }, []);
   const actionCards = [
     { id: "disney", tag: "CARGO DUDOSO", title: "Disney+ aparece dos veces", detail: "Mismo monto · 1 minuto", amount: "$11.990", tone: "alert", third: "Ver cargos", review: () => onLedger("General", "disney-bci"), act: () => onLedger("General", "disney-bci") },
     { id: "maria", tag: "POR COBRAR", title: "María te debe del almuerzo", detail: "Pendiente desde el viernes", amount: "$18.000", tone: "social", third: "Cobrar", review: () => onMove("cobrar"), act: () => onMove("cobrar") },
@@ -256,18 +286,64 @@ function Start({ archived, onArchive, onMove, onCollect, onLedger, onNotice }: {
   ];
   const visibleCards = actionCards.filter((card) => !archived.includes(card.id));
 
-  const answer = (question: string) => {
-    const normalized = question.toLowerCase();
-    let response = "Puedo cruzar los datos ficticios del ejemplo para explicarte movimientos, pendientes y oportunidades. Tú decides qué revisar.";
-    if (normalized.includes("mes") || normalized.includes("cambió")) response = "Agosto deja un resultado de +$830.000: $2.450.000 de ingresos menos $1.620.000 de egresos clasificados. Las transferencias propias están excluidas por una regla revisable.";
-    else if (normalized.includes("debo") || normalized.includes("pagar")) response = "En el ejemplo le debes $42.000 a Camila por Depto agosto. Puedes abrir Cobrar y pagar, revisar el detalle y simular un recordatorio o inicio de pago.";
-    else if (normalized.includes("cobrar") || normalized.includes("deben")) response = "Te deben $228.000: Josefa $210.000 y María $18.000. Puedo ordenarlo por persona o grupo y preparar un mensaje simulado.";
-    else if (normalized.includes("restaurante") || normalized.includes("beneficio") || normalized.includes("descuento")) response = "Vimos gasto reciente en restaurantes y un beneficio ficticio de 20% asociado a la BCI Visa del ejemplo. Antes de usarlo, revisa día, locales y tope.";
-    else if (normalized.includes("ahorrar") || normalized.includes("oportunidad")) response = "Hay hasta $28.000 potenciales en el ejemplo: cargos por revisar, un beneficio de tarjeta y una alternativa de plan móvil. Son rangos, no ahorro garantizado.";
-    else if (normalized.includes("revisar") || normalized.includes("cargo") || normalized.includes("disney")) response = "Hay dos cargos Disney+ con el mismo monto y un minuto de diferencia. Es una señal, no una conclusión: abre la cartola para comparar código, hora y fuente.";
-    else if (normalized.includes("liguria") || normalized.includes("dividir")) response = "La boleta ficticia de Liguria fue $41.600, mayor que tu consumo individual habitual en el ejemplo. Puedo preparar un reparto; no contactaré ni cobraré a nadie.";
-    setMessages((current) => [...current, { role: "user", text: question }, { role: "assistant", text: response }]);
+  const chooseAiMode = (choice: "ai" | "demo") => {
+    setAiChoice(choice);
+    window.sessionStorage.setItem("yol1-lab-ai-choice", choice);
+  };
+
+  const answer = async (question: string) => {
+    if (chatBusy || aiChoice === "pending") return;
+    const userMessage: ChatMessage = { id: window.crypto.randomUUID(), role: "user", text: question };
+    const history = [...messages, userMessage].slice(-12);
+    setMessages(history);
     setChatInput("");
+    setChatBusy(true);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          aiConsent: aiChoice === "ai",
+          messages: history.map(({ role, text }) => ({ role, text })),
+        }),
+      });
+      const payload = await response.json() as { message?: ChatMessage; knowledgeVersion?: string; error?: string; degraded?: boolean };
+      if (!response.ok || !payload.message) throw new Error(payload.error || "No response");
+      const assistantMessage = { ...payload.message, knowledgeVersion: payload.knowledgeVersion };
+      setMessages((current) => [...current, assistantMessage]);
+      void submitChatResponse({
+        id: assistantMessage.id,
+        question,
+        answer: assistantMessage.text,
+        rating: "unrated",
+        knowledgeVersion: assistantMessage.knowledgeVersion ?? "sin-versión",
+      }).catch(() => undefined);
+      if (payload.degraded) onNotice("La IA no respondió; seguimos en modo demo local.");
+    } catch {
+      setMessages((current) => [...current, { id: window.crypto.randomUUID(), role: "assistant", mode: "demo", text: "No pude responder ahora. Puedes seguir recorriendo el ejemplo; no se ejecutó ni guardó ninguna acción." }]);
+    } finally {
+      setChatBusy(false);
+    }
+  };
+
+  const rateAnswer = (message: ChatMessage, rating: ChatFeedbackRating) => {
+    const index = messages.findIndex((candidate) => candidate.id === message.id);
+    const question = [...messages.slice(0, index)].reverse().find((candidate) => candidate.role === "user")?.text ?? "Inicio de conversación";
+    localChatFeedbackIntake.submit({
+      sessionId: sessionId.current,
+      question,
+      answer: message.text,
+      rating,
+      knowledgeVersion: message.knowledgeVersion ?? "welcome",
+    });
+    void submitChatResponse({
+      id: message.id,
+      question,
+      answer: message.text,
+      rating,
+      knowledgeVersion: message.knowledgeVersion ?? "welcome",
+    }).then(() => onNotice(rating === "useful" ? "Respuesta aprobada por la persona y enviada a revisión." : "Corrección enviada a la bandeja compartida.")).catch(() => onNotice("Feedback guardado en este navegador; la bandeja compartida no respondió."));
+    setMessages((current) => current.map((candidate) => candidate.id === message.id ? { ...candidate, feedback: rating } : candidate));
   };
 
   const submitChat = (event: FormEvent) => {
@@ -286,10 +362,13 @@ function Start({ archived, onArchive, onMove, onCollect, onLedger, onNotice }: {
     </div> : <div className="all-clear"><strong>Todo revisado por ahora.</strong><span>Puedes seguir preguntándole a YOL1.</span></div>}
 
     <section className="finance-chat">
-      <div className="chat-heading"><div><span className="chat-orb">Y</span><div><small>CONVERSACIÓN DE EJEMPLO</small><h3>Pregúntale a YOL1</h3></div></div><span>Respuestas simuladas</span></div>
-      <div className="chat-suggestions">{["¿Qué cambió este mes?", "¿A quién le debo?", "¿Quién me debe?", "¿Qué beneficio tengo?", "¿Cuánto podría ahorrar?", "¿Qué pasó con Disney+?"].map((suggestion) => <button key={suggestion} onClick={() => answer(suggestion)}>{suggestion}</button>)}</div>
-      <div className="chat-thread">{messages.slice(-6).map((message, index) => <p key={`${message.role}-${index}`} className={message.role}>{message.text}</p>)}</div>
-      <form className="chat-compose" onSubmit={submitChat}><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder="Escribe una pregunta…" aria-label="Pregunta financiera de demo" /><button type="button" className="mic-button" onClick={() => onNotice("Micrófono visual: no graba audio en esta demo.")} aria-label="Micrófono de demo">●</button><button type="submit" aria-label="Enviar pregunta">↑</button></form>
+      <div className="chat-heading"><div><span className="chat-orb">Y</span><div><small>DATOS FICTICIOS</small><h3>Pregúntale a YOL1</h3></div></div><span>{aiChoice === "ai" ? "IA activa" : aiChoice === "pending" ? "Elige modo" : "Demo local"}</span></div>
+      {aiConfigured && aiChoice === "pending" && <div className="chat-consent"><strong>¿Cómo quieres conversar?</strong><p>Con IA, tu texto se procesa en OpenAI desde el servidor. La pregunta y respuesta pueden guardarse en la bandeja del Lab para revisión. No incluyas datos personales, claves ni finanzas reales.</p><div><button onClick={() => chooseAiMode("ai")}>Usar IA</button><button onClick={() => chooseAiMode("demo")}>Seguir en demo</button></div></div>}
+      {aiConfigured && aiChoice !== "pending" && <button className="chat-mode-link" onClick={() => setAiChoice("pending")}>Cambiar modo · {aiChoice === "ai" ? "IA" : "demo"}</button>}
+      <div className="chat-suggestions">{["¿Qué cambió este mes?", "¿A quién le debo?", "¿Quién me debe?", "¿Qué beneficio tengo?", "¿Cuánto podría ahorrar?", "¿Qué pasó con Disney+?"].map((suggestion) => <button key={suggestion} disabled={chatBusy || aiChoice === "pending"} onClick={() => answer(suggestion)}>{suggestion}</button>)}</div>
+      <div className="chat-thread" aria-live="polite">{messages.slice(-8).map((message) => <article key={message.id} className={message.role}><p>{message.text}</p>{message.role === "assistant" && message.id !== "welcome" && <div className="chat-rating"><span>{message.mode === "ai" ? "IA" : "DEMO"}</span><button className={message.feedback === "useful" ? "selected" : ""} onClick={() => rateAnswer(message, "useful")}>Útil</button><button className={message.feedback === "improve" ? "selected" : ""} onClick={() => rateAnswer(message, "improve")}>Mejoraría</button></div>}</article>)}{chatBusy && <p className="chat-thinking">YOL1 está pensando…</p>}</div>
+      <form className="chat-compose" onSubmit={submitChat}><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={aiChoice === "pending" ? "Elige IA o demo para empezar" : "Pregunta sobre el ejemplo…"} aria-label="Pregunta financiera sobre datos ficticios" maxLength={700} disabled={chatBusy || aiChoice === "pending"} /><button type="button" className="mic-button" onClick={() => onNotice("Micrófono visual: no graba audio en esta demo.")} aria-label="Micrófono de demo">●</button><button type="submit" aria-label="Enviar pregunta" disabled={chatBusy || aiChoice === "pending"}>↑</button></form>
+      <p className="chat-privacy">Ejemplo ficticio · preguntas y respuestas pueden guardarse para revisión · no compartas datos personales o financieros reales.</p>
     </section>
   </>;
 }

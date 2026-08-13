@@ -2,16 +2,16 @@
 
 ## Estado de esta versión
 
-El formulario visible es una **demo local**. Asocia automáticamente cada entrada con la pantalla activa, guarda hasta 30 registros en `localStorage` bajo `yol1-lab-feedback-v1` y no transmite información. La interfaz pide no incluir datos financieros ni personales.
+El formulario asocia cada entrada con la pantalla activa y llama `POST /api/feedback`. Cuando `DATABASE_URL` está conectado, el servidor valida y guarda en Neon Postgres; si no está disponible, el navegador conserva un fallback local bajo `yol1-lab-feedback-v1` y lo declara en la confirmación. La interfaz pide no incluir datos financieros ni personales.
 
-`lib/feedback-intake.ts` define el contrato `FeedbackIntakeAdapter`. La implementación actual, `localFeedbackIntake`, puede sustituirse más adelante sin entregar acceso a GitHub al cliente.
+Cada pregunta/respuesta de IA también genera una entrada `chat`; una calificación posterior usa el mismo ID y actualiza la fila en vez de duplicarla. `/review` exige `YOL1_REVIEW_TOKEN` para listar o cambiar estados. No entrega acceso a GitHub al cliente.
 
 ## Flujo recomendado para producción
 
 ```text
 Formulario web
   → POST /api/feedback (server-side)
-  → autenticación + validación + rate limit + redacción de PII
+  → validación + origen + límite de sesión + filtro básico de PII
   → adapter de intake
       → bandeja interna/storage, o
       → GitHub Issue con labels controlados
@@ -32,20 +32,17 @@ La recepción y la edición del prototipo son permisos distintos. Recibir feedba
 - Registrar fecha, estado `new`, versión del prototipo y trazabilidad de revisión; no registrar cookies, IP completa ni fingerprint salvo necesidad justificada.
 - Responder con un ID de intake, nunca con credenciales, token de GitHub ni detalles internos del repositorio.
 
-## Adapter real opcional en Vercel
+## Adapter real en Vercel
 
-Implementar un adapter server-only que cumpla `FeedbackIntakeAdapter` o una variante asíncrona equivalente. Configuración sugerida, siempre como secretos/variables del proyecto Vercel y nunca con valores reales dentro del repo:
+La implementación usa Neon Postgres vía adapter server-only. Configuración requerida como secretos/variables del proyecto Vercel y nunca con valores reales dentro del repo:
 
 ```text
-YOL1_FEEDBACK_INTAKE_MODE=storage|github
-YOL1_FEEDBACK_GITHUB_REPOSITORY=owner/repository
-YOL1_FEEDBACK_GITHUB_APP_ID=...
-YOL1_FEEDBACK_GITHUB_INSTALLATION_ID=...
-YOL1_FEEDBACK_GITHUB_PRIVATE_KEY=...
+DATABASE_URL=postgresql://...
+YOL1_REVIEW_TOKEN=...
 YOL1_FEEDBACK_ALLOWED_ORIGIN=https://...
 ```
 
-Preferir una GitHub App con permisos mínimos para Issues sobre un token personal. Si se usa storage, conservar una cola con estados `new → triaged → approved | rejected → promoted`. El proceso de promoción necesita otro permiso y otra acción explícita.
+La cola usa `new → approve | wrong | discard`. `wrong` exige nota editorial. Una promoción posterior a branch/PR necesita otro permiso y otra acción explícita.
 
 ## Estructura de una Issue futura
 

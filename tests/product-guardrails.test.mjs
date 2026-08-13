@@ -5,7 +5,7 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const source = (path) => readFile(new URL(path, root), "utf8");
 
-test("Inicio conserva datos ficticios, bandeja y chat demo", async () => {
+test("Inicio conserva datos ficticios, bandeja y elección IA/demo", async () => {
   const page = await source("app/page.tsx");
   assert.match(page, /DATOS FICTICIOS/);
   assert.match(page, /Entiende tus finanzas/);
@@ -15,8 +15,78 @@ test("Inicio conserva datos ficticios, bandeja y chat demo", async () => {
   assert.match(page, /Le debes a Camila/);
   assert.match(page, /La cuenta de Liguria parece compartida/);
   assert.match(page, /Pregúntale a YOL1/);
-  assert.match(page, /Respuestas simuladas/);
+  assert.match(page, /Usar IA/);
+  assert.match(page, /Seguir en demo/);
+  assert.match(page, /no compartas datos personales o financieros reales/i);
   assert.doesNotMatch(page, /Explorar ejemplo|Simular con mi información/);
+});
+
+test("la IA opera server-side con consentimiento, límites y fallback", async () => {
+  const page = await source("app/page.tsx");
+  const route = await source("app/api/chat/route.ts");
+  const prompt = await source("lib/ai/yol1-prompt.ts");
+  const knowledge = await source("lib/ai/knowledge.ts");
+  const envExample = await source(".env.example");
+  const evals = JSON.parse(await source("evals/yol1-cases.json"));
+  assert.match(route, /process\.env\.OPENAI_API_KEY/);
+  assert.match(route, /typedBody\.aiConsent !== true/);
+  assert.match(route, /MAX_MESSAGES = 12/);
+  assert.match(route, /MAX_MESSAGE_LENGTH = 700/);
+  assert.match(route, /store: false/);
+  assert.match(route, /api\.openai\.com\/v1\/responses/);
+  assert.match(route, /createDemoResponse/);
+  assert.doesNotMatch(page, /OPENAI_API_KEY|api\.openai\.com|Authorization:|Bearer /);
+  assert.match(prompt, /No solicites claves/);
+  assert.match(prompt, /Una coincidencia no es una conclusión/);
+  assert.match(knowledge, /YOL1_KNOWLEDGE_VERSION/);
+  assert.match(envExample, /OPENAI_API_KEY=\s*$/m);
+  assert.doesNotMatch(envExample, /sk-[A-Za-z0-9]/);
+  assert.ok(evals.length >= 4);
+});
+
+test("feedback y respuestas llegan a una bandeja editorial con fallback local", async () => {
+  const page = await source("app/page.tsx");
+  const review = await source("app/review/page.tsx");
+  const adapter = await source("lib/learning-review.ts");
+  const sharedClient = await source("lib/shared-feedback-client.ts");
+  const architecture = await source("AI-ARCHITECTURE.md");
+  assert.match(page, /Útil/);
+  assert.match(page, /Mejoraría/);
+  assert.match(page, /localChatFeedbackIntake\.submit/);
+  assert.match(page, /submitChatResponse/);
+  assert.match(review, /Bandeja de aprendizaje/);
+  assert.match(review, /Aprobar/);
+  assert.match(review, /Equivocado/);
+  assert.match(review, /Descartar/);
+  assert.match(review, /¿Qué está mal\?/);
+  assert.match(review, /Feedback/);
+  assert.match(review, /Respuestas IA/);
+  assert.match(adapter, /localStorage/);
+  assert.doesNotMatch(adapter, /fetch\(|github\.com|api\.github/i);
+  assert.match(sharedClient, /fetch\("\/api\/feedback"/);
+  assert.doesNotMatch(sharedClient, /DATABASE_URL|YOL1_REVIEW_TOKEN/);
+  assert.match(architecture, /nunca reescribe automáticamente/i);
+});
+
+test("intake compartido protege Postgres y la revisión privada", async () => {
+  const route = await source("app/api/feedback/route.ts");
+  const store = await source("lib/server/feedback-store.ts");
+  const page = await source("app/page.tsx");
+  const envExample = await source(".env.example");
+  assert.match(route, /YOL1_REVIEW_TOKEN/);
+  assert.match(route, /timingSafeEqual/);
+  assert.match(route, /sameOrigin/);
+  assert.match(route, /containsSensitiveData/);
+  assert.match(route, /countRecentFeedback\(sessionHash\) >= 20/);
+  assert.match(route, /status === "wrong" && !reviewNote/);
+  assert.match(store, /process\.env\.DATABASE_URL/);
+  assert.match(store, /CREATE TABLE IF NOT EXISTS yol1_feedback_items/);
+  assert.match(store, /ON CONFLICT \(id\) DO UPDATE/);
+  assert.match(store, /session_hash/);
+  assert.doesNotMatch(page, /DATABASE_URL|YOL1_REVIEW_TOKEN|@neondatabase/);
+  assert.match(envExample, /DATABASE_URL=\s*$/m);
+  assert.match(envExample, /YOL1_REVIEW_TOKEN=\s*$/m);
+  assert.doesNotMatch(envExample, /postgres(?:ql)?:\/\/[^\s]+:[^\s]+@/i);
 });
 
 test("acciones y confirmaciones permanecen simuladas y visibles", async () => {
@@ -90,7 +160,7 @@ test("documenta límites y gates de aprendizaje", async () => {
   assert.match(spec, /Directo y Embebido quedan fuera/i);
 });
 
-test("feedback permanece local y desacoplado de GitHub", async () => {
+test("feedback conserva fallback local y permanece desacoplado de GitHub", async () => {
   const page = await source("app/page.tsx");
   const css = await source("app/globals.css");
   const adapter = await source("lib/feedback-intake.ts");

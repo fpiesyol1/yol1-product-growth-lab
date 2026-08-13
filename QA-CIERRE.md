@@ -5,6 +5,20 @@ Estado: **prototipo exploratorio con datos sintéticos; no canon**
 
 No conecta bancos, no mueve dinero y no representa capacidades disponibles, roadmap, wedge, producto validado ni readiness.
 
+## IA conversacional y bandeja de aprendizaje — 13 de agosto de 2026
+
+- `POST /api/chat` valida hasta 12 mensajes de 700 caracteres, mantiene la clave en servidor y llama Responses API únicamente cuando la persona eligió IA explícitamente.
+- Las solicitudes usan conocimiento sintético versionado, máximo 350 tokens de salida y `store: false`; no habilitan herramientas ni acciones. Sin clave, consentimiento o disponibilidad del modelo, se mantiene el fallback demo.
+- Con Postgres conectado, cada pregunta/respuesta y cada feedback general se guarda en `/api/feedback`; sin secretos se mantiene el fallback local visible.
+- `/review` separa Feedback/Respuestas IA y ofrece Aprobar / Equivocado / Descartar. Equivocado exige explicación y la muestra asociada a la respuesta.
+- Listar o clasificar la bandeja compartida exige `YOL1_REVIEW_TOKEN`; el intake aplica origen, idempotencia, validación, límite por sesión y rechazo básico de PII. No se guarda IP ni el identificador crudo de sesión.
+- Build Next.js/TypeScript: exitoso; rutas `/`, `/review`, `/api/chat` y `/api/feedback` generadas correctamente.
+- Guardrails: **10 tests, 10 aprobados, 0 fallidos**; `git diff --check` sin errores.
+- QA funcional sin secretos: una respuesta incorrecta a “¿Qué beneficios tengo?” apareció en `/review`; Equivocado abrió el editor, mantuvo Guardar deshabilitado sin texto y luego conservó la explicación “respondió sobre resultado mensual…” con contador Equivocadas `0 → 1`.
+- QA `390×844`: Inicio ocupa 390 px sin overflow horizontal; `/review` usa resumen 2×N, tarjeta en una columna, filtros y tres decisiones completas, también sin overflow.
+- QA `1440×1000`: teléfono de 430 px, feedback lateral y chat visibles sin overflow de documento. `/review` usa grilla editorial `150 / flexible / 290 px` y cinco contadores en una fila.
+- La conexión real a Neon no se ejecutó en esta máquina porque no hay `DATABASE_URL` y la sesión de Vercel requiere login. Se verificó el fallback, el contrato del endpoint y la protección de secretos; la escritura/lectura entre navegadores queda pendiente de conectar el recurso y ejecutar el smoke test productivo.
+
 ## Intake de feedback local — 13 de agosto de 2026
 
 - Se eliminó la fotografía lateral y se sustituyó por una tarjeta permanente de Feedback integrada al escenario editorial.

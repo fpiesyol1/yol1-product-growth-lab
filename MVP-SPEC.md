@@ -33,9 +33,13 @@ El **intake de feedback** es una utilidad transversal del Lab, no un octavo mód
 
 **Trabajo a resolver:** entender qué hace YOL1 y resolver una señal cotidiana sin buscarla en varios módulos.
 
-Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal cuenta los pendientes visibles e incluye cinco situaciones sintéticas: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. **OK** archiva durante la sesión; **Revisar** abre evidencia o detalle; la tercera acción lleva al destino pertinente. La conversación acepta texto o seis sugerencias y responde contextualmente desde reglas de demo; el micrófono es solo visual y no graba.
+Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal cuenta los pendientes visibles e incluye cinco situaciones sintéticas: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. **OK** archiva durante la sesión; **Revisar** abre evidencia o detalle; la tercera acción lleva al destino pertinente. La conversación acepta texto o seis sugerencias y usa IA server-side únicamente después de elección explícita; sin clave o consentimiento responde desde reglas de demo. El micrófono es solo visual y no graba.
 
-**Aceptación:** una acción responde con confirmación visible en móvil y desktop; OK retira una tarjeta durante la sesión; Revisar y la tercera acción tienen destino útil; ningún camino usa datos, IA ni audio reales. Una eventual IA real requiere endpoint de servidor, credencial protegida, límites y disclosure propio.
+**Aceptación:** una acción responde con confirmación visible en móvil y desktop; OK retira una tarjeta durante la sesión; Revisar y la tercera acción tienen destino útil. La IA no recibe texto antes de consentimiento, la clave vive solo en servidor, el request usa `store: false`, el fallback conserva la demo y ningún camino usa audio real.
+
+### Bandeja de aprendizaje interna
+
+`/review` queda fuera de los siete módulos consumer. Con Postgres conectado reúne feedback de producto y preguntas/respuestas de IA de todos los visitantes, separados por tipo. Permite Aprobar, marcar Equivocado con explicación obligatoria o Descartar. Ningún estado modifica por sí solo el prompt o el conocimiento. Sin secretos configurados funciona en modo local explícito.
 
 ### Mis Finanzas
 
