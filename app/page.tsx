@@ -43,7 +43,7 @@ export default function Home() {
           <header className="app-top"><span>{activeTitle.toUpperCase()}</span><Brand /></header>
           <div className="app-content">
             {tab === "inicio" && <Start onMove={(target, msg) => { setTab(target); choose(msg); }} />}
-            {tab === "finanzas" && <Finances onOpen={(message) => { setTab("cartola"); choose(message); }} />}
+            {tab === "finanzas" && <Finances onOpen={(message) => { setTab("cartola"); choose(message); }} onNotice={choose} />}
             {tab === "cartola" && <Ledger selected={selected} setSelected={setSelected} onNotice={choose} />}
             {tab === "cobrar" && <Collect onNotice={choose} />}
           </div>
@@ -75,15 +75,15 @@ function Start({ onMove }: { onMove: (target: Tab, message: string) => void }) {
   </>;
 }
 
-function Finances({ onOpen }: { onOpen: (message: string) => void }) {
+function Finances({ onOpen, onNotice }: { onOpen: (message: string) => void; onNotice: (message: string) => void }) {
   return <>
     <h2 className="compact-title">Mis finanzas</h2>
     <p className="body-copy top-gap">Tu resumen de agosto.</p>
     <div className="sources-grid">
       <button className="source-card" onClick={() => onOpen("BCI está al día: abrimos su cartola completa.")}><strong>BCI</strong><span className="good">Al día</span><small>Ver cuenta</small></button>
-      <button className="source-card" onClick={() => choose("Fintual necesita una nueva conexión. Aquí irá la explicación y el botón para resolverlo.")}><strong>Fintual</strong><span className="warn">Revisar</span><small>Ver error</small></button>
+      <button className="source-card" onClick={() => onNotice("Fintual necesita una nueva conexión. Aquí irá la explicación y el botón para resolverlo.")}><strong>Fintual</strong><span className="warn">Revisar</span><small>Ver error</small></button>
     </div>
-    <div className="source-actions"><button onClick={() => choose("Agregar banco abrirá el flujo de conexión segura.")}>＋ Banco</button><button onClick={() => choose("Cargar cartola abrirá un selector de archivo.")}>↑ Cartola</button><button onClick={() => onOpen("Mostrando todas tus fuentes consolidadas.")}>Ver todas ›</button></div>
+    <div className="source-actions"><button onClick={() => onNotice("Agregar banco abrirá el flujo de conexión segura.")}>＋ Banco</button><button onClick={() => onNotice("Cargar cartola abrirá un selector de archivo.")}>↑ Cartola</button><button onClick={() => onOpen("Mostrando todas tus fuentes consolidadas.")}>Ver todas ›</button></div>
     <div className="metrics"><Metric label="Ingresos" value="$2.450.000" tone="aqua" /><Metric label="Egresos" value="$1.620.000" tone="coral" /><Metric label="Por cobrar" value="$560.000" tone="acid" /><Metric label="Por pagar" value="$42.000" tone="yellow" /></div>
     <h3>Cosas para revisar</h3>
     <button className="issue-card" onClick={() => onOpen("Abrimos la cartola filtrada en Disney+ para revisar el cobro duplicado.")}><span className="issue-tag warn-bg">REVISA</span><span><strong>Disney aparece dos veces</strong><small>Mismo cobro en dos fuentes</small></span><b>Ver ›</b></button>
