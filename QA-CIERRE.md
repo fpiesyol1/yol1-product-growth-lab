@@ -5,6 +5,18 @@ Estado: **prototipo exploratorio con datos sintéticos; no canon**
 
 No conecta bancos, no mueve dinero y no representa capacidades disponibles, roadmap, wedge, producto validado ni readiness.
 
+## Portfolio y especificación viva — 13 de agosto de 2026
+
+- Selector verificado con exactamente seis productos; solo Acompañante financiero aparece `PUBLICADO`.
+- Los cinco productos restantes muestran `NO PUBLICADO`, guardrail de prototipo y retorno al Acompañante; no contienen pantallas funcionales.
+- Biblioteca: 12 estados vacíos propios. Construir mi propio producto abre el perro CSS animado; `prefers-reduced-motion` anula la animación.
+- Inspector: un click en “Ver otro estado editorial” ejecutó la rotación y actualizó el evento visible a `portfolio.builder.empty-state.rotate`; no existe emisor de analytics.
+- Ficha viva: evento, arquitectura, datos, KYC, licencias Chile, fuentes, preguntas y feedback local visibles. Los estados disponibles son solo `No aplica`, `Por validar` y `Requerido`.
+- Bandeja: 3 conflictos demo. “A manda” dejó resolución persistente; al volver a Cartola, la ficha mostró “Felipe manda · contexto local actualizado”. No se escribieron archivos ni servicios.
+- QA visual real `1440×1000`: selector completo en una línea, intro y teléfono conservan jerarquía, placeholder no compite con el teléfono y no hay overflow horizontal.
+- QA visual real `390×844`: selector horizontal usable, placeholder completo sin tarjetas cortadas, `scrollWidth = clientWidth = 390`; ficha en una columna, evento y estados legibles debajo de la app.
+- Build Next.js/TypeScript: exitoso con `/`, `/review`, `/review/knowledge`, `/api/chat` y `/api/feedback`.
+
 ## IA conversacional y bandeja de aprendizaje — 13 de agosto de 2026
 
 - `POST /api/chat` valida hasta 12 mensajes de 700 caracteres, mantiene la clave en servidor y llama Responses API únicamente cuando la persona eligió IA explícitamente.
@@ -161,6 +173,14 @@ Los estados de salida dicen expresamente “link demo”, “WhatsApp · Demo”
 El header de todos los módulos mantiene el disclosure corto **“DATOS FICTICIOS”**. En Experimentos se retiró “Propuestas sin GitHub” del teléfono por ser una capability interna del Lab; permanece documentada fuera de la experiencia B2C. “Comparar consumo anónimo” pasó a **“Comparar con referencias agregadas”**, condicionado a muestra suficiente y población comparable visible.
 
 ## Verificación técnica
+
+## Ajuste de ficha y portfolio — 13 agosto 2026
+
+- Los cinco productos no publicados ya no usan marco de teléfono ni muestran Ficha de producto. Quedan como espacios editoriales con un bloque breve para dejar una idea.
+- El evento visible se expresa en lenguaje humano; sus propiedades se muestran debajo como metadata separada.
+- La Ficha separa datos a guardar, fuentes/bases a consultar y reglas de tratamiento. React Native y AWS aparecen como candidatos técnicos, no como arquitectura cerrada.
+- Se retiró el bloque visual de fuentes/decisiones y se añadió **Todo lo que puede salir mal**: un QA interno para probar cada click como usuario promedio e identificar flujos muertos, confusos o incompletos.
+- Licencias siguen deliberadamente en `Por validar` hasta cruzar la documentación vigente de Notion/Second Brain.
 
 Build ejecutado:
 

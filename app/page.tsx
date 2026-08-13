@@ -1,9 +1,11 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { localFeedbackIntake, type FeedbackKind } from "../lib/feedback-intake";
+import { localFeedbackIntake, type FeedbackKind, type FeedbackRecord } from "../lib/feedback-intake";
 import { localChatFeedbackIntake, type ChatFeedbackRating } from "../lib/chat-feedback";
 import { submitChatResponse, submitGeneralFeedback } from "../lib/shared-feedback-client";
+import { DECISION_CONFLICTS, readDecisionResolutions, type DecisionResolution } from "../lib/decision-inbox";
+import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, proposedEventForElement, simpleEventName, type LivingSpec, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "futuro";
 type Theme = "dark" | "light";
@@ -60,6 +62,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("inicio");
+  const [productId, setProductId] = useState<ProductId>("companion");
   const [theme, setTheme] = useState<Theme>("dark");
   const [source, setSource] = useState("General");
   const [selectedMovement, setSelectedMovement] = useState<string | null>(null);
@@ -73,16 +76,25 @@ export default function Home() {
   const [pendingView, setPendingView] = useState<PendingView>("personas");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [messagePreview, setMessagePreview] = useState<MessagePreview | null>(null);
+  const [emptyStateIndex, setEmptyStateIndex] = useState(0);
+  const [inspectedEvent, setInspectedEvent] = useState("");
+  const [touchInspection, setTouchInspection] = useState(false);
+  const [feedbackRecords, setFeedbackRecords] = useState<FeedbackRecord[]>([]);
+  const [decisionResolutions, setDecisionResolutions] = useState<Record<string, DecisionResolution>>({});
 
   useEffect(() => {
     const stored = window.localStorage.getItem("yol1-lab-theme");
-    const systemTheme: Theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-    setTheme(stored === "light" || stored === "dark" ? stored : systemTheme);
+    setTheme(stored === "light" || stored === "dark" ? stored : "dark");
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    setFeedbackRecords(localFeedbackIntake.list());
+    setDecisionResolutions(readDecisionResolutions());
+  }, []);
 
   const chooseTheme = (next: Theme) => {
     setTheme(next);
@@ -125,28 +137,55 @@ export default function Home() {
     notify(`${movement.name}: detalle abierto para revisar.`);
   };
 
-  const activeTitle = tabLabels[tab];
+  const activeProduct = PORTFOLIO_PRODUCTS.find((product) => product.id === productId) ?? PORTFOLIO_PRODUCTS[0];
+  const activeTitle = productId === "companion" ? tabLabels[tab] : activeProduct.name;
+  const activeScreenKey = productId === "companion" ? tab : productId;
+  const livingSpec = getLivingSpec(activeProduct, activeScreenKey);
+
+  useEffect(() => {
+    setInspectedEvent(livingSpec.event);
+  }, [livingSpec.event]);
+
+  const inspectTarget = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return;
+    const actionable = target.closest<HTMLElement>("button,a,[data-event]");
+    if (!actionable) return;
+    setInspectedEvent(proposedEventForElement(actionable, livingSpec.event));
+  };
+
+  const chooseProduct = (next: ProductId) => {
+    setProductId(next);
+    const index = PORTFOLIO_PRODUCTS.findIndex((product) => product.id === next);
+    setEmptyStateIndex(next === "builder" ? 1 : Math.max(0, index * 2));
+    setFeedbackOpen(false);
+  };
 
   if (messagePreview) return <MessagePreviewScreen preview={messagePreview} theme={theme} onBack={() => setMessagePreview(null)} />;
 
   return (
-    <main className="lab-shell" data-theme={theme}>
+    <main className="lab-shell" data-theme={theme} onPointerOver={(event) => inspectTarget(event.target)} onFocusCapture={(event) => inspectTarget(event.target)} onClickCapture={(event) => { if (touchInspection) inspectTarget(event.target); }}>
+      <section className="portfolio-rail" aria-label="Portfolio de productos del Lab">
+        <div className="portfolio-heading"><span>PORTFOLIO YOL1</span><strong>6 espacios · 1 publicado</strong></div>
+        <nav className="product-selector">
+          {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event={`portfolio.${product.id}.select`} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.published ? "PUBLICADO" : "NO PUBLICADO"}</small></button>)}
+        </nav>
+        <div className="event-inspector" aria-live="polite"><span><small>EVENTO PROPUESTO · NO ANALYTICS</small><strong>{simpleEventName(inspectedEvent || livingSpec.event, activeProduct, activeTitle)}</strong></span><button className={touchInspection ? "active" : ""} onClick={() => setTouchInspection((current) => !current)} data-event="lab.event-inspection.toggle" aria-pressed={touchInspection}>{touchInspection ? "Inspección touch activa" : "Inspeccionar en touch"}</button></div>
+      </section>
       <section className="lab-intro">
         <div className="brand-plate"><Brand /><span>PRODUCT GROWTH LAB · 01</span></div>
         <div className="editorial-copy">
-          <p className="eyebrow">FINANZAS QUE AYUDAN A VIVIR</p>
-          <h1>Tu plata,<br /><span>más clara.</span></h1>
-          <p className="lede">Entiende tus finanzas y simplifica tu vida financiera.</p>
-          <div className="editorial-rule"><span>YOL1 explica</span><span>Tú decides</span><span>Nada se ejecuta</span></div>
+          <p className="eyebrow">{activeProduct.published ? "FINANZAS QUE AYUDAN A VIVIR" : "ESPACIO NO PUBLICADO"}</p>
+          <h1>{activeProduct.published ? <>Tu plata,<br /><span>más clara.</span></> : <>{activeProduct.name}<br /><span>en pausa.</span></>}</h1>
+          <p className="lede">{activeProduct.description}</p>
         </div>
-        <div className="module-map" aria-label="Módulos del MVP">
+        {productId === "companion" && <div className="module-map" aria-label="Módulos del Acompañante financiero">
           {(Object.keys(tabLabels) as Tab[]).map((item) => <button key={item} className={tab === item ? "module-active" : ""} onClick={() => go(item)}>{tabLabels[item]}</button>)}
-        </div>
+        </div>}
         <div className="lab-status"><span className="status-dot" /><span>Ejemplo con datos ficticios · sin bancos, pagos ni envíos reales.</span></div>
-        <FeedbackPanel screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" />
+        <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={!activeProduct.published} onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
       </section>
 
-      <section className="phone-wrap" aria-label={`YOL1 — ${activeTitle}`}>
+      {productId === "companion" ? <section className="phone-wrap" aria-label={`YOL1 — ${activeTitle}`}>
         <span className="phone-halo" aria-hidden="true" />
         <div className="phone">
           <div className="phone-notch" />
@@ -155,17 +194,19 @@ export default function Home() {
             <span className="app-section">{activeTitle}</span>
             <div className="header-actions"><span className="demo-pill">DATOS FICTICIOS</span><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
           </header>
-          <div className={`app-content app-${tab} ${tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
-            {tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
-            {tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
-            {tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} reviewed={reviewedMovements} onUnreview={(id) => setReviewedMovements((items) => items.filter((item) => item !== id))} notes={movementNotes} setNotes={setMovementNotes} savedNotes={savedMovementNotes} setSavedNotes={setSavedMovementNotes} onAction={handleMovementAction} onNotice={notify} />}
-            {tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} onPreview={setMessagePreview} />}
-            {tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
-            {tab === "ganar" && <ComingSoon onBack={() => go("inicio")} />}
-            {tab === "futuro" && <Future votes={experimentVotes} setVotes={setExperimentVotes} onNotice={notify} />}
+          <div className={`app-content app-${productId === "companion" ? tab : "unpublished"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
+            <>
+              {tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
+              {tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
+              {tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} reviewed={reviewedMovements} onUnreview={(id) => setReviewedMovements((items) => items.filter((item) => item !== id))} notes={movementNotes} setNotes={setMovementNotes} savedNotes={savedMovementNotes} setSavedNotes={setSavedMovementNotes} onAction={handleMovementAction} onNotice={notify} />}
+              {tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} onPreview={setMessagePreview} />}
+              {tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
+              {tab === "ganar" && <ComingSoon onBack={() => go("inicio")} />}
+              {tab === "futuro" && <Future votes={experimentVotes} setVotes={setExperimentVotes} onNotice={notify} />}
+            </>
           </div>
           {notice && <div className="phone-toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Cerrar confirmación">×</button></div>}
-          <FeedbackPanel screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" />
+          <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
           <nav className="bottom-nav" aria-label="Navegación principal">
             <NavButton icon="⌂" label="Inicio" current={tab === "inicio"} onClick={() => go("inicio")} />
             <NavButton icon="💵" label="Finanzas" current={tab === "finanzas" || tab === "cartola"} onClick={() => go("finanzas")} />
@@ -174,9 +215,58 @@ export default function Home() {
             <NavButton icon="🧪" label="Experimentos" current={tab === "ganar" || tab === "futuro"} onClick={() => go("futuro")} />
           </nav>
         </div>
-      </section>
+      </section> : <UnpublishedStage product={activeProduct} stateIndex={emptyStateIndex} />}
+      {productId === "companion" && <LivingSpecification product={activeProduct} screen={activeTitle} spec={livingSpec} inspectedEvent={inspectedEvent || livingSpec.event} feedback={feedbackRecords} resolutions={decisionResolutions} />}
     </main>
   );
+}
+
+function UnpublishedStage({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
+  return <section className="unpublished-stage" aria-label={`${product.name}, en pausa`}>
+    <div className="unpublished-phone" aria-label={`${product.name} en pausa`}>
+      <div className="unpublished-notch" />
+      <header><Brand compact /><span>{product.name} · EN PAUSA</span><small>NO PUBLICADO</small></header>
+      <UnpublishedProduct product={product} stateIndex={stateIndex} />
+    </div>
+  </section>;
+}
+
+function UnpublishedProduct({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
+  const fixedState: Record<Exclude<ProductId, "companion">, number> = { kyc: 1, banking: 0, cards: 2, remittances: 5, builder: 3 };
+  const empty = EMPTY_STATE_LIBRARY[fixedState[product.id as Exclude<ProductId, "companion">] ?? (stateIndex % EMPTY_STATE_LIBRARY.length)];
+  return <section className={`product-empty gesture-${empty.gesture}`} aria-label={`${product.name}, no publicado`}>
+    <div className="empty-status"><span>NO PUBLICADO</span><small>PROTOTIPO EXPLORATORIO</small></div>
+    <div className="empty-gesture" aria-hidden="true">
+      {empty.gesture === "dog" ? <div className="tail-dog"><i className="dog-ear" /><i className="dog-eye" /><i className="dog-body" /><i className="dog-tail" /><i className="dog-paw" /></div> : empty.gesture === "cat" ? <div className="typing-cat"><i className="cat-head" /><i className="cat-ear left" /><i className="cat-ear right" /><i className="cat-eye left" /><i className="cat-eye right" /><i className="cat-paw left" /><i className="cat-paw right" /><i className="cat-keyboard" /></div> : empty.gesture === "robot" ? <div className="idea-robot"><i className="robot-head" /><i className="robot-eye left" /><i className="robot-eye right" /><i className="robot-arm left" /><i className="robot-arm right" /><i className="robot-note note-one" /><i className="robot-note note-two" /><i className="robot-note note-three" /></div> : empty.gesture === "coffee" ? <img className="empty-photo" src="/felipe-coffee-break.png" alt="Máquina de café en pausa" /> : <span>{empty.icon}</span>}
+    </div>
+    <p className="kicker">{empty.eyebrow}</p>
+    <h2>{empty.title}</h2>
+    <p>{empty.body}</p>
+  </section>;
+}
+
+function StateBadge({ state }: { state: LivingSpec["kyc"]["state"] }) {
+  return <span className={`certainty-badge certainty-${state.toLowerCase().replaceAll(" ", "-")}`}>{state}</span>;
+}
+
+function LivingSpecification({ product, screen, spec, inspectedEvent, feedback, resolutions }: { product: ProductDefinition; screen: string; spec: LivingSpec; inspectedEvent: string; feedback: FeedbackRecord[]; resolutions: Record<string, DecisionResolution> }) {
+  const relatedFeedback = feedback.filter((item) => (item.product ? item.product === product.name : true) && (item.screen === screen || product.id !== "companion")).slice(0, 3);
+  const relatedDecisions = DECISION_CONFLICTS.filter((conflict) => conflict.context.includes(product.name) && (product.id !== "companion" || conflict.context.includes(screen))).map((conflict) => ({ conflict, resolution: resolutions[conflict.id] })).filter((item) => item.resolution);
+  return <section className="living-spec" aria-label={`Ficha de producto de ${product.name}`}>
+    <header className="living-spec-head"><div><small>ESPECIFICACIÓN VIVA · CHILE</small><h2>Ficha de producto</h2></div><div><strong>{product.name}</strong><span>{screen}</span></div><p>Propuesta técnica para revisar. No envía analytics ni afirma requisitos legales cerrados.</p></header>
+    <div className="spec-grid">
+      <article className="spec-event"><small>EVENTO</small><strong>{simpleEventName(inspectedEvent, product, screen)}</strong><div className="event-metadata">{eventMetadata(inspectedEvent, product, screen).map(([key, value]) => <span key={key}><b>{key}</b>{value}</span>)}</div><p>Hover/focus cambia el evento. El click sigue ejecutando la demo.</p></article>
+      <article><small>ARQUITECTURA</small><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><em>SIMULADA / POR VALIDAR</em></article>
+      <article className="spec-data"><small>DATOS</small><strong>Guardar</strong><ul>{spec.data.store.map((item) => <li key={item}>{item}</li>)}</ul><strong>Consultar</strong><ul>{spec.data.query.map((item) => <li key={item}>{item}</li>)}</ul><p>{spec.data.handling}</p></article>
+      <article><small>KYC</small><StateBadge state={spec.kyc.state} /><p>{spec.kyc.reason}</p></article>
+      <article><small>LICENCIAS · CHILE</small><StateBadge state={spec.licenses.state} /><p>{spec.licenses.reason}</p></article>
+      <article><small>PREGUNTAS ABIERTAS</small><ol>{spec.questions.map((question) => <li key={question}>{question}</li>)}</ol></article>
+      <article className="spec-feedback"><small>FEEDBACK RELACIONADO</small>{relatedFeedback.length ? relatedFeedback.map((item) => <p key={item.id}><strong>{item.kind === "like" ? "Me gusta" : item.kind === "improve" ? "Mejoraría" : "Idea"}</strong>{item.message || item.topics || "Feedback rápido sin comentario."}</p>) : <p className="spec-empty">Todavía no hay feedback local para este contexto.</p>}</article>
+      <article className="spec-risks"><small>TODO LO QUE PUEDE SALIR MAL</small><ul>{spec.risks.map((risk) => <li key={risk}>{risk}</li>)}</ul><p>QA interno: recorrer cada click como usuario promedio y corregir cualquier salida muerta antes de publicar.</p></article>
+    </div>
+    {relatedDecisions.length > 0 && <div className="spec-resolution"><strong>✓ Felipe manda · contexto local actualizado</strong>{relatedDecisions.map(({ conflict, resolution }) => <span key={conflict.id}>{conflict.topic}: {resolution?.choice === "a" ? "Fuente A" : resolution?.choice === "b" ? "Fuente B" : "Falta contexto"}{resolution?.comment ? ` · ${resolution.comment}` : ""}</span>)}</div>}
+    <footer><span>Estado de revisión</span><b>Felipe resuelve contradicciones en la bandeja del Lab.</b><a href="/review#decisions">Abrir Bandeja de revisión →</a></footer>
+  </section>;
 }
 
 function MessagePreviewScreen({ preview, theme, onBack }: { preview: MessagePreview; theme: Theme; onBack: () => void }) {
@@ -206,7 +296,7 @@ function MessagePreviewScreen({ preview, theme, onBack }: { preview: MessagePrev
   </main>;
 }
 
-function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; open: boolean; onToggle: () => void; variant: "desktop" | "mobile" }) {
+function FeedbackPanel({ product, screen, open, onToggle, variant, compact = false, onSubmitted }: { product: string; screen: string; open: boolean; onToggle: () => void; variant: "desktop" | "mobile"; compact?: boolean; onSubmitted: () => void }) {
   const [kind, setKind] = useState<FeedbackKind>("like");
   const [message, setMessage] = useState("");
   const [topics, setTopics] = useState("");
@@ -222,11 +312,12 @@ function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; op
   const submitFeedback = async (event: FormEvent) => {
     event.preventDefault();
     if (requiresMessage && !message.trim()) return;
-    const input = { screen, kind, message: message.trim(), topics: topics.trim() };
+    const input = { product, screen, kind, message: message.trim(), topics: topics.trim() };
     localFeedbackIntake.submit(input);
+    onSubmitted();
     setSubmitting(true);
     try {
-      const shared = await submitGeneralFeedback(input);
+      const shared = await submitGeneralFeedback({ screen: `${product} · ${screen}`, kind, message: message.trim(), topics: topics.trim() });
       setConfirmation(shared ? `Enviado a la bandeja compartida · ${screen}` : `Guardado localmente · ${screen}`);
     } catch {
       setConfirmation(`Guardado en este navegador; la bandeja compartida aún no está disponible.`);
@@ -239,7 +330,7 @@ function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; op
 
   const panelHeading = <>
       <span className="feedback-mark">✦</span>
-      <span><small>AYÚDANOS A MEJORAR</small><strong>Feedback</strong></span>
+      <span><small>{compact ? "TENGO UNA IDEA" : "AYÚDANOS A MEJORAR"}</small><strong>{compact ? "Déjala aquí" : "Feedback"}</strong></span>
       {variant === "mobile" && <b>{open ? "−" : "+"}</b>}
     </>;
 
@@ -247,16 +338,16 @@ function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; op
     {variant === "desktop" ? <div className="feedback-panel-head">{panelHeading}</div> : <button className="feedback-panel-head" onClick={onToggle} aria-expanded={open}>{panelHeading}</button>}
     {!open && <p className="feedback-peek">Estás viendo <strong>{screen}</strong>. Cuéntanos qué funciona y qué cambiarías.</p>}
     {open && <form className="feedback-form" onSubmit={submitFeedback}>
-      <div className="feedback-context"><span>PANTALLA</span><strong>{screen}</strong></div>
-      <div className="feedback-kinds" aria-label="Tipo de feedback">{([
+      {!compact && <div className="feedback-context"><span>PRODUCTO · PANTALLA</span><strong>{product} · {screen}</strong></div>}
+      {!compact && <div className="feedback-kinds" aria-label="Tipo de feedback">{([
         ["like", "Me gusta"],
         ["improve", "Mejoraría"],
         ["idea", "Idea"],
-      ] as [FeedbackKind, string][]).map(([value, label]) => <button type="button" key={value} className={kind === value ? "selected" : ""} onClick={() => { setKind(value); setConfirmation(""); }}>{label}</button>)}</div>
-      <label>{prompts[kind].label}<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={prompts[kind].placeholder} required={requiresMessage} maxLength={700} /></label>
-      <label>Temas clave (opcional)<input value={topics} onChange={(event) => setTopics(event.target.value)} placeholder="Ej.: claridad, confianza, navegación" maxLength={180} /></label>
-      <p className="feedback-privacy">Se guarda para revisión cuando la bandeja compartida está activa. No incluyas datos financieros ni personales.</p>
-      <button className="feedback-submit" type="submit" disabled={submitting || (requiresMessage && !message.trim())}>{submitting ? "Enviando…" : "Enviar feedback"}</button>
+      ] as [FeedbackKind, string][]).map(([value, label]) => <button type="button" key={value} className={kind === value ? "selected" : ""} onClick={() => { setKind(value); setConfirmation(""); }}>{label}</button>)}</div>}
+      <label>{compact ? "¿Qué producto o problema deberíamos trabajar?" : prompts[kind].label}<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={compact ? "Ej.: Quiero una forma simple de…" : prompts[kind].placeholder} required={compact || requiresMessage} maxLength={700} /></label>
+      {!compact && <label>Temas clave (opcional)<input value={topics} onChange={(event) => setTopics(event.target.value)} placeholder="Ej.: claridad, confianza, navegación" maxLength={180} /></label>}
+      {!compact && <p className="feedback-privacy">Se guarda para revisión cuando la bandeja compartida está activa. No incluyas datos financieros ni personales.</p>}
+      <button className="feedback-submit" type="submit" disabled={submitting || ((compact || requiresMessage) && !message.trim())}>{submitting ? "Enviando…" : compact ? "Guardar idea" : "Enviar feedback"}</button>
       {confirmation && <p className="feedback-confirmation" role="status">✓ {confirmation}</p>}
     </form>}
   </aside>;

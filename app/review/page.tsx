@@ -3,10 +3,48 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { listLearningItems, setLearningStatus, type LearningItem, type LearningStatus } from "../../lib/learning-review";
 import { getFeedbackServiceStatus, listSharedFeedback, updateSharedFeedback } from "../../lib/shared-feedback-client";
+import { localFeedbackIntake, type FeedbackRecord } from "../../lib/feedback-intake";
+import { DECISION_CONFLICTS, readDecisionResolutions, saveDecisionResolution, type DecisionChoice, type DecisionResolution } from "../../lib/decision-inbox";
 
 const REVIEW_TOKEN_KEY = "yol1-review-token-session-v1";
 const statusLabels: Record<LearningStatus, string> = { new: "Pendiente", approve: "Aprobar", wrong: "Equivocado", discard: "Descartar" };
 type InboxMode = "checking" | "local" | "locked" | "shared";
+
+function DecisionInbox() {
+  const [resolutions, setResolutions] = useState<Record<string, DecisionResolution>>({});
+  const [comments, setComments] = useState<Record<string, string>>({});
+  const [contextOpen, setContextOpen] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackRecord[]>([]);
+
+  useEffect(() => {
+    setResolutions(readDecisionResolutions());
+    setFeedback(localFeedbackIntake.list());
+  }, []);
+
+  const decide = (conflictId: string, choice: DecisionChoice) => {
+    if (choice === "context" && contextOpen !== conflictId) {
+      setContextOpen(conflictId);
+      return;
+    }
+    const resolution: DecisionResolution = { conflictId, choice, comment: (comments[conflictId] ?? "").trim(), decidedAt: new Date().toISOString() };
+    saveDecisionResolution(resolution);
+    setResolutions((current) => ({ ...current, [conflictId]: resolution }));
+    setContextOpen(null);
+  };
+
+  return <section className="decision-inbox" id="decisions" aria-label="Bandeja local de decisiones">
+    <header><div><small>BANDEJA DE DECISIONES · DEMO LOCAL</small><h2>Cuando las fuentes chocan, Felipe manda.</h2></div><p>Estas resoluciones viven solo en este navegador. No modifican archivos, GitHub ni requisitos legales.</p></header>
+    <div className="decision-grid">{DECISION_CONFLICTS.map((conflict) => {
+      const resolution = resolutions[conflict.id];
+      return <article className={resolution ? "resolved" : ""} key={conflict.id}>
+        <div className="decision-topic"><small>{conflict.context} · POR VALIDAR</small><h3>{conflict.topic}</h3></div>
+        <div className="decision-sources"><div><span>FUENTE A</span><strong>{conflict.sourceA.label}</strong><p>{conflict.sourceA.value}</p><small>{conflict.sourceA.date} · {conflict.sourceA.state}</small></div><div><span>FUENTE B</span><strong>{conflict.sourceB.label}</strong><p>{conflict.sourceB.value}</p><small>{conflict.sourceB.date} · {conflict.sourceB.state}</small></div></div>
+        {!resolution ? <><label>Comentario breve (opcional)<input value={comments[conflict.id] ?? ""} onChange={(event) => setComments((current) => ({ ...current, [conflict.id]: event.target.value }))} placeholder="Qué debe quedar registrado" maxLength={220} /></label><div className="decision-actions"><button onClick={() => decide(conflict.id, "a")}>A manda</button><button onClick={() => decide(conflict.id, "b")}>B manda</button><button className={contextOpen === conflict.id ? "selected" : ""} onClick={() => decide(conflict.id, "context")}>{contextOpen === conflict.id ? "Guardar contexto" : "Necesito más contexto"}</button></div></> : <div className="decision-result"><strong>✓ Felipe manda · resolución local visible</strong><span>{resolution.choice === "a" ? "A manda" : resolution.choice === "b" ? "B manda" : "Necesita más contexto"}{resolution.comment ? ` · ${resolution.comment}` : ""}</span><button onClick={() => setResolutions((current) => { const next = { ...current }; delete next[conflict.id]; window.localStorage.setItem("yol1-lab-decisions-v1", JSON.stringify(next)); return next; })}>Revisar decisión</button></div>}
+      </article>;
+    })}</div>
+    <div className="decision-feedback"><div><small>FEEDBACK RELACIONADO</small><strong>{feedback.length} {feedback.length === 1 ? "entrada local" : "entradas locales"}</strong></div>{feedback.length ? feedback.slice(0, 3).map((item) => <p key={item.id}><span>{item.product ?? "Acompañante financiero"} · {item.screen}</span>{item.message || item.topics || "Feedback rápido sin comentario."}</p>) : <p>No hay feedback local todavía. Las entradas compartidas siguen en la bandeja principal.</p>}</div>
+  </section>;
+}
 
 export default function ReviewPage() {
   const [items, setItems] = useState<LearningItem[]>([]);
@@ -120,6 +158,7 @@ export default function ReviewPage() {
     {mode === "locked" && <section className="review-login"><span>↳</span><div><small>BANDEJA PRIVADA</small><h2>Entra con tu clave de revisión</h2><p>Esta clave es distinta de GitHub, Vercel y OpenAI. Vive como secreto del servidor.</p><form onSubmit={login}><input type="password" value={loginToken} onChange={(event) => setLoginToken(event.target.value)} placeholder="YOL1_REVIEW_TOKEN" aria-label="Clave privada de revisión" autoComplete="current-password" /><button type="submit">Abrir bandeja</button></form>{error && <p className="review-error" role="alert">{error}</p>}</div></section>}
 
     {mode !== "locked" && <>
+      <DecisionInbox />
       <section className="review-summary" aria-label="Resumen de revisión">
         <button className={statusFilter === "all" ? "active" : ""} onClick={() => setStatusFilter("all")}><small>TOTAL</small><strong>{items.length}</strong></button>
         <button className={statusFilter === "new" ? "active" : ""} onClick={() => setStatusFilter("new")}><small>PENDIENTES</small><strong>{counts.new}</strong></button>

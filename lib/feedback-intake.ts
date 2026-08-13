@@ -1,6 +1,7 @@
 export type FeedbackKind = "like" | "improve" | "idea";
 
 export type FeedbackSubmission = {
+  product?: string;
   screen: string;
   kind: FeedbackKind;
   message: string;

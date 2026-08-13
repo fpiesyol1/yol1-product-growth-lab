@@ -138,3 +138,24 @@ Posible experimento posterior: una experiencia de propuestas sin GitHub donde un
 - **E4 — Resultado / retorno:** en pruebas posteriores se observa si la acción produjo un resultado verificable y si la persona vuelve por otra situación cotidiana.
 
 La navegabilidad de este dummy solo aporta evidencia de usabilidad y comprensión inicial. No demuestra demanda, product-market fit, economics ni readiness operacional o regulatoria.
+
+## 8. Arquitectura de portfolio aprobada
+
+El producto publicado del Lab se llama **Acompañante financiero** y contiene Mis finanzas, Cobrar y pagar, Ahorrar y Ganar. El selector de portfolio contiene exactamente seis productos: Acompañante financiero, Onboarding y KYC progresivo, Home Banking, Tarjetas, Remesas y Construir mi propio producto. Borradores o propuestas no entran a este selector hasta que Felipe los autorice.
+
+Los cinco espacios no publicados muestran únicamente estados vacíos. No contienen journeys, formularios operacionales, integraciones ni claims. “Construir mi propio producto” puede explicar que a futuro ordenará propuestas revisables, pero no implementa intake, MCP, automatización de ramas ni publicación.
+
+## 9. Ficha de producto y eventos propuestos
+
+La ficha contextual es una superficie editorial interna del Lab. Sus semillas son propuestas no definitivas:
+
+- evento humano de entrada o acción, visible en hover/focus y en modo touch; sus parámetros quedan como metadata separada;
+- arquitectura candidata con React Native y AWS como base a validar; datos separados entre qué guardar, qué consultar y cómo tratarlos;
+- KYC y licencias en Chile con estado `No aplica`, `Por validar` o `Requerido` y razón;
+- preguntas abiertas, feedback relacionado y bloque de QA interno “todo lo que puede salir mal”.
+
+Los eventos viven como atributos o mapeo local y no se envían a analytics. Un click conserva su comportamiento real de demo. La ficha no reemplaza documentación técnica, legal ni regulatoria.
+
+## 10. Contradicciones y jerarquía de fuentes
+
+La bandeja interna usa esta prioridad: **decisión verbal de Felipe > decisión aprobada > reunión reciente > Notion/Second Brain > Jira > estrategia/contexto**. Los conflictos semilla son ejemplos no sensibles y se marcan como demo/por validar. Felipe puede elegir A, B o pedir más contexto con comentario; la resolución vive en el navegador, actualiza la ficha local y no edita archivos.

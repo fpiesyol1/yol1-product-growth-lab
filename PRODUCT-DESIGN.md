@@ -58,6 +58,20 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 - Una diagonal baja y consistente cierra cada pantalla con su acento emocional: Acid en Inicio/Ahorrar, aqua en Finanzas/Cartola, rosa en Cobrar y pagar, rosa+acid editorial en Ganar y violeta tenue en Experimentos.
 - Alto contraste, foco visible, áreas táctiles amplias, lectura sin overflow y movimiento opcional.
 
+## Portfolio y especificación viva
+
+El selector superior se trata como una repisa editorial, no como navegación de una suite disponible. Acid identifica el único producto publicado; aqua permite explorar; amarillo señala `No publicado` o `Por validar`. Los estados vacíos usan tipografía, halos, cinta, bloques y un sticker animado propio en CSS. Nunca usan logos de terceros ni ilustraciones que sugieran una capacidad real.
+
+La Ficha de producto vive debajo del teléfono y el feedback solo para productos publicados. Los espacios no publicados muestran estado editorial + bloque breve de ideas, sin teléfono ni ficha. La ficha mantiene densidad editorial en desktop y una columna legible en móvil. Sus estados de certeza son semánticos:
+
+- `No aplica`: aqua/control; la razón explica por qué no corresponde al contexto actual.
+- `Por validar`: amarillo/decisión abierta; nunca se presenta como exención ni requisito.
+- `Requerido`: coral/riesgo regulatorio únicamente cuando exista fuente aprobada.
+
+El inspector de eventos es informativo: hover/focus actualiza un nombre humano, por ejemplo “Me gusta en Home”, y deja producto, pantalla, acción y origen como metadata separada. El modo touch permite inspeccionar sin bloquear el click. El evento no se emite.
+
+Los nuevos tokens `--decision-bg` y `--decision-text` conservan contraste del estado amarillo en dark y light. Violeta sigue reservado para exploración/feedback y el perro animado respeta `prefers-reduced-motion`.
+
 ## Reglas de experiencia
 
 1. Una pantalla debe tener una tarea principal y una acción clara.

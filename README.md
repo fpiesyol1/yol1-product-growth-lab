@@ -4,6 +4,8 @@ Prototipo exploratorio con datos ficticios para recorrer una experiencia cotidia
 
 La propuesta que explora esta versión es: **“Con YOL1 entiendes tus finanzas y simplificas tu vida financiera.”** YOL1 detecta señales, explica evidencia y recomienda; la persona decide y confirma.
 
+El producto activo se llama oficialmente **Acompañante financiero**. El selector superior organiza exactamente seis espacios del portfolio: Acompañante financiero, Onboarding y KYC progresivo, Home Banking, Tarjetas, Remesas y Construir mi propio producto. Solo el primero está publicado en el Lab; los otros cinco son estados vacíos editoriales y no representan capacidades, roadmap ni readiness.
+
 ## Qué incluye
 
 - **Inicio:** propuesta de valor ampliada, cinco pendientes de ejemplo —cargo dudoso, por cobrar, por pagar, beneficio y gasto posiblemente compartido— en un carrusel con contador/puntos, y una conversación financiera con IA opcional o fallback demo. “Ya lo vi” archiva y deja un contador recuperable durante la sesión.
@@ -90,3 +92,13 @@ El orden de resolución es: regla de seguridad → ficha aprobada/dato sintétic
 ## Qué demuestra y qué no
 
 La navegación permite probar comprensión y usabilidad. No demuestra demanda, product-market fit, economics ni readiness operacional o regulatoria. Los gates declarados son E2 comprensión, E3 acción voluntaria y E4 resultado/retorno.
+
+## Portfolio, ficha viva y decisiones
+
+- El selector superior conserva un único producto publicado. Los estados no publicados rotan entre 12 composiciones editoriales propias —incluido un perro animado en CSS— y siempre permiten volver al Acompañante financiero.
+- Hover o foco sobre una acción muestra su **evento propuesto**. En touch existe un modo de inspección discreto; el toque continúa ejecutando la acción de la demo. Estos nombres no se envían a analytics.
+- Debajo de la experiencia, la **Ficha de producto** muestra contexto por producto/pantalla: evento en lenguaje simple con metadata separada, arquitectura candidata, qué datos guardar/consultar, KYC, licencias para Chile, preguntas abiertas, feedback relacionado y un QA interno de "todo lo que puede salir mal".
+- Los productos no publicados no muestran teléfono ni Ficha de producto: solo un estado editorial y un bloque breve de "Tengo una idea".
+- KYC y licencias usan únicamente `No aplica`, `Por validar` o `Requerido`, con razón visible. No son asesoría ni conclusión legal.
+- `/review#decisions` contiene tres conflictos sintéticos y no sensibles. Felipe puede elegir A, B o pedir contexto; la resolución se guarda en `localStorage`, se refleja en la ficha correspondiente y no modifica archivos ni GitHub.
+- Jerarquía aplicada cuando las fuentes chocan: decisión verbal de Felipe → decisión aprobada → reunión reciente → Notion/Second Brain → Jira → estrategia/contexto.

@@ -231,7 +231,7 @@ test("feedback conserva fallback local y permanece desacoplado de GitHub", async
   const css = await source("app/globals.css");
   const adapter = await source("lib/feedback-intake.ts");
   const architecture = await source("FEEDBACK-INTAKE.md");
-  assert.match(page, /FeedbackPanel screen=\{activeTitle\} open=\{true\}/);
+  assert.match(page, /FeedbackPanel product=\{activeProduct\.name\} screen=\{activeTitle\} open=\{true\}/);
   assert.match(page, /Me gusta/);
   assert.match(page, /Mejoraría/);
   assert.match(page, /Idea/);
@@ -239,7 +239,7 @@ test("feedback conserva fallback local y permanece desacoplado de GitHub", async
   assert.doesNotMatch(page, /life-shot|yol1-life\.jpg/);
   assert.match(css, /\.feedback-desktop[^}]*position:static/i);
   assert.doesNotMatch(css, /\.feedback-desktop[^}]*position:absolute/i);
-  assert.ok(page.indexOf('<div className="module-map"') < page.indexOf('<FeedbackPanel screen={activeTitle} open={true}'), "feedback desktop debe estar después de la navegación de módulos");
+  assert.ok(page.indexOf('className="module-map"') < page.indexOf('<FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true}'), "feedback desktop debe estar después de la navegación de módulos");
   assert.match(css, /@media \(max-width:720px\)[\s\S]*\.feedback-mobile\.feedback-open/i);
   assert.match(css, /inset:62px 8px 70px/i);
   assert.match(adapter, /localStorage/);
@@ -247,4 +247,84 @@ test("feedback conserva fallback local y permanece desacoplado de GitHub", async
   assert.doesNotMatch(adapter, /github\.com|api\.github|Authorization|Bearer/i);
   assert.match(architecture, /ruta server-side protegida|POST \/api\/feedback/i);
   assert.match(architecture, /branch \+ PR.*aprobación|branch\/PR.*aprobación/i);
+});
+
+test("portfolio mantiene exactamente seis productos y solo publica el Acompañante financiero", async () => {
+  const page = await source("app/page.tsx");
+  const portfolio = await source("lib/product-portfolio.ts");
+  const css = await source("app/globals.css");
+  const definitions = portfolio.match(/\{ id: "(?:companion|kyc|banking|cards|remittances|builder)"/g) ?? [];
+  assert.equal(definitions.length, 6);
+  assert.match(portfolio, /name: "Acompañante financiero"[\s\S]*published: true/);
+  assert.match(portfolio, /name: "Onboarding y KYC progresivo"/);
+  assert.match(portfolio, /name: "Home Banking"/);
+  assert.match(portfolio, /name: "Tarjetas"/);
+  assert.match(portfolio, /name: "Remesas"/);
+  assert.match(portfolio, /name: "Construir mi propio producto"/);
+  assert.equal((portfolio.match(/published: true/g) ?? []).length, 1);
+  assert.equal((portfolio.match(/published: false/g) ?? []).length, 5);
+  assert.match(page, /NO PUBLICADO/);
+  assert.doesNotMatch(page, /Volver al Acompañante financiero/);
+  assert.match(portfolio, /EMPTY_STATE_LIBRARY[\s\S]*Hasta el perro sabe esperar/);
+  assert.match(portfolio, /acá hay un gato tecleando/i);
+  assert.match(portfolio, /Felipe no hizo la pega/i);
+  assert.match(portfolio, /Aún no desciframos por completo cómo lo queremos construir/i);
+  assert.match(portfolio, /ChatGPT o Claude/);
+  assert.match(portfolio, /Un robot está ordenando los post-its/i);
+  assert.ok((portfolio.match(/gesture: "/g) ?? []).length >= 12);
+  assert.match(css, /@keyframes dog-tail-wag/);
+  assert.match(css, /@keyframes cat-type/);
+  assert.match(css, /@keyframes robot-note-shuffle/);
+  assert.doesNotMatch(page, /MCP conectado|banco conectado|KYC aprobado|remesa enviada/i);
+});
+
+test("ficha viva hace visibles eventos propuestos, certeza y feedback contextual", async () => {
+  const page = await source("app/page.tsx");
+  const portfolio = await source("lib/product-portfolio.ts");
+  const feedback = await source("lib/feedback-intake.ts");
+  assert.match(page, /EVENTO PROPUESTO · NO ANALYTICS/);
+  assert.match(page, /onPointerOver/);
+  assert.match(page, /onFocusCapture/);
+  assert.match(page, /Inspeccionar en touch/);
+  assert.match(page, /Ficha de producto/);
+  assert.match(page, /ARQUITECTURA/);
+  assert.match(page, /LICENCIAS · CHILE/);
+  assert.match(page, /PREGUNTAS ABIERTAS/);
+  assert.match(page, /FEEDBACK RELACIONADO/);
+  assert.match(page, /TODO LO QUE PUEDE SALIR MAL/);
+  assert.match(page, /eventMetadata\(/);
+  assert.match(page, /simpleEventName\(/);
+  assert.match(page, /spec\.data\.store/);
+  assert.match(page, /spec\.data\.query/);
+  assert.doesNotMatch(page, /FUENTES \/ DECISIONES/);
+  assert.match(portfolio, /React Native/);
+  assert.match(portfolio, /AWS/);
+  assert.match(portfolio, /"No aplica" \| "Por validar" \| "Requerido"/);
+  assert.match(portfolio, /Chile es la jurisdicción base/);
+  assert.match(feedback, /product\?: string/);
+  assert.doesNotMatch(page, /analytics\.track|gtag\(|mixpanel|segment\.track/i);
+});
+
+test("los productos no publicados no simulan una app ni una ficha técnica", async () => {
+  const page = await source("app/page.tsx");
+  const css = await source("app/globals.css");
+  assert.match(page, /productId === "companion" \? <section className="phone-wrap"/);
+  assert.match(page, /productId === "companion" && <LivingSpecification/);
+  assert.match(page, /TENGO UNA IDEA/);
+  assert.match(page, /className="unpublished-phone"/);
+  assert.match(css, /\.unpublished-phone \{/);
+});
+
+test("bandeja de decisiones resuelve contradicciones solo en estado local", async () => {
+  const review = await source("app/review/page.tsx");
+  const decisions = await source("lib/decision-inbox.ts");
+  assert.match(review, /BANDEJA DE DECISIONES/i);
+  assert.match(review, /A manda/);
+  assert.match(review, /B manda/);
+  assert.match(review, /Necesito más contexto/);
+  assert.match(review, /Felipe manda · resolución local visible/);
+  assert.match(review, /FEEDBACK RELACIONADO/);
+  assert.match(decisions, /localStorage/);
+  assert.match(decisions, /Decisión verbal de Felipe/);
+  assert.doesNotMatch(decisions, /fetch\(|github|OPENAI_API_KEY/i);
 });
