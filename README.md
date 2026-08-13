@@ -17,6 +17,7 @@ La vista de mensaje no abre WhatsApp, no copia al portapapeles, no genera links 
 - **Experimentos:** feedback local sobre ideas ya conversadas, sin fechas ni disponibilidad.
 - **Feedback del Lab:** recuadro siempre abierto al final del lateral desktop, después de la navegación de módulos, y acceso compacto en móvil. Detecta la pantalla activa y acepta “Me gusta”, “Mejoraría” o “Idea”; usa la bandeja compartida cuando Postgres está activo y fallback local en desarrollo.
 - **Bandeja de aprendizaje:** con Postgres conectado, `/review` reúne feedback de todos los visitantes y cada pregunta/respuesta de IA. Separa ambos tipos y permite Aprobar, marcar Equivocado con explicación o Descartar. Sin base configurada mantiene un fallback local visible.
+- **Conocimiento del Lab:** `/review/knowledge` permite buscar las preguntas aprobadas, abrir sus variantes y marcar localmente una ficha para mejorar. No edita archivos ni reentrena nada.
 
 La app inicia en modo oscuro. El selector del header cambia a modo claro y guarda la elección en el navegador. Si no existe elección, usa la preferencia del sistema.
 
@@ -44,6 +45,7 @@ Abre `http://localhost:3000`. Recorridos sugeridos:
 7. Cambiar entre oscuro y claro en Inicio, Finanzas, Cartola y Cobrar y pagar.
 8. Abrir Feedback, cambiar de módulo y comprobar que la pantalla se actualiza. “Mejoraría” e “Idea” requieren comentario; “Me gusta” permite un envío rápido.
 9. Abrir `http://localhost:3000/review`, separar Feedback/Respuestas IA y probar Aprobar, Equivocado con comentario y Descartar.
+10. Abrir `http://localhost:3000/review/knowledge`, buscar “Disney” o “Camila”, revisar variantes y marcar una ficha para mejorar.
 
 Para verificar build y guardrails:
 
@@ -62,11 +64,15 @@ npm test
 - `tests/product-guardrails.test.mjs`: checks livianos de seguridad y contrato UI.
 - `lib/feedback-intake.ts`: contrato y adapter local del intake.
 - `lib/ai/`: conocimiento, instrucciones y fallback de conversación.
+- `knowledge/`: fichas Markdown por dominio, índice y guía de dictado por voz.
+- `lib/ai/knowledge-catalog.ts`: representación runtime vinculada a cada ficha Markdown.
+- `lib/ai/knowledge-router.ts`: reglas y matching local antes de cualquier llamada de IA.
 - `app/api/chat/route.ts`: proxy server-side hacia Responses API con validación, consentimiento y `store: false`.
 - `app/review/`: bandeja privada compartida con fallback local, fuera de los módulos consumer.
 - `AI-ARCHITECTURE.md`: configuración, privacidad y ciclo incremental revisado.
 - `POSTGRES-GUIDE.md`: explicación práctica, conexión desde Vercel y consultas de lectura.
 - `evals/yol1-cases.json`: casos iniciales de comportamiento y seguridad.
+- `evals/knowledge-router-cases.json`: consultas que verifican variantes, reglas y fallback.
 - `FEEDBACK-INTAKE.md`: arquitectura recomendada para recepción server-side, bandeja editorial y eventual promoción a PR.
 
 ## Publicación
@@ -74,6 +80,12 @@ npm test
 Felipe revisa antes de publicar. Los secretos se configuran únicamente en Vercel; nunca se agregan al repositorio. No integrar bancos, pagos ni mensajería reales.
 
 La recepción compartida se activa únicamente cuando Vercel tiene `DATABASE_URL` y `YOL1_REVIEW_TOKEN`. Ningún secreto ni permiso de GitHub llega al navegador. La IA puede habilitarse con una clave server-side, pero el uso público requiere además límites de consumo, presupuesto y política de retención.
+
+## Cómo alimentar el chat por voz
+
+Felipe puede dictar libremente: pregunta imaginada, respuesta ideal, tono, qué no debería decir y qué falta preguntar. Codex lo convierte primero en una ficha Markdown `borrador`; Felipe aprueba la pregunta madre; recién después se agregan variantes, catálogo y evaluaciones. La guía completa está en `knowledge/WORKFLOW-POR-VOZ.md`.
+
+El orden de resolución es: regla de seguridad → ficha aprobada/dato sintético → fallback con preguntas concretas → IA server-side solo si sigue haciendo falta y existe consentimiento. El feedback nunca actualiza automáticamente la base.
 
 ## Qué demuestra y qué no
 

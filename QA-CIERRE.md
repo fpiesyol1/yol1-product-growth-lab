@@ -250,3 +250,14 @@ Comandos finales:
 ```
 
 Resultado: build y TypeScript correctos; **12 tests aprobados, 0 fallidos**. Revisión local en `http://localhost:3000`; no se hizo commit, push ni publicación.
+
+## Base de conocimiento conversacional — 13 de agosto de 2026
+
+- Se crearon 6 fichas aprobadas de demo y 60 variantes trazables en cinco documentos de dominio, más índice y workflow por voz.
+- El router local aplica primero reglas de seguridad y conocimiento aprobado. La llamada de IA queda después y solo para preguntas no resueltas, con consentimiento vigente.
+- `/review/knowledge` permite buscar, filtrar por dominio, abrir variantes y marcar localmente una ficha para mejorar. No escribe archivos, no llama GitHub y no modifica el modelo.
+- La evaluación dedicada cubre 15 consultas: resultado mensual, Disney, por cobrar, por pagar, beneficio, Liguria, ejecución prohibida, credenciales y fallback.
+- Contenido estrictamente ficticio; no se agregaron bancos, pagos, audio, modelos, servicios ni credenciales.
+- Build final: Next.js y TypeScript correctos; nueva ruta estática `/review/knowledge` incluida.
+- Pruebas finales: **16 tests aprobados, 0 fallidos**; el set dedicado recorre 15 consultas y verifica además las 10 variantes de cada ficha y el cálculo determinista de +$830.000.
+- QA visual en el navegador local: visor desktop sin overflow, jerarquía y contraste correctos; búsqueda “Disney” devuelve una ficha; acordeón, modo claro y “Marcar para mejorar” funcionan. La marca persiste después de recargar. El contrato móvil `max-width:800px` apila resumen, filtros, respuesta y columnas a una sola columna y queda cubierto por guardrail responsive para 390 px.

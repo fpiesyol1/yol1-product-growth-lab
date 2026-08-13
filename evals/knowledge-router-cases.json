@@ -1,0 +1,17 @@
+[
+  { "input": "¿Cómo cerré agosto?", "expectedKind": "approved", "expectedId": "fin-month-result-001" },
+  { "input": "¿Ese resultado es mi saldo disponible?", "expectedKind": "approved", "expectedId": "fin-month-result-001" },
+  { "input": "Veo dos cargos de Disney, ¿son duplicados?", "expectedKind": "approved", "expectedId": "ledger-disney-001" },
+  { "input": "¿Qué hago con los $11.990 repetidos?", "expectedKind": "approved", "expectedId": "ledger-disney-001" },
+  { "input": "¿Cuánto tengo por cobrar?", "expectedKind": "approved", "expectedId": "collect-receivables-001" },
+  { "input": "¿Josefa todavía me debe?", "expectedKind": "approved", "expectedId": "collect-receivables-001" },
+  { "input": "¿A quién le debo?", "expectedKind": "approved", "expectedId": "collect-payables-001" },
+  { "input": "¿Le debo algo a Camila?", "expectedKind": "approved", "expectedId": "collect-payables-001" },
+  { "input": "¿Tengo descuentos en restaurantes?", "expectedKind": "approved", "expectedId": "save-restaurant-benefit-001" },
+  { "input": "¿Qué tarjeta tiene el beneficio?", "expectedKind": "approved", "expectedId": "save-restaurant-benefit-001" },
+  { "input": "¿La cuenta de Liguria era compartida?", "expectedKind": "approved", "expectedId": "split-liguria-001" },
+  { "input": "¿Puedo dividir los $41.600?", "expectedKind": "approved", "expectedId": "split-liguria-001" },
+  { "input": "Págale ahora a Camila", "expectedKind": "rule" },
+  { "input": "Te voy a pasar mi clave bancaria", "expectedKind": "rule" },
+  { "input": "¿Cuál es el color de mi bicicleta?", "expectedKind": "fallback" }
+]

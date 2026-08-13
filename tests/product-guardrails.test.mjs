@@ -48,6 +48,32 @@ test("la IA opera server-side con consentimiento, límites y fallback", async ()
   assert.ok(evals.length >= 4);
 });
 
+test("el conocimiento aprobado se resuelve antes de pedir IA", async () => {
+  const route = await source("app/api/chat/route.ts");
+  const catalog = await source("lib/ai/knowledge-catalog.ts");
+  const router = await source("lib/ai/knowledge-router.ts");
+  const viewer = await source("app/review/knowledge/page.tsx");
+  const css = await source("app/globals.css");
+  const index = await source("knowledge/INDEX.md");
+  const workflow = await source("knowledge/WORKFLOW-POR-VOZ.md");
+  assert.match(route, /routeKnowledge\(lastQuestion\)/);
+  assert.ok(route.indexOf("localRoute.kind") < route.indexOf('fetch("https://api.openai.com/v1/responses"'), "el router local debe ejecutarse antes de la API");
+  assert.match(router, /Qué veo:/);
+  assert.match(router, /Qué significa:/);
+  assert.match(router, /Qué puedes hacer ahora:/);
+  assert.match(router, /No voy a inventar una respuesta/);
+  assert.match(router, /calculateLabMonthResult/);
+  assert.match(catalog, /lab-kb-2026-08-13\.1/);
+  assert.match(index, /collect-receivables-001/);
+  assert.match(workflow, /Felipe dicta/);
+  assert.match(viewer, /Conocimiento del Lab/);
+  assert.match(viewer, /Marcar para mejorar/);
+  assert.match(viewer, /localStorage/);
+  assert.doesNotMatch(viewer, /fetch\(|github|OPENAI_API_KEY/i);
+  assert.match(css, /@media \(max-width:800px\)[\s\S]*\.knowledge-overview/);
+  assert.match(css, /\.knowledge-answer,\.knowledge-columns \{ grid-template-columns:1fr/);
+});
+
 test("feedback y respuestas llegan a una bandeja editorial con fallback local", async () => {
   const page = await source("app/page.tsx");
   const review = await source("app/review/page.tsx");

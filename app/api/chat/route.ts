@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createDemoResponse } from "../../../lib/ai/demo-response";
 import { YOL1_KNOWLEDGE_VERSION } from "../../../lib/ai/knowledge";
+import { routeKnowledge } from "../../../lib/ai/knowledge-router";
 import { buildYol1Instructions } from "../../../lib/ai/yol1-prompt";
 
 type InputMessage = { role: "user" | "assistant"; text: string };
@@ -54,11 +55,22 @@ export async function POST(request: Request) {
   const messages = rawMessages as InputMessage[];
   const lastQuestion = [...messages].reverse().find((message) => message.role === "user")?.text ?? "";
   const apiKey = process.env.OPENAI_API_KEY;
+  const localRoute = routeKnowledge(lastQuestion);
+
+  if (localRoute.kind !== "fallback") {
+    return NextResponse.json({
+      message: { id: crypto.randomUUID(), role: "assistant", text: localRoute.text, mode: localRoute.kind === "approved" ? "knowledge" : "demo" },
+      knowledgeVersion: YOL1_KNOWLEDGE_VERSION,
+      matchedKnowledgeId: localRoute.knowledgeId,
+      resolvedBy: localRoute.kind,
+    });
+  }
 
   if (!apiKey || typedBody.aiConsent !== true) {
     return NextResponse.json({
       message: { id: crypto.randomUUID(), role: "assistant", text: createDemoResponse(lastQuestion), mode: "demo" },
       knowledgeVersion: YOL1_KNOWLEDGE_VERSION,
+      resolvedBy: "fallback",
     });
   }
 
@@ -83,12 +95,14 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: { id: crypto.randomUUID(), role: "assistant", text, mode: "ai" },
       knowledgeVersion: YOL1_KNOWLEDGE_VERSION,
+      resolvedBy: "ai",
     });
   } catch {
     return NextResponse.json({
       message: { id: crypto.randomUUID(), role: "assistant", text: createDemoResponse(lastQuestion), mode: "demo" },
       knowledgeVersion: YOL1_KNOWLEDGE_VERSION,
       degraded: true,
+      resolvedBy: "fallback",
     });
   }
 }

@@ -82,6 +82,7 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 - Experimentos por explorar: feedback sin fechas, disponibilidad ni promesas de roadmap.
 - Feedback del Lab: tarjeta editorial de baja intensidad en el lateral desktop; en móvil se presenta como hoja sobre el teléfono. Usa violeta como señal de exploración, conserva superficies Night/Mist y no compite con Acid, aqua o rosa de los módulos.
 - Bandeja `/review`: superficie editorial interna, sin marco de teléfono y sin competir con la experiencia B2C. Violeta identifica origen/aprendizaje, amarillo indica pendiente o Equivocado, Acid confirma Aprobar y Descartar usa tinta neutra; coral queda reservado para errores operativos. El editor de Equivocado aparece solo cuando se necesita explicar la corrección.
+- Visor `/review/knowledge`: comparte el lenguaje editorial interno de la bandeja. Violeta identifica contenido aprobado y amarillo una ficha marcada para mejorar; búsqueda, dominio y acordeones priorizan lectura. No imita un editor ni sugiere que la marca local cambió el conocimiento.
 
 ## Patrón de feedback transversal
 
@@ -95,3 +96,11 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 ## Cómo mejorar una pantalla
 
 Anotar el caso de uso, qué debería entender la persona en menos de cinco segundos, qué acción debe poder tomar y qué información sobra. Esa nota se transforma en una decisión versionada en este archivo o en una página de Notion cuando se conecte el repositorio oficial.
+
+## Patrón de respuesta conversacional
+
+- **Qué veo:** solo evidencia disponible en la ficha o dato sintético.
+- **Qué significa:** interpretación con certeza y límites explícitos.
+- **Qué puedes hacer ahora:** siguiente acción reversible y bajo control de la persona.
+- Si no existe una ficha suficientemente clara, YOL1 no improvisa: reconoce el límite y muestra preguntas que sí puede responder.
+- Las variantes ayudan a reconocer lenguaje cotidiano, pero nunca agregan hechos distintos a la pregunta madre.

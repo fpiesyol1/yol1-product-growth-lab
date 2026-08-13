@@ -109,7 +109,7 @@ export default function ReviewPage() {
     <header className="review-header">
       <a href="/" aria-label="Volver al Product Growth Lab"><img src="/yol1-wordmark-dark.png" alt="YOL1" /></a>
       <div><small>PRODUCT GROWTH LAB · INTERNO</small><h1>Bandeja de aprendizaje</h1><p>Separa feedback y respuestas de IA. Tú decides qué aprobar, corregir o descartar; nada cambia el modelo automáticamente.</p></div>
-      <div className="review-header-actions"><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button>{mode === "shared" && <button onClick={logout}>Cerrar bandeja</button>}</div>
+      <div className="review-header-actions"><a href="/review/knowledge">Conocimiento del Lab</a><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button>{mode === "shared" && <button onClick={logout}>Cerrar bandeja</button>}</div>
     </header>
 
     <details className="review-postgres-guide">

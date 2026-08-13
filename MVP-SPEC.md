@@ -41,6 +41,14 @@ Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplif
 
 `/review` queda fuera de los siete módulos consumer. Con Postgres conectado reúne feedback de producto y preguntas/respuestas de IA de todos los visitantes, separados por tipo. Permite Aprobar, marcar Equivocado con explicación obligatoria o Descartar. Ningún estado modifica por sí solo el prompt o el conocimiento. Sin secretos configurados funciona en modo local explícito.
 
+### Conocimiento conversacional interno
+
+`knowledge/` organiza preguntas madre por dominio con estado, intención, variantes, respuesta esperada, evidencia, límites, siguientes preguntas y feedback conocido. El catálogo runtime conserva un vínculo a la ficha fuente. El router prioriza una regla de seguridad o una respuesta aprobada, después datos/operaciones deterministas y solo al final una eventual IA con consentimiento.
+
+`/review/knowledge` es una vista editorial interna, no un octavo módulo consumer. Permite buscar fichas, revisar sus diez variantes y marcar localmente “para mejorar”; no edita Markdown, no cambia el router y no promueve contenido automáticamente.
+
+**Aceptación:** una pregunta aprobada responde con “Qué veo / Qué significa / Qué puedes hacer ahora”; una consulta fuera de alcance reconoce el límite y ofrece 2–3 preguntas útiles; los dictados de Felipe nacen como borrador y las variantes se agregan después de su aprobación.
+
 ### Mis Finanzas
 
 **Trabajo a resolver:** entender de dónde vienen los números y qué merece atención.
