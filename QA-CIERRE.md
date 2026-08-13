@@ -5,12 +5,46 @@ Estado: **prototipo exploratorio con datos sintéticos; no canon**
 
 No conecta bancos, no mueve dinero y no representa capacidades disponibles, roadmap, wedge, producto validado ni readiness.
 
+## Intake de feedback local — 13 de agosto de 2026
+
+- Se eliminó la fotografía lateral y se sustituyó por una tarjeta permanente de Feedback integrada al escenario editorial.
+- El contexto usa automáticamente el módulo activo entre los siete existentes.
+- “Me gusta” acepta comentario opcional; “Mejoraría” e “Idea” requieren texto. “Temas clave” es opcional.
+- La demo guarda hasta 30 entradas en `localStorage`, muestra confirmación dentro del panel y no transmite datos.
+- En móvil existe un acceso compacto en el encabezado y una hoja cerrable por encima del contenido, sin ocultar permanentemente la navegación.
+- `lib/feedback-intake.ts` separa contrato y adapter local; `FEEDBACK-INTAKE.md` define la futura ruta server-side protegida y la revisión editorial previa a cualquier branch/PR.
+- Revisión responsive de código: desktop conserva el panel dentro de la columna editorial; en `max-width:720px` desaparece el lateral y la hoja usa `inset: 62px 8px 70px`, dejando libres header y navegación inferior. Se verificó ausencia de la foto y de overflow horizontal estructural mediante guardrail.
+- La compilación y los tests responsive/guardrail pasan. La política del navegador integrado impidió capturar visualmente `localhost` en esta sesión; no se atribuye una inspección visual nueva de 390×844 o 1440×1000 hasta que Felipe recargue la pestaña local.
+
+### Ajuste de disposición desktop
+
+- Feedback queda siempre abierto, compacto y en flujo normal al final del lateral izquierdo.
+- Se eliminó su posicionamiento absoluto y la capacidad de expandirse hacia arriba; por contrato estructural aparece después de `module-map` y no puede cubrir los botones de navegación.
+- Móvil conserva el acceso del encabezado y la hoja con margen inferior de 70 px sobre la navegación.
+
+## Cobrar y pagar — doble bandeja vertical
+
+- Se retiró el carrusel horizontal de pendientes.
+- Por cobrar queda arriba y Por pagar abajo; ambas ocupan mitades iguales del alto mediante `grid-template-rows: minmax(0, 1fr) minmax(0, 1fr)`.
+- Cada `.pending-lane-track` usa `overflow-y: auto`, `overflow-x: hidden`, `overscroll-behavior: contain` y su propio scrollbar; el contenedor base usa `overflow: hidden` para mantener resumen, selector y navegación estables.
+- En anchos de 340 px o menos se compactan botones y acciones, conservando orden arriba/abajo y scroll independiente.
+
+### Salida de solicitud
+
+- Confirmar desde el reparto o “Enviar cobro” abre una vista previa separada, sin marco, header, navegación ni marca visual de YOL1/WhatsApp.
+- El mensaje es ajustable e incluye monto, gasto, invitación y una URL `.example` renderizada como texto, no como enlace.
+- La pantalla declara `DEMO · NO ENVIADO`; no abre WhatsApp, no usa el portapapeles, no conecta bancos ni inicia pagos.
+- “Volver a YOL1” cierra solo la vista externa: el estado de `collectDraft`, incluyendo `step: 5`, sigue en el componente raíz y se conserva durante la sesión.
+- Producción queda condicionada a consentimiento explícito, link generado server-side y partner de pagos autorizado; no se agregó integración.
+- QA real `390×844`: el tablero mide 350×382 px y se divide en dos bandejas de 350×187 px, arriba/abajo, sin overflow horizontal. Al expandir Josefa y desplazar Por cobrar, su `scrollTop` cambió `0 → 16`, Por pagar quedó en `0`, el documento permaneció en `scrollY: 0` y la navegación en `y: 780`.
+- QA real de vista externa `390×844` y `1440×1000`: no existen `.phone`, `.bottom-nav`, región `YOL1 — …` ni anchors; la URL ficticia no es navegable. “Volver a YOL1” devolvió a Cobrar y pagar con la misma selección de Josefa abierta. El flujo completo también conserva `collectDraft.step = 5` porque el preview vive en el componente raíz y no reinicializa el borrador.
+
 ## Iteración de feedback directo — 13 de agosto de 2026
 
 - Inicio agranda “Tu plata, más simple” y muestra cinco pendientes sintéticos: cargo dudoso, por cobrar, por pagar, beneficio y gasto para dividir. Se retiró “Desliza para ver más”.
 - “Pregúntale a YOL1” crece como interfaz y responde desde reglas de demo a seis tipos de pregunta; sigue sin IA ni audio reales.
 - Finanzas recupera cartola general bajo las cuentas, métricas accionables y últimos movimientos densos; “Agregar banco/cartola” declara que no conecta ni carga nada.
-- Cobrar y pagar separa carriles horizontales por cobrar/pagar, agrega aliases, recordatorios, conciliación ficticia y previews que niegan explícitamente envío, WhatsApp y pago reales.
+- Cobrar y pagar separa bandejas verticales por cobrar/pagar, agrega aliases, recordatorios, conciliación ficticia y previews que niegan explícitamente envío, WhatsApp y pago reales.
 - Ahorrar abre con `$0–$28.000` potenciales, agrega beneficio BCI ficticio, cuenta/servicio, Liguria para dividir, descarte lateral y compra simulada con confirmación.
 - El gesto diagonal mantiene geometría común y cambia solo su acento semántico por módulo.
 

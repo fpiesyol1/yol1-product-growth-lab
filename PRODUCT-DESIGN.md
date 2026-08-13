@@ -72,10 +72,21 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 - Inicio: propuesta de valor ampliada, cinco pendientes accionables y conversación financiera simulada.
 - Mis Finanzas: resultado compacto, carrusel de cuentas, métricas con destino, cartola general y últimos movimientos densos.
 - Cartola: tabla densa General/BCI/MACH, tres acciones por fila y asistente contextual de demo.
-- Cobrar y pagar: carriles independientes por cobrar/pagar, persona/grupo, aliases y reparto persistente durante sesión.
+- Cobrar y pagar: bandejas apiladas 50/50 — por cobrar arriba y por pagar abajo — con scroll interno independiente, persona/grupo, aliases y reparto persistente durante sesión. El contenedor principal no desplaza cabecera, selector ni navegación. En móvil pequeño se reduce la densidad de encabezados sin convertir las bandejas en carrusel o columnas laterales.
+- La vista previa de mensaje es deliberadamente una superficie externa al teléfono YOL1: fondo, estructura y controles propios, sin logo oficial de WhatsApp. Conserva el rosa como gesto humano, el amarillo como disclosure y el acid solo para volver a YOL1. La URL ficticia se presenta como texto no navegable.
 - Ahorrar: rango potencial protagonista, tarjetas espaciadas y descartables con evidencia, certeza y acción reversible.
 - Ganar: tratamiento editorial “Próximamente”, sin flujo.
 - Experimentos por explorar: feedback sin fechas, disponibilidad ni promesas de roadmap.
+- Feedback del Lab: tarjeta editorial de baja intensidad en el lateral desktop; en móvil se presenta como hoja sobre el teléfono. Usa violeta como señal de exploración, conserva superficies Night/Mist y no compite con Acid, aqua o rosa de los módulos.
+
+## Patrón de feedback transversal
+
+- La tarjeta permanece siempre abierta en desktop, dentro del flujo normal y después de los botones de módulo. No se expande hacia arriba, no flota y no puede cubrir la navegación lateral.
+- El módulo activo aparece como chip automático; la persona no debe volver a seleccionar el contexto.
+- La elección de tipo precede al texto para reducir carga: “Me gusta” puede ser rápida; “Mejoraría” e “Idea” requieren explicación.
+- La confirmación ocurre dentro del mismo panel. No se usan modales del sistema ni redirecciones.
+- En móvil el acceso es compacto, la hoja respeta la navegación inferior y el contenido puede desplazarse sin producir overflow horizontal.
+- El copy de privacidad está junto al envío: demo local, sin datos financieros/personales y sin transmisión real.
 
 ## Cómo mejorar una pantalla
 

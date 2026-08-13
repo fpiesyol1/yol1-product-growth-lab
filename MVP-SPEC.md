@@ -25,6 +25,8 @@ La navegación principal está organizada por la intención de la persona, no po
 6. **Ganar:** placeholder “Próximamente”.
 7. **Experimentos por explorar:** vitrina y feedback sin fechas, disponibilidad ni promesas; no construye banca ni remesas.
 
+El **intake de feedback** es una utilidad transversal del Lab, no un octavo módulo de producto. Identifica automáticamente uno de los siete módulos activos y guarda comentarios locales para probar la experiencia de contribución.
+
 ## 3. MVP por módulo
 
 ### Inicio
@@ -55,7 +57,9 @@ Incluye navegación General/BCI/MACH, fecha, hora, código, monto y fuente. Cada
 
 **Trabajo a resolver:** entender lo pendiente en ambos sentidos y transformar un gasto en montos claros por persona.
 
-La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos carriles horizontales independientes: **Por cobrar** y **Por pagar**. Personas con YOL1 pueden mostrar un alias ficticio `@nombre`. Cada pendiente se abre sin mover el resto de la pantalla y permite simular recordatorio, mensaje de cobro o inicio de pago, además de marcar “ya me pagaron/ya pagué”; esos estados quedan sujetos a conciliación contra cartolas ficticias. **Nuevo gasto** conserva el flujo gasto → contacto → división → confirmación y su borrador al navegar.
+La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos bandejas verticales 50/50 del alto: **Por cobrar arriba** y **Por pagar abajo**. Cada lista se desplaza de manera independiente; la otra bandeja, cabecera, selector y navegación inferior permanecen estables. En móvil pequeño se comprimen encabezados y acciones sin cambiar el orden ni convertirlo en carrusel. Personas con YOL1 pueden mostrar un alias ficticio `@nombre`. Cada pendiente se abre dentro de su bandeja y permite simular recordatorio o marcar “ya me pagaron/ya pagué”; esos estados quedan sujetos a conciliación contra cartolas ficticias. **Nuevo gasto** conserva el flujo gasto → contacto → división → confirmación y su borrador al navegar.
+
+Después de confirmar una solicitud, el prototipo muestra una superficie separada del marco YOL1: una **vista previa de mensaje** con texto ajustable, datos ficticios y URL `.example` sin vínculo. “Volver a YOL1” restaura la solicitud y el borrador de sesión. No se abre WhatsApp ni se copia, envía o cobra nada. Producción exigiría consentimiento explícito antes de compartir, generación server-side de un link de pago y un partner autorizado; ninguno se integra en este Lab.
 
 **Aceptación:** se alternan las dos vistas; se puede completar y corregir el reparto; navegar a otro módulo y volver conserva el paso y datos durante la sesión; nunca se ofrece ejecución real.
 
@@ -74,6 +78,14 @@ Solo muestra “Próximamente”. No contiene flujo, promesa ni mecanismo de ref
 ### Experimentos por explorar
 
 Vitrina de ideas ya conversadas y feedback simulado, sin fechas, fases, disponibilidad ni promesa de roadmap. Una posible etapa posterior del Lab permitiría que otras personas propongan mejoras sin GitHub mediante fichas comparables y revisión de Felipe. No se implementa esa capa, banca ni remesas en este MVP.
+
+### Feedback transversal del Lab
+
+**Trabajo a resolver:** capturar qué gustó, qué se mejoraría y qué idea o tema clave debería considerarse, manteniendo el contexto de la pantalla evaluada.
+
+En desktop reemplaza la fotografía editorial por un recuadro compacto siempre abierto al final del lateral, después de los botones de módulo y sin superposición; en móvil se abre desde un control compacto del encabezado. “Me gusta” permite comentario opcional; “Mejoraría” e “Idea” lo requieren. Cada entrada incluye módulo, tipo, comentario, temas clave, fecha y estado `new`, y se conserva únicamente en `localStorage` durante esta demo.
+
+**Aceptación:** el contexto cambia al navegar; el formulario puede abrirse/cerrarse; una entrada válida genera confirmación visible; no transmite datos, no solicita identidad ni finanzas personales y no concede acceso al repositorio. La arquitectura futura queda en `FEEDBACK-INTAKE.md`.
 
 ## 4. Journeys prioritarios
 

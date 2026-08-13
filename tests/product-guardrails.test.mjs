@@ -27,7 +27,7 @@ test("acciones y confirmaciones permanecen simuladas y visibles", async () => {
   assert.match(page, /No cobra, paga ni contacta a nadie/i);
   assert.match(page, /no se conecta ninguna cuenta/i);
   assert.match(page, /no se carga ningún archivo/i);
-  assert.match(page, /no se abrió WhatsApp, no se envió el mensaje y no se movió dinero/i);
+  assert.match(page, /no conecta bancos y no envía nada por WhatsApp/i);
   assert.match(page, /no se inició un pago real/i);
   assert.doesNotMatch(page, /pago exitoso|dinero transferido|banco conectado/i);
 });
@@ -43,6 +43,7 @@ test("Cartola usa navegación general e individual y acciones coherentes", async
 
 test("Cobrar y pagar cubre ambos lados y conserva borrador en la app", async () => {
   const page = await source("app/page.tsx");
+  const css = await source("app/globals.css");
   assert.match(page, /Cobrar y pagar/);
   assert.match(page, /ME DEBEN/);
   assert.match(page, /LE DEBO/);
@@ -53,7 +54,18 @@ test("Cobrar y pagar cubre ambos lados y conserva borrador en la app", async () 
   assert.match(page, /@josefa/);
   assert.match(page, /Ya me pagaron/);
   assert.match(page, /Conciliación de ejemplo/);
-  assert.doesNotMatch(page, /Preparar en WhatsApp|yol1\.demo\/cobro/);
+  assert.match(page, /collect-home-mode/);
+  assert.match(css, /\.pending-board[^}]*grid-template-rows:minmax\(0,1fr\) minmax\(0,1fr\)/i);
+  assert.match(css, /\.pending-lane-track[^}]*overflow-y:auto/i);
+  assert.match(css, /\.pending-lane-track[^}]*overflow-x:hidden/i);
+  assert.match(css, /\.app-content\.collect-home-mode[^}]*overflow:hidden/i);
+  assert.match(css, /overscroll-behavior:contain/i);
+  assert.match(page, /VISTA PREVIA DE MENSAJE/);
+  assert.match(page, /Volver a YOL1/);
+  assert.match(page, /https:\/\/paga\.yol1\.example\/s\/demo-2841/);
+  assert.match(page, /consentimiento explícito, un link generado en servidor y un partner de pagos autorizado/i);
+  assert.match(page, /setMessagePreview\(null\)/);
+  assert.doesNotMatch(page, /href=.*paga\.yol1\.example|window\.open|wa\.me|api\.whatsapp/i);
 });
 
 test("tema dual y acentos semánticos están tokenizados", async () => {
@@ -76,4 +88,27 @@ test("documenta límites y gates de aprendizaje", async () => {
   assert.match(spec, /E4 — Resultado \/ retorno/);
   assert.match(spec, /No demuestra demanda, product-market fit, economics ni readiness/i);
   assert.match(spec, /Directo y Embebido quedan fuera/i);
+});
+
+test("feedback permanece local y desacoplado de GitHub", async () => {
+  const page = await source("app/page.tsx");
+  const css = await source("app/globals.css");
+  const adapter = await source("lib/feedback-intake.ts");
+  const architecture = await source("FEEDBACK-INTAKE.md");
+  assert.match(page, /FeedbackPanel screen=\{activeTitle\} open=\{true\}/);
+  assert.match(page, /Me gusta/);
+  assert.match(page, /Mejoraría/);
+  assert.match(page, /Idea/);
+  assert.match(page, /No incluyas datos financieros ni personales/);
+  assert.doesNotMatch(page, /life-shot|yol1-life\.jpg/);
+  assert.match(css, /\.feedback-desktop[^}]*position:static/i);
+  assert.doesNotMatch(css, /\.feedback-desktop[^}]*position:absolute/i);
+  assert.ok(page.indexOf('<div className="module-map"') < page.indexOf('<FeedbackPanel screen={activeTitle} open={true}'), "feedback desktop debe estar después de la navegación de módulos");
+  assert.match(css, /@media \(max-width:720px\)[\s\S]*\.feedback-mobile\.feedback-open/i);
+  assert.match(css, /inset:62px 8px 70px/i);
+  assert.match(adapter, /localStorage/);
+  assert.match(adapter, /FeedbackIntakeAdapter/);
+  assert.doesNotMatch(adapter, /github\.com|api\.github|Authorization|Bearer/i);
+  assert.match(architecture, /ruta server-side protegida|POST \/api\/feedback/i);
+  assert.match(architecture, /branch \+ PR.*aprobación|branch\/PR.*aprobación/i);
 });

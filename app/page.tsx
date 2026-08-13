@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { localFeedbackIntake, type FeedbackKind } from "../lib/feedback-intake";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "futuro";
 type Theme = "dark" | "light";
@@ -8,6 +9,7 @@ type MovementAction = "OK" | "Revisar" | "Dividir" | "Cobrar";
 type PendingView = "personas" | "grupos";
 type SplitMode = "equal" | "custom";
 type ChatMessage = { role: "user" | "assistant"; text: string };
+type MessagePreview = { name: string; alias?: string; amount: string; expense: string; direction: "collect" | "pay" };
 type CollectDraft = {
   step: number;
   expense: string;
@@ -63,6 +65,8 @@ export default function Home() {
   const [archivedCards, setArchivedCards] = useState<string[]>([]);
   const [collectDraft, setCollectDraft] = useState<CollectDraft>(initialDraft);
   const [pendingView, setPendingView] = useState<PendingView>("personas");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [messagePreview, setMessagePreview] = useState<MessagePreview | null>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("yol1-lab-theme");
@@ -112,6 +116,8 @@ export default function Home() {
 
   const activeTitle = tabLabels[tab];
 
+  if (messagePreview) return <MessagePreviewScreen preview={messagePreview} theme={theme} onBack={() => setMessagePreview(null)} />;
+
   return (
     <main className="lab-shell" data-theme={theme}>
       <section className="lab-intro">
@@ -122,11 +128,11 @@ export default function Home() {
           <p className="lede">Entiende tus finanzas y simplifica tu vida financiera.</p>
           <div className="editorial-rule"><span>YOL1 explica</span><span>Tú decides</span><span>Nada se ejecuta</span></div>
         </div>
-        <figure className="life-shot"><img src="/yol1-life.jpg" alt="Una mano sintiendo el aire desde una ventana en movimiento" /><figcaption>Plata para vivir. No vivir para administrar plata.</figcaption></figure>
         <div className="module-map" aria-label="Módulos del MVP">
           {(Object.keys(tabLabels) as Tab[]).map((item) => <button key={item} className={tab === item ? "module-active" : ""} onClick={() => go(item)}>{tabLabels[item]}</button>)}
         </div>
         <div className="lab-status"><span className="status-dot" /><span>Ejemplo con datos ficticios · sin bancos, pagos ni envíos reales.</span></div>
+        <FeedbackPanel screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" />
       </section>
 
       <section className="phone-wrap" aria-label={`YOL1 — ${activeTitle}`}>
@@ -136,18 +142,19 @@ export default function Home() {
           <header className="app-top">
             <Brand compact />
             <span className="app-section">{activeTitle}</span>
-            <div className="header-actions"><span className="demo-pill">DATOS FICTICIOS</span><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}>{theme === "dark" ? "☀" : "◐"}</button></div>
+            <div className="header-actions"><span className="demo-pill">DATOS FICTICIOS</span><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}>✎</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}>{theme === "dark" ? "☀" : "◐"}</button></div>
           </header>
-          <div className={`app-content app-${tab}`}>
+          <div className={`app-content app-${tab} ${tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
             {tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
             {tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
             {tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} onAction={handleMovementAction} onNotice={notify} />}
-            {tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} />}
+            {tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} onPreview={setMessagePreview} />}
             {tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
             {tab === "ganar" && <ComingSoon onBack={() => go("inicio")} />}
             {tab === "futuro" && <Future onNotice={notify} />}
           </div>
           {notice && <div className="phone-toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Cerrar confirmación">×</button></div>}
+          <FeedbackPanel screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" />
           <nav className="bottom-nav" aria-label="Navegación principal">
             <NavButton icon="⌂" label="Inicio" current={tab === "inicio"} onClick={() => go("inicio")} />
             <NavButton icon="↗" label="Finanzas" current={tab === "finanzas" || tab === "cartola"} onClick={() => go("finanzas")} />
@@ -159,6 +166,78 @@ export default function Home() {
       </section>
     </main>
   );
+}
+
+function MessagePreviewScreen({ preview, theme, onBack }: { preview: MessagePreview; theme: Theme; onBack: () => void }) {
+  const initialMessage = preview.direction === "collect"
+    ? `Hola ${preview.name}, me debes ${preview.amount} por ${preview.expense}. Sigue este link si quieres pagar con tu banco o descarga YOL1.`
+    : `Hola ${preview.name}, tengo pendiente pagarte ${preview.amount} por ${preview.expense}. Estoy revisando el detalle en YOL1.`;
+  const [message, setMessage] = useState(initialMessage);
+  const [copyNotice, setCopyNotice] = useState("");
+  return <main className="message-preview-shell" data-theme={theme} aria-label="Vista previa de mensaje ficticio">
+    <section className="message-preview-stage">
+      <header className="message-preview-top"><div><small>VISTA PREVIA DE MENSAJE</small><strong>{preview.name} {preview.alias}</strong></div><span>DEMO · NO ENVIADO</span></header>
+      <div className="message-date">HOY · EJEMPLO</div>
+      <div className="message-bubble">
+        <textarea aria-label="Mensaje ficticio ajustable" value={message} onChange={(event) => setMessage(event.target.value)} />
+        {preview.direction === "collect" && <code>https://paga.yol1.example/s/demo-2841</code>}
+        <time>10:42 ✓</time>
+      </div>
+      <div className="message-demo-note"><strong>Este enlace es ficticio y no se puede abrir.</strong><span>No inicia pagos, no conecta bancos y no envía nada por WhatsApp.</span></div>
+      <div className="message-preview-actions">
+        <button className="message-back" onClick={onBack}>← Volver a YOL1</button>
+        <button onClick={() => setCopyNotice("Copia simulada: no usamos el portapapeles ni otra app.")}>Simular copia</button>
+      </div>
+      {copyNotice && <p className="message-copy-notice" role="status">{copyNotice}</p>}
+      <p className="message-production-note">En producción, compartir requeriría tu consentimiento explícito, un link generado en servidor y un partner de pagos autorizado.</p>
+    </section>
+  </main>;
+}
+
+function FeedbackPanel({ screen, open, onToggle, variant }: { screen: string; open: boolean; onToggle: () => void; variant: "desktop" | "mobile" }) {
+  const [kind, setKind] = useState<FeedbackKind>("like");
+  const [message, setMessage] = useState("");
+  const [topics, setTopics] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const requiresMessage = kind !== "like";
+  const prompts: Record<FeedbackKind, { label: string; placeholder: string }> = {
+    like: { label: "¿Qué te gustó? (opcional)", placeholder: "Ej.: entendí rápido qué revisar" },
+    improve: { label: "¿Qué cambiarías?", placeholder: "Cuéntanos qué no funcionó o qué simplificarías" },
+    idea: { label: "¿Qué deberíamos considerar?", placeholder: "Describe la idea o situación que falta contemplar" },
+  };
+
+  const submitFeedback = (event: FormEvent) => {
+    event.preventDefault();
+    if (requiresMessage && !message.trim()) return;
+    localFeedbackIntake.submit({ screen, kind, message: message.trim(), topics: topics.trim() });
+    setConfirmation(`Registrado en esta sesión · ${screen}`);
+    setMessage("");
+    setTopics("");
+  };
+
+  const panelHeading = <>
+      <span className="feedback-mark">✦</span>
+      <span><small>AYÚDANOS A MEJORAR</small><strong>Feedback</strong></span>
+      {variant === "mobile" && <b>{open ? "−" : "+"}</b>}
+    </>;
+
+  return <aside className={`feedback-panel feedback-${variant} ${open ? "feedback-open" : "feedback-closed"}`} aria-label="Feedback del Product Growth Lab">
+    {variant === "desktop" ? <div className="feedback-panel-head">{panelHeading}</div> : <button className="feedback-panel-head" onClick={onToggle} aria-expanded={open}>{panelHeading}</button>}
+    {!open && <p className="feedback-peek">Estás viendo <strong>{screen}</strong>. Cuéntanos qué funciona y qué cambiarías.</p>}
+    {open && <form className="feedback-form" onSubmit={submitFeedback}>
+      <div className="feedback-context"><span>PANTALLA</span><strong>{screen}</strong></div>
+      <div className="feedback-kinds" aria-label="Tipo de feedback">{([
+        ["like", "Me gusta"],
+        ["improve", "Mejoraría"],
+        ["idea", "Idea"],
+      ] as [FeedbackKind, string][]).map(([value, label]) => <button type="button" key={value} className={kind === value ? "selected" : ""} onClick={() => { setKind(value); setConfirmation(""); }}>{label}</button>)}</div>
+      <label>{prompts[kind].label}<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={prompts[kind].placeholder} required={requiresMessage} maxLength={700} /></label>
+      <label>Temas clave (opcional)<input value={topics} onChange={(event) => setTopics(event.target.value)} placeholder="Ej.: claridad, confianza, navegación" maxLength={180} /></label>
+      <p className="feedback-privacy">Demo local: no se envía nada todavía. No incluyas datos financieros ni personales.</p>
+      <button className="feedback-submit" type="submit" disabled={requiresMessage && !message.trim()}>Guardar feedback local</button>
+      {confirmation && <p className="feedback-confirmation" role="status">✓ {confirmation}</p>}
+    </form>}
+  </aside>;
 }
 
 function NavButton({ icon, label, current, onClick }: { icon: string; label: string; current: boolean; onClick: () => void }) {
@@ -262,10 +341,9 @@ function Ledger({ source, setSource, selected, setSelected, onAction, onNotice }
   </>;
 }
 
-function Collect({ draft, setDraft, view, setView, onNotice }: { draft: CollectDraft; setDraft: (draft: CollectDraft | ((draft: CollectDraft) => CollectDraft)) => void; view: PendingView; setView: (view: PendingView) => void; onNotice: (message: string) => void }) {
+function Collect({ draft, setDraft, view, setView, onNotice, onPreview }: { draft: CollectDraft; setDraft: (draft: CollectDraft | ((draft: CollectDraft) => CollectDraft)) => void; view: PendingView; setView: (view: PendingView) => void; onNotice: (message: string) => void; onPreview: (preview: MessagePreview) => void }) {
   const [selectedPending, setSelectedPending] = useState<string | null>(null);
   const [settled, setSettled] = useState<string[]>([]);
-  const [sharePreview, setSharePreview] = useState<{ name: string; alias?: string; amount: string; direction: "collect" | "pay" } | null>(null);
   const update = (patch: Partial<CollectDraft>) => setDraft((current) => ({ ...current, ...patch }));
   const peopleRows = [
     { id: "josefa", name: "Josefa", alias: "@josefa", direction: "collect" as const, amount: "$210.000", meta: "Viaje a Pucón" },
@@ -284,16 +362,15 @@ function Collect({ draft, setDraft, view, setView, onNotice }: { draft: CollectD
   const equalAmount = Math.round(draft.amount / Math.max(participants.length, 1));
   const assigned = participants.reduce((sum, person) => sum + (draft.custom[person] ?? 0), 0);
 
-  if (draft.step === 0) return <>
+  if (draft.step === 0) return <div className="collect-home">
     <section className="collect-hero"><p className="kicker">COBRAR Y PAGAR · EJEMPLO</p><h2 className="compact-title">Lo pendiente,<br />por ambos lados.</h2><div className="pending-totals"><span><small>ME DEBEN</small><strong>$228.000</strong></span><span><small>LE DEBO</small><strong>$42.000</strong></span></div></section>
     <div className="pending-view"><button className={view === "personas" ? "selected-option" : ""} onClick={() => setView("personas")}>Por persona</button><button className={view === "grupos" ? "selected-option" : ""} onClick={() => setView("grupos")}>Por grupo / gasto</button></div>
     <div className="pending-board">
-      <section className="pending-lane"><div className="lane-heading"><div><small>POR COBRAR</small><strong>$228.000</strong></div><button onClick={() => setDraft({ ...initialDraft, step: 1 })}>＋ Nuevo gasto</button></div><div className="pending-lane-track">{receivableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio preparado para ${row.name}. No se envió nada.`)}>Recordar</button><button onClick={() => setSharePreview({ name: row.name, alias: row.alias, amount: row.amount, direction: "collect" })}>Enviar cobro</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: marcado “ya me pagaron”. YOL1 buscará una coincidencia solo en las cartolas ficticias.`); }}>Ya me pagaron</button></div>}</article>)}</div></section>
-      <section className="pending-lane"><div className="lane-heading"><div><small>POR PAGAR</small><strong>$42.000</strong></div><button onClick={() => onNotice("Pago pendiente de ejemplo creado. No se cargó ni transfirió dinero.")}>＋ Nuevo pendiente</button></div><div className="pending-lane-track">{payableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio personal creado para pagar a ${row.name}.`)}>Recordarme</button><button onClick={() => setSharePreview({ name: row.name, alias: row.alias, amount: row.amount, direction: "pay" })}>Simular pago</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pago marcado en el ejemplo; queda sujeto a conciliación ficticia.`); }}>Ya pagué</button></div>}</article>)}</div></section>
+      <section className="pending-lane"><div className="lane-heading"><div><small>POR COBRAR</small><strong>$228.000</strong></div><button onClick={() => setDraft({ ...initialDraft, step: 1 })}>＋ Nuevo gasto</button></div><div className="pending-lane-track">{receivableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio preparado para ${row.name}. No se envió nada.`)}>Recordar</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "collect" })}>Enviar cobro</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: marcado “ya me pagaron”. YOL1 buscará una coincidencia solo en las cartolas ficticias.`); }}>Ya me pagaron</button></div>}</article>)}</div></section>
+      <section className="pending-lane"><div className="lane-heading"><div><small>POR PAGAR</small><strong>$42.000</strong></div><button onClick={() => onNotice("Pago pendiente de ejemplo creado. No se cargó ni transfirió dinero.")}>＋ Nuevo pendiente</button></div><div className="pending-lane-track">{payableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio personal creado para pagar a ${row.name}.`)}>Recordarme</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "pay" })}>Simular pago</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pago marcado en el ejemplo; queda sujeto a conciliación ficticia.`); }}>Ya pagué</button></div>}</article>)}</div></section>
     </div>
     <div className="reconcile-note"><span>↻</span><p><strong>Conciliación de ejemplo</strong>Cuando marcas un pago, YOL1 busca una coincidencia en las cartolas ficticias antes de cerrarlo.</p></div>
-    {sharePreview && <section className="share-sheet"><div className="share-sheet-head"><div><small>{sharePreview.direction === "collect" ? "MENSAJE SIMULADO" : "INICIO DE PAGO SIMULADO"}</small><strong>{sharePreview.name} {sharePreview.alias}</strong></div><button onClick={() => setSharePreview(null)}>×</button></div><div className="fake-whatsapp"><span>WA</span><p>{sharePreview.direction === "collect" ? `Hola ${sharePreview.name}, me debes ${sharePreview.amount} del pendiente que compartimos. ¿Lo revisamos?` : `Hola ${sharePreview.name}, tengo pendiente pagarte ${sharePreview.amount}. Estoy revisando el detalle antes de confirmar.`}</p></div>{sharePreview.alias && <div className="yol1-direct"><span>Y</span><p>Como tiene alias YOL1, también podrías dejarle el pendiente dentro de YOL1.</p></div>}<button className="share-confirm" onClick={() => { onNotice("Simulación confirmada. No se abrió WhatsApp, no se envió el mensaje y no se movió dinero."); setSharePreview(null); }}>Confirmar simulación</button><p className="privacy-note">Vista ficticia: no abre WhatsApp, no envía mensajes y no inicia un pago real.</p></section>}
-  </>;
+  </div>;
 
   const goBack = () => update({ step: Math.max(0, draft.step - 1) });
   return <>
@@ -302,7 +379,7 @@ function Collect({ draft, setDraft, view, setView, onNotice }: { draft: CollectD
     {draft.step === 1 && <section className="flow-step"><p className="kicker">PASO 1 DE 4</p><h2 className="compact-title">Nuevo gasto</h2><label>¿Qué pagaste?<input value={draft.expense} onChange={(event) => update({ expense: event.target.value })} /></label><label>Monto total<input type="number" min="0" value={draft.amount} onChange={(event) => update({ amount: Number(event.target.value) })} /></label><button className="primary-action" onClick={() => update({ step: 2 })}>Elegir personas →</button></section>}
     {draft.step === 2 && <section className="flow-step"><p className="kicker">PASO 2 DE 4</p><h2 className="compact-title">¿Quiénes participaron?</h2><div className="participants">{draft.contacts.map((person) => <label key={person}><input type="checkbox" checked={participants.includes(person)} onChange={() => update({ participants: participants.includes(person) ? participants.filter((item) => item !== person) : [...participants, person] })} /><span className="avatar">{person[0]}</span><strong>{person}</strong><small>{person === "Tú" ? "Pagaste tú" : "Contacto demo"}</small></label>)}</div><div className="new-contact"><input value={draft.newContact} onChange={(event) => update({ newContact: event.target.value })} placeholder="Crear contacto demo" /><button onClick={() => { const name = draft.newContact.trim(); if (!name) return; update({ contacts: [...draft.contacts, name], participants: [...participants, name], custom: { ...draft.custom, [name]: 0 }, newContact: "" }); onNotice(`${name}: contacto ficticio agregado.`); }}>＋</button></div><button className="primary-action" disabled={participants.length < 2} onClick={() => update({ step: 3 })}>Definir división →</button></section>}
     {draft.step === 3 && <section className="flow-step"><p className="kicker">PASO 3 DE 4</p><h2 className="compact-title">Divide {money.format(draft.amount)}</h2><div className="segmented"><button className={draft.split === "equal" ? "selected-option" : ""} onClick={() => update({ split: "equal" })}>Partes iguales</button><button className={draft.split === "custom" ? "selected-option" : ""} onClick={() => update({ split: "custom" })}>Montos distintos</button></div><div className="split-list">{participants.map((person) => <label key={person}><span>{person}</span>{draft.split === "equal" ? <strong>{money.format(equalAmount)}</strong> : <input type="number" min="0" value={draft.custom[person] ?? 0} onChange={(event) => update({ custom: { ...draft.custom, [person]: Number(event.target.value) } })} />}</label>)}</div>{draft.split === "custom" && <p className={assigned === draft.amount ? "sum-ok" : "sum-warn"}>Asignado: {money.format(assigned)} de {money.format(draft.amount)} {assigned === draft.amount ? "✓" : "· ajusta la diferencia"}</p>}<button className="primary-action" disabled={draft.split === "custom" && assigned !== draft.amount} onClick={() => update({ step: 4 })}>Revisar reparto →</button></section>}
-    {draft.step === 4 && <section className="flow-step"><p className="kicker">PASO 4 DE 4</p><h2 className="compact-title">Confirma el reparto</h2><div className="summary-card"><span>{draft.expense}</span><strong>{money.format(draft.amount)}</strong><small>{draft.split === "equal" ? "Partes iguales" : "Montos personalizados"}</small></div><div className="split-list compact">{participants.filter((person) => person !== "Tú").map((person) => <div key={person}><span>{person}</span><strong>{money.format(draft.split === "equal" ? equalAmount : draft.custom[person] ?? 0)}</strong></div>)}</div><div className="consent-box"><strong>Confirmación de demo</strong><span>Guardar ordena el reparto solo durante esta sesión. No cobra, paga ni contacta a nadie.</span></div><button className="primary-action" onClick={() => { update({ step: 5 }); onNotice("Reparto demo guardado. Nada fue cobrado ni enviado."); }}>Guardar reparto demo →</button></section>}
+    {draft.step === 4 && <section className="flow-step"><p className="kicker">PASO 4 DE 4</p><h2 className="compact-title">Confirma el reparto</h2><div className="summary-card"><span>{draft.expense}</span><strong>{money.format(draft.amount)}</strong><small>{draft.split === "equal" ? "Partes iguales" : "Montos personalizados"}</small></div><div className="split-list compact">{participants.filter((person) => person !== "Tú").map((person) => <div key={person}><span>{person}</span><strong>{money.format(draft.split === "equal" ? equalAmount : draft.custom[person] ?? 0)}</strong></div>)}</div><div className="consent-box"><strong>Confirmación de demo</strong><span>Guardar ordena el reparto solo durante esta sesión. No cobra, paga ni contacta a nadie.</span></div><button className="primary-action" onClick={() => { const recipient = participants.find((person) => person !== "Tú") ?? "Contacto demo"; const amount = money.format(draft.split === "equal" ? equalAmount : draft.custom[recipient] ?? 0); update({ step: 5 }); onPreview({ name: recipient, amount, expense: draft.expense, direction: "collect" }); }}>Guardar y ver mensaje demo →</button></section>}
     {draft.step === 5 && <section className="success-step"><span className="success-mark">✓</span><p className="kicker">REPARTO GUARDADO</p><h2 className="compact-title">Quedó ordenado.</h2><p>El estado vive solo durante esta sesión demo. No existe link, pago ni mensaje real.</p><button className="primary-action" onClick={() => update({ step: 0 })}>Volver a pendientes</button></section>}
   </>;
 }
