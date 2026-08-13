@@ -64,17 +64,20 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 2. Cada alerta debe mostrar qué la activó, de dónde vienen los datos y qué puede hacer la persona.
 3. Las transferencias entre cuentas propias no inflan ingresos ni egresos.
 4. "Por cobrar" y "por pagar" son compromisos visibles; una persona puede confirmar, rechazar o corregir un cobro.
-5. La cartola conserva evidencia: fecha, hora, código, fuente, monto y una acción contextual.
+5. La cartola conserva evidencia: fecha, hora, código, fuente, monto y una acción contextual. La fila principal prioriza fecha, movimiento y monto; banco, código y hora viven en el detalle.
 6. Los datos del laboratorio son ficticios. No se integra ninguna cuenta ni pago desde este repositorio.
+7. Una acción no termina en un toast: revisar, guardar nota, ignorar o votar deja una señal visible durante la sesión y, cuando es sencillo, una vía para deshacer.
+8. La navegación usa íconos literales acompañados de labels legibles. Tema y Feedback nunca dependen solo de un símbolo.
+9. La vista principal prefiere lenguaje cotidiano —“Te entró”, “Gastaste”, “Revisar si este pago ya quedó resuelto”— y reserva términos técnicos para el detalle.
 
 ## Pantallas actuales
 
-- Inicio: propuesta de valor ampliada, cinco pendientes accionables y conversación financiera con selector IA/demo. Consentimiento y privacidad se concentran dentro del chat, sin crear un banner global.
+- Inicio: propuesta de valor ampliada, cinco pendientes accionables en carrusel con contador/puntos y conversación financiera con selector IA/demo. Consentimiento y privacidad se concentran dentro del chat, sin crear un banner global. “Ya lo vi” archiva con estado recuperable; no se muestra micrófono sin una función real.
 - Mis Finanzas: resultado compacto, carrusel de cuentas, métricas con destino, cartola general y últimos movimientos densos.
-- Cartola: tabla densa General/BCI/MACH, tres acciones por fila y asistente contextual de demo.
+- Cartola: tabla densa General/BCI/MACH, tres acciones por fila y asistente contextual de demo. Código/hora aparecen en el panel de detalle; revisado y nota guardada quedan señalizados de forma persistente.
 - Cobrar y pagar: bandejas apiladas 50/50 — por cobrar arriba y por pagar abajo — con scroll interno independiente, persona/grupo, aliases y reparto persistente durante sesión. El contenedor principal no desplaza cabecera, selector ni navegación. En móvil pequeño se reduce la densidad de encabezados sin convertir las bandejas en carrusel o columnas laterales.
 - La vista previa de mensaje es deliberadamente una superficie externa al teléfono YOL1: fondo, estructura y controles propios, sin logo oficial de WhatsApp. Conserva el rosa como gesto humano, el amarillo como disclosure y el acid solo para volver a YOL1. La URL ficticia se presenta como texto no navegable.
-- Ahorrar: rango potencial protagonista, tarjetas espaciadas y descartables con evidencia, certeza y acción reversible.
+- Ahorrar: rango potencial protagonista, conclusión simple primero y transparencia completa en “Ver por qué”. Ignorar es una acción visible y recuperable; el swipe nunca es la única vía.
 - Ganar: tratamiento editorial “Próximamente”, sin flujo.
 - Experimentos por explorar: feedback sin fechas, disponibilidad ni promesas de roadmap.
 - Feedback del Lab: tarjeta editorial de baja intensidad en el lateral desktop; en móvil se presenta como hoja sobre el teléfono. Usa violeta como señal de exploración, conserva superficies Night/Mist y no compite con Acid, aqua o rosa de los módulos.

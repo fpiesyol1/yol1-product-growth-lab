@@ -17,8 +17,12 @@ test("Inicio conserva datos ficticios, bandeja y elección IA/demo", async () =>
   assert.match(page, /Pregúntale a YOL1/);
   assert.match(page, /Usar IA/);
   assert.match(page, /Seguir en demo/);
+  assert.match(page, /Ya lo vi/);
+  assert.match(page, /carousel-dots/);
+  assert.match(page, /Deshacer última/);
   assert.match(page, /no compartas datos personales o financieros reales/i);
   assert.doesNotMatch(page, /Explorar ejemplo|Simular con mi información/);
+  assert.doesNotMatch(page, /Micrófono de demo/);
 });
 
 test("la IA opera server-side con consentimiento, límites y fallback", async () => {
@@ -106,9 +110,13 @@ test("Cartola usa navegación general e individual y acciones coherentes", async
   const page = await source("app/page.tsx");
   assert.match(page, /Ver cartola general/);
   assert.match(page, /\["General", "BCI", "MACH"\]/);
-  assert.match(page, /"OK" \| "Revisar" \| "Dividir" \| "Cobrar"/);
+  assert.match(page, /"Ya lo vi" \| "Revisar" \| "Dividir" \| "Cobrar"/);
   assert.match(page, /ASISTENTE DEMO/);
-  assert.match(page, /Guardar nota demo/);
+  assert.match(page, /Guardar nota del ejemplo/);
+  assert.match(page, /Nota guardada/);
+  assert.match(page, /Revisado/);
+  assert.match(page, /movement-detail-meta/);
+  assert.doesNotMatch(page, /\{movement\.bank\} · \{movement\.code\}/);
 });
 
 test("Cobrar y pagar cubre ambos lados y conserva borrador en la app", async () => {
@@ -123,7 +131,10 @@ test("Cobrar y pagar cubre ambos lados y conserva borrador en la app", async () 
   assert.match(page, /Crear contacto demo/);
   assert.match(page, /@josefa/);
   assert.match(page, /Ya me pagaron/);
-  assert.match(page, /Conciliación de ejemplo/);
+  assert.match(page, /Revisar si este pago ya quedó resuelto/);
+  assert.match(page, /Nuevo gasto compartido/);
+  assert.match(page, /Agregar deuda pendiente/);
+  assert.match(page, /Repartir lo que falta/);
   assert.match(page, /collect-home-mode/);
   assert.match(css, /\.pending-board[^}]*grid-template-rows:minmax\(0,1fr\) minmax\(0,1fr\)/i);
   assert.match(css, /\.pending-lane-track[^}]*overflow-y:auto/i);
@@ -131,11 +142,40 @@ test("Cobrar y pagar cubre ambos lados y conserva borrador en la app", async () 
   assert.match(css, /\.app-content\.collect-home-mode[^}]*overflow:hidden/i);
   assert.match(css, /overscroll-behavior:contain/i);
   assert.match(page, /VISTA PREVIA DE MENSAJE/);
+  assert.match(page, /Sigues dentro de YOL1/);
   assert.match(page, /Volver a YOL1/);
+  assert.match(page, /Ver cómo se compartiría/);
   assert.match(page, /https:\/\/paga\.yol1\.example\/s\/demo-2841/);
   assert.match(page, /consentimiento explícito, un link generado en servidor y un partner de pagos autorizado/i);
   assert.match(page, /setMessagePreview\(null\)/);
   assert.doesNotMatch(page, /href=.*paga\.yol1\.example|window\.open|wa\.me|api\.whatsapp/i);
+  assert.doesNotMatch(page, /Simular copia/);
+});
+
+test("lenguaje cotidiano, navegación literal y estados de confianza quedan visibles", async () => {
+  const page = await source("app/page.tsx");
+  const css = await source("app/globals.css");
+  assert.match(page, /Te entró/);
+  assert.match(page, /Gastaste/);
+  assert.match(page, /💵/);
+  assert.match(page, /👥/);
+  assert.match(page, /🪙/);
+  assert.match(page, /🧪/);
+  assert.match(page, /Feedback/);
+  assert.match(page, /Claro/);
+  assert.match(page, /Oscuro/);
+  assert.match(css, /\.bottom-nav button>small[^}]*font-size:9px/i);
+});
+
+test("Ahorrar ordena la conclusión antes de la evidencia sin ocultar transparencia", async () => {
+  const page = await source("app/page.tsx");
+  assert.match(page, /Ver por qué/);
+  assert.match(page, /Ignorar/);
+  assert.match(page, /Recuperar última/);
+  assert.match(page, /Puede convenirte/);
+  assert.match(page, /Evidencia/);
+  assert.match(page, /Certeza/);
+  assert.match(page, /Disclosure/);
 });
 
 test("tema dual y acentos semánticos están tokenizados", async () => {

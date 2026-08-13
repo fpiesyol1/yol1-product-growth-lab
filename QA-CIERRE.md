@@ -220,3 +220,33 @@ No se hizo commit, push ni publicación.
 ## Revisión local
 
 Con el servidor de desarrollo activo, abrir `http://localhost:3000`. No se publicó ninguna URL nueva.
+
+## Batch de confianza y lenguaje cotidiano — 13 de agosto de 2026
+
+Este cierre posterior sustituye las referencias históricas a **OK** y micrófono en las secciones anteriores:
+
+- Inicio conserva el carrusel pedido por Felipe y agrega contador/puntos; no reinstala “Desliza para ver más”. “Ya lo vi” archiva con contador y deshacer. El chat no muestra micrófono y, ante una pregunta no reconocida, propone consultas concretas.
+- Cartola retira el código técnico de la fila principal y lo mantiene en el detalle. Revisado y nota guardada dejan estados visibles con opción de deshacer/editar.
+- Header y navegación inferior exponen labels literales para tema, Feedback, Finanzas, Cobrar y pagar, Ahorrar y Experimentos; los labels móviles usan 9 px.
+- Mis Finanzas usa “Te entró” y “Gastaste”. Cobrar y pagar diferencia “Nuevo gasto compartido” de “Agregar deuda pendiente”, reemplaza “conciliación” por una frase cotidiana y permite “Repartir lo que falta”.
+- La vista externa se identifica como “Vista previa del mensaje · sigues dentro de YOL1” y “Ver cómo se compartiría” no copia ni abre otra app.
+- Ahorrar pone una conclusión simple antes de “Ver por qué”; Ignorar permanece visible y los descartes son recuperables durante la sesión.
+
+No se añadieron conexiones, pagos, mensajería, audio ni acciones financieras reales.
+
+Verificación de este batch:
+
+- Capturas reales en Chrome: `1440 × 1000` y emulación exacta `390 × 844`; en móvil se midió `scrollWidth = 390` para `html` y `body`, sin overflow horizontal. Inicio conserva header completo, contador/puntos, chat y navegación inferior visible.
+- Recorrido interactivo local: modo claro/oscuro responde; Ya lo vi conserva contador y deshacer al cambiar de módulo; Cartola muestra Revisado, mantiene `TX-81672` solo en el detalle y confirma Nota guardada; el voto de Experimentos persiste al navegar.
+- Cobrar y pagar mantiene dos filas de igual alto, `overflow-y: auto` independiente y `overflow: hidden` en la app exterior. La vista externa declara que se sigue dentro de YOL1 y vuelve a Cobrar y pagar.
+- Ahorrar confirma oportunidades ignoradas con Recuperar última; la conclusión aparece antes de “Ver por qué”. El fallback de chat, ante una pregunta fuera de alcance, ofrece tres preguntas concretas que sí puede responder.
+- Conflicto no aplicado: no se reinstaló “Desliza para ver más” en Inicio, porque Felipe había pedido retirarlo. El carrusel se descubre mediante “1 de 5” y puntos.
+
+Comandos finales:
+
+```bash
+/usr/bin/env PATH=/Users/felipepies/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:/Users/felipepies/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/usr/bin:/bin /Users/felipepies/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm run build
+/Users/felipepies/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/product-guardrails.test.mjs
+```
+
+Resultado: build y TypeScript correctos; **12 tests aprobados, 0 fallidos**. Revisión local en `http://localhost:3000`; no se hizo commit, push ni publicación.

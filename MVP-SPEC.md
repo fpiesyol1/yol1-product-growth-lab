@@ -33,9 +33,9 @@ El **intake de feedback** es una utilidad transversal del Lab, no un octavo mód
 
 **Trabajo a resolver:** entender qué hace YOL1 y resolver una señal cotidiana sin buscarla en varios módulos.
 
-Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal cuenta los pendientes visibles e incluye cinco situaciones sintéticas: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. **OK** archiva durante la sesión; **Revisar** abre evidencia o detalle; la tercera acción lleva al destino pertinente. La conversación acepta texto o seis sugerencias y usa IA server-side únicamente después de elección explícita; sin clave o consentimiento responde desde reglas de demo. El micrófono es solo visual y no graba.
+Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal cuenta los pendientes visibles e incluye cinco situaciones sintéticas: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. Un contador y puntos hacen descubrible el carrusel sin reinstalar instrucciones redundantes. **Ya lo vi** archiva durante la sesión; **Revisar** abre evidencia o detalle; la tercera acción lleva al destino pertinente. Los elementos archivados dejan una señal persistente y recuperable. La conversación acepta texto o seis sugerencias y usa IA server-side únicamente después de elección explícita; sin clave o consentimiento responde desde reglas de demo. No se muestra micrófono porque no existe captura de audio.
 
-**Aceptación:** una acción responde con confirmación visible en móvil y desktop; OK retira una tarjeta durante la sesión; Revisar y la tercera acción tienen destino útil. La IA no recibe texto antes de consentimiento, la clave vive solo en servidor, el request usa `store: false`, el fallback conserva la demo y ningún camino usa audio real.
+**Aceptación:** una acción responde con confirmación visible en móvil y desktop; Ya lo vi retira una tarjeta, incrementa el contador persistente y permite deshacer durante la sesión; Revisar y la tercera acción tienen destino útil. Si el fallback no reconoce una pregunta, ofrece preguntas concretas que sí puede responder. La IA no recibe texto antes de consentimiento, la clave vive solo en servidor, el request usa `store: false` y ningún camino usa audio real.
 
 ### Bandeja de aprendizaje interna
 
@@ -45,7 +45,7 @@ Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplif
 
 **Trabajo a resolver:** entender de dónde vienen los números y qué merece atención.
 
-Incluye resultado mensual compacto, carrusel horizontal de cuentas, ingreso/egreso consolidado, por cobrar/pagar y últimos movimientos en filas densas. Cada métrica abre su detalle; por cobrar/pagar lleva al módulo correspondiente. **Ver cartola general** queda debajo de las cuentas. **Agregar banco** y **Agregar cartola** solo confirman que no existe integración ni carga.
+Incluye resultado mensual compacto, carrusel horizontal de cuentas, **Te entró/Gastaste** consolidado, por cobrar/pagar y últimos movimientos en filas densas. Cada métrica abre su detalle; por cobrar/pagar lleva al módulo correspondiente. **Ver cartola general** queda debajo de las cuentas. **Agregar banco** y **Agregar cartola** solo confirman que no existe integración ni carga.
 
 **Aceptación:** resultado no se confunde con saldo; fuentes se recorren horizontalmente; cada fuente y la cartola general tienen destino; Finanzas no duplica la bandeja de Inicio.
 
@@ -53,7 +53,7 @@ Incluye resultado mensual compacto, carrusel horizontal de cuentas, ingreso/egre
 
 **Trabajo a resolver:** inspeccionar movimientos y convertirlos en acciones concretas.
 
-Incluye navegación General/BCI/MACH, fecha, hora, código, monto y fuente. Cada fila ofrece **OK, Revisar y Dividir/Cobrar**. Revisar abre un asistente contextual de demo que explica evidencia y permite guardar una nota local de sesión; no entrega resultados garantizados ni enlaces externos.
+Incluye navegación General/BCI/MACH, fecha, hora, monto y fuente. El código técnico se conserva en el detalle, no en la fila principal. Cada fila ofrece **Ya lo vi, Revisar y Dividir/Cobrar**. Ya lo vi deja la fila atenuada con check y permite deshacer; Revisar abre un asistente contextual de demo que explica evidencia y permite guardar o editar una nota con estado persistente durante la sesión; no entrega resultados garantizados ni enlaces externos.
 
 **Aceptación:** se puede cambiar de cartola, confirmar cualquier acción y ver feedback; Disney abre evidencia contextual; una transferencia propia permanece como clasificación revisable.
 
@@ -61,7 +61,7 @@ Incluye navegación General/BCI/MACH, fecha, hora, código, monto y fuente. Cada
 
 **Trabajo a resolver:** entender lo pendiente en ambos sentidos y transformar un gasto en montos claros por persona.
 
-La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos bandejas verticales 50/50 del alto: **Por cobrar arriba** y **Por pagar abajo**. Cada lista se desplaza de manera independiente; la otra bandeja, cabecera, selector y navegación inferior permanecen estables. En móvil pequeño se comprimen encabezados y acciones sin cambiar el orden ni convertirlo en carrusel. Personas con YOL1 pueden mostrar un alias ficticio `@nombre`. Cada pendiente se abre dentro de su bandeja y permite simular recordatorio o marcar “ya me pagaron/ya pagué”; esos estados quedan sujetos a conciliación contra cartolas ficticias. **Nuevo gasto** conserva el flujo gasto → contacto → división → confirmación y su borrador al navegar.
+La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos bandejas verticales 50/50 del alto: **Por cobrar arriba** y **Por pagar abajo**. Cada lista se desplaza de manera independiente; la otra bandeja, cabecera, selector y navegación inferior permanecen estables. En móvil pequeño se comprimen encabezados y acciones sin cambiar el orden ni convertirlo en carrusel. Personas con YOL1 pueden mostrar un alias ficticio `@nombre`. Cada pendiente se abre dentro de su bandeja y permite simular recordatorio o marcar “ya me pagaron/ya pagué”; luego se invita a **revisar si este pago ya quedó resuelto** contra cartolas ficticias. **Nuevo gasto compartido** abre el flujo gasto → contacto → división → confirmación; **Agregar deuda pendiente** crea un borrador visible y reversible. En montos distintos, **Repartir lo que falta** distribuye la diferencia positiva en partes iguales y confirma el resultado sin ejecutar un pago.
 
 Después de confirmar una solicitud, el prototipo muestra una superficie separada del marco YOL1: una **vista previa de mensaje** con texto ajustable, datos ficticios y URL `.example` sin vínculo. “Volver a YOL1” restaura la solicitud y el borrador de sesión. No se abre WhatsApp ni se copia, envía o cobra nada. Producción exigiría consentimiento explícito antes de compartir, generación server-side de un link de pago y un partner autorizado; ninguno se integra en este Lab.
 
@@ -71,7 +71,7 @@ Después de confirmar una solicitud, el prototipo muestra una superficie separad
 
 **Trabajo a resolver:** encontrar oportunidades cotidianas sin promesas opacas.
 
-Abre con un rango grande de potencial estimado, no garantizado. Prioriza cargo dudoso → beneficio desaprovechado por tarjeta → cuenta o servicio posiblemente ineficiente → gasto posiblemente compartido. Cada tarjeta explica evidencia, fuente, certeza, estimación, acción reversible y disclosure. Puede descartarse con botón o gesto lateral; plan y división abren simulaciones explícitas, nunca una compra o cobro real.
+Abre con un rango grande de potencial estimado, no garantizado. Prioriza cargo dudoso → beneficio desaprovechado por tarjeta → cuenta o servicio posiblemente ineficiente → gasto posiblemente compartido. Cada tarjeta presenta primero una conclusión simple y conserva evidencia, fuente, certeza, estimación, acción reversible y disclosure bajo **Ver por qué**. Ignorar permanece como botón visible y deja un contador recuperable; el gesto lateral es solo un atajo secundario. Plan y división abren simulaciones explícitas, nunca una compra o cobro real.
 
 **Aceptación:** ninguna tarjeta afirma ahorro garantizado ni fraude; la persona puede abrir la explicación y decidir qué hacer.
 
@@ -95,7 +95,7 @@ En desktop reemplaza la fotografía editorial por un recuadro compacto siempre a
 
 ### Journey A — cargo dudoso
 
-Inicio → tarjeta Disney+ → Revisar → Cartola general con Disney+ → asistente contextual → guardar nota u OK.
+Inicio → tarjeta Disney+ → Revisar → Cartola general con Disney+ → asistente contextual → guardar nota o marcar Ya lo vi.
 
 ### Journey B — beneficio desaprovechado
 

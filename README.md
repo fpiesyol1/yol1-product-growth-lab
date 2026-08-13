@@ -6,13 +6,13 @@ La propuesta que explora esta versión es: **“Con YOL1 entiendes tus finanzas 
 
 ## Qué incluye
 
-- **Inicio:** propuesta de valor ampliada, cinco pendientes de ejemplo —cargo dudoso, por cobrar, por pagar, beneficio y gasto posiblemente compartido— y una conversación financiera con IA opcional o fallback demo.
+- **Inicio:** propuesta de valor ampliada, cinco pendientes de ejemplo —cargo dudoso, por cobrar, por pagar, beneficio y gasto posiblemente compartido— en un carrusel con contador/puntos, y una conversación financiera con IA opcional o fallback demo. “Ya lo vi” archiva y deja un contador recuperable durante la sesión.
 - **Mis Finanzas:** resultado mensual, carrusel de cuentas, acceso a cartola general, cuatro métricas accionables y últimos movimientos compactos.
-- **Cartola:** cartola General, BCI o MACH; fecha, hora, código y monto; acciones consistentes OK, Revisar y Dividir/Cobrar. Revisar abre un asistente contextual y permite guardar una nota solo durante la sesión.
+- **Cartola:** cartola General, BCI o MACH; fecha, hora y monto en la fila principal, con banco/código disponibles en el detalle; acciones consistentes Ya lo vi, Revisar y Dividir/Cobrar. Revisar abre un asistente contextual y permite guardar una nota con estado visible durante la sesión.
 - **Cobrar y pagar:** separa por cobrar arriba y por pagar abajo en dos bandejas que dividen el alto 50/50, por persona o grupo. Cada lista tiene scroll interno independiente mientras cabecera, selector y navegación permanecen estables. Incluye aliases, recordatorios y estados “ya pagado”. Al confirmar una solicitud, sale del marco YOL1 hacia una vista previa de mensaje ajustable, con URL ficticia no navegable y retorno que conserva el borrador de sesión.
 
 La vista de mensaje no abre WhatsApp, no copia al portapapeles, no genera links ni inicia pagos. Una implementación productiva requeriría consentimiento explícito antes de compartir, generación server-side del link y un partner de pagos autorizado.
-- **Ahorrar:** presenta potencial estimado y cuatro oportunidades: cargo dudoso, beneficio por tarjeta, cuenta/servicio y gasto posiblemente compartido. Se pueden abrir, ignorar o descartar con gesto lateral.
+- **Ahorrar:** presenta potencial estimado y cuatro oportunidades: cargo dudoso, beneficio por tarjeta, cuenta/servicio y gasto posiblemente compartido. Primero muestra una conclusión cotidiana; evidencia, fuente, certeza, rango y disclosure siguen disponibles en “Ver por qué”. Ignorar es siempre visible y reversible durante la sesión.
 - **Ganar:** solo “Próximamente”.
 - **Experimentos:** feedback local sobre ideas ya conversadas, sin fechas ni disponibilidad.
 - **Feedback del Lab:** recuadro siempre abierto al final del lateral desktop, después de la navegación de módulos, y acceso compacto en móvil. Detecta la pantalla activa y acepta “Me gusta”, “Mejoraría” o “Idea”; usa la bandeja compartida cuando Postgres está activo y fallback local en desarrollo.
@@ -36,10 +36,10 @@ Para recibir feedback de otros navegadores, conecta Neon Postgres desde Vercel y
 Abre `http://localhost:3000`. Recorridos sugeridos:
 
 1. Inicio → Disney+ → Revisar → asistente contextual → dejar nota.
-2. Inicio → OK en una tarjeta → confirmar que desaparece y aparece feedback visible.
+2. Inicio → Ya lo vi en una tarjeta → confirmar que desaparece, aumenta el contador de revisados y se puede deshacer.
 3. Inicio → elegir IA o demo → probar preguntas sobre mes, deudas, beneficios y ahorro → marcar una respuesta Útil/Mejoraría.
-4. Finanzas → Ingresos/Egresos → detalle filtrado; Por cobrar/Por pagar → módulo social.
-5. Cobrar y pagar → abrir Josefa/Camila → simular cobro o pago → verificar el guardrail; alternar persona/grupo sin mover toda la pantalla.
+4. Finanzas → Te entró/Gastaste → detalle filtrado; Por cobrar/Por pagar → módulo social.
+5. Cobrar y pagar → abrir Josefa/Camila → simular cobro o pago → verificar el guardrail; alternar persona/grupo sin mover toda la pantalla; comprobar los CTAs diferenciados “Nuevo gasto compartido” y “Agregar deuda pendiente”.
 6. Ahorrar → beneficio BCI, plan móvil o Liguria → revisar evidencia → simular o ignorar.
 7. Cambiar entre oscuro y claro en Inicio, Finanzas, Cartola y Cobrar y pagar.
 8. Abrir Feedback, cambiar de módulo y comprobar que la pantalla se actualiza. “Mejoraría” e “Idea” requieren comentario; “Me gusta” permite un envío rápido.
