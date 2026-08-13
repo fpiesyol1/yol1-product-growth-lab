@@ -139,13 +139,21 @@ Posible experimento posterior: una experiencia de propuestas sin GitHub donde un
 
 La navegabilidad de este dummy solo aporta evidencia de usabilidad y comprensión inicial. No demuestra demanda, product-market fit, economics ni readiness operacional o regulatoria.
 
-## 8. Arquitectura de portfolio aprobada
+## 8. Onboarding y activación progresiva
 
-El producto publicado del Lab se llama **Acompañante financiero** y contiene Mis finanzas, Cobrar y pagar, Ahorrar y Ganar. El selector de portfolio contiene exactamente seis productos: Acompañante financiero, Onboarding y KYC progresivo, Home Banking, Tarjetas, Remesas y Construir mi propio producto. Borradores o propuestas no entran a este selector hasta que Felipe los autorice.
+**Onboarding y KYC progresivo** pasa a ser el segundo producto publicado del Lab. El recorrido de demo es: bienvenida → teléfono o email → OTP → pre-registro → acceso de exploración al Acompañante financiero. T0 permite conocer la app sin datos financieros propios ni activaciones.
+
+`Mi banco` vive dentro del Acompañante: cuando la persona decide activar una función personal, pide RUT + número de serie y luego muestra biometría **simulada**. No valida identidad, no abre cuenta, no conecta banca y no decide KYC real. Cognito, API Gateway/Lambda, DynamoDB y CDP son referencias del discovery; proveedor KYC, ID definitivo y soporte/revisión manual siguen por definir.
+
+El menú de perfil se abre desde el logo superior izquierdo y muestra un checklist de información: lo completo, lo pendiente y qué capacidad desbloquearía cada paso.
+
+## 9. Arquitectura de portfolio aprobada
+
+El producto publicado del Lab se llama **Acompañante financiero** y contiene Mis finanzas, Cobrar y pagar, Ahorrar, Gana más lucas y Mi banco. El selector de portfolio contiene exactamente seis productos: Acompañante financiero, Onboarding y KYC progresivo, Home Banking, Tarjetas, Remesas y Construir mi propio producto. Borradores o propuestas no entran a este selector hasta que Felipe los autorice.
 
 Los cinco espacios no publicados muestran únicamente estados vacíos. No contienen journeys, formularios operacionales, integraciones ni claims. “Construir mi propio producto” puede explicar que a futuro ordenará propuestas revisables, pero no implementa intake, MCP, automatización de ramas ni publicación.
 
-## 9. Ficha de producto y eventos propuestos
+## 10. Ficha de producto y eventos propuestos
 
 La ficha contextual es una superficie editorial interna del Lab. Sus semillas son propuestas no definitivas:
 
@@ -156,6 +164,6 @@ La ficha contextual es una superficie editorial interna del Lab. Sus semillas so
 
 Los eventos viven como atributos o mapeo local y no se envían a analytics. Un click conserva su comportamiento real de demo. La ficha no reemplaza documentación técnica, legal ni regulatoria.
 
-## 10. Contradicciones y jerarquía de fuentes
+## 11. Contradicciones y jerarquía de fuentes
 
 La bandeja interna usa esta prioridad: **decisión verbal de Felipe > decisión aprobada > reunión reciente > Notion/Second Brain > Jira > estrategia/contexto**. Los conflictos semilla son ejemplos no sensibles y se marcan como demo/por validar. Felipe puede elegir A, B o pedir más contexto con comentario; la resolución vive en el navegador, actualiza la ficha local y no edita archivos.

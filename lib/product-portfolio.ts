@@ -22,8 +22,8 @@ export type LivingSpec = {
 };
 
 export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
-  { id: "companion", shortLabel: "Acompañante", name: "Acompañante financiero", icon: "✦", published: true, description: "El prototipo activo del Lab: Mis finanzas, Cobrar y pagar, Ahorrar y Ganar." },
-  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", published: false, description: "Espacio reservado. No hay flujo publicado ni definición regulatoria cerrada." },
+  { id: "companion", shortLabel: "Acompañante", name: "Acompañante financiero", icon: "✦", published: true, description: "El prototipo activo del Lab: finanzas, cobrar y pagar, ahorrar, ganar más lucas y Mi banco." },
+  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", published: true, description: "Entrada por teléfono o email con OTP, pre-registro y activación progresiva." },
   { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", published: false, description: "Espacio reservado. No representa banca construida ni disponible." },
   { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", published: false, description: "Espacio reservado. No hay emisión, procesamiento ni producto publicado." },
   { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", published: false, description: "Espacio reservado. No hay envíos, tipo de cambio ni licencias definidas." },
@@ -104,19 +104,28 @@ const companionSpecs: Record<string, LivingSpec> = {
     questions: ["¿Qué problema cotidiano debería resolver antes de diseñar un flujo?"],
     risks: ["Prometer ingresos sin un mecanismo real", "No transparentar pagos de terceros"],
   },
-  futuro: {
-    event: "experiments.view",
-    architecture: ["Vitrina local de hipótesis", "Votos de sesión"],
-    data: { store: ["Votos e ideas de prueba"], query: ["Hipótesis autorizadas"], handling: "No convertir votos en promesas de roadmap." },
-    kyc: { state: "No aplica", reason: "La vitrina no habilita productos ni identifica personas." },
-    licenses: { state: "No aplica", reason: "Mostrar hipótesis no equivale a ofrecer un servicio regulado." },
-    questions: ["¿Qué evidencia habilita pasar una idea a pantalla autorizada?"],
-    risks: ["Que un usuario entienda una hipótesis como producto comprometido"],
+  banco: {
+    event: "my-bank.view",
+    architecture: ["React Native · activación progresiva", "Cognito · sesión autenticada", "API Gateway + Lambda · orquestación (por validar)", "Proveedor KYC/biometría · pendiente de selección", "CDP · deduplicación y unión de identidad (por definir)"],
+    data: { store: ["Estado de activación", "Referencia del caso KYC", "Consentimiento y versión aceptada"], query: ["Estado del pre-registro", "Reglas de elegibilidad", "Resultado del proveedor KYC"], handling: "RUT, número de serie, biometría y documentos no van a analytics ni quedan expuestos en este prototipo." },
+    kyc: { state: "Requerido", reason: "La pantalla solicita RUT + número de serie y luego biometría simulada para activar Mi banco." },
+    licenses: { state: "Por validar", reason: "Activar una cuenta o conectar banca depende de partner, vehículo y definición legal en Chile." },
+    questions: ["¿Cuándo se crea el ID definitivo Yol1?", "¿Qué proveedor y qué datos conserva cada parte?"],
+    risks: ["Pedir identidad antes de que la persona entienda el beneficio", "No tener salida humana ante revisión manual", "Confundir una simulación con validación real"],
   },
 };
 
 export function getLivingSpec(product: ProductDefinition, screen: string): LivingSpec {
   if (product.id === "companion") return companionSpecs[screen] ?? companionSpecs.inicio;
+  if (product.id === "kyc") return {
+    event: "onboarding.view",
+    architecture: ["React Native · app móvil (decisión de equipo)", "Cognito · OTP, sesión y credenciales", "API Gateway + Lambda · perfil temporal y reglas", "DynamoDB · pre-registro y estados de onboarding", "CDP · resolución de duplicidades e identidad canónica (por definir)"],
+    data: { store: ["ID temporal", "Canal de acceso verificado", "Estado de onboarding", "Consentimientos versionados"], query: ["Estado de OTP", "Regla de duplicidad", "Estado KYC cuando se active"], handling: "T0 no activa productos ni usa datos financieros propios. No guardar OTP, PIN, biometría o documentos en analytics." },
+    kyc: { state: "Por validar", reason: "RUT + número de serie y biometría se solicitan al activar Mi banco; el ID definitivo queda abierto." },
+    licenses: { state: "Por validar", reason: "Chile es la base. La capacidad financiera depende de vehículo, partner y revisión Legal." },
+    questions: ["¿Cuándo nace el ID definitivo Yol1?", "¿Cuál es el SLA y ruta de Customer Success ante revisión o pérdida de acceso?"],
+    risks: ["OTP no recibido o expirado", "Pre-registros duplicados por teléfono o email", "Abandono durante la validación de identidad", "Explicar biometría como demo cuando no hay proveedor conectado"],
+  };
   return {
     event: `portfolio.${product.id}.view`,
     architecture: ["Sin arquitectura aprobada", "React Native + AWS son candidatos, no decisiones"],

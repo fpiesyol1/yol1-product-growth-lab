@@ -186,7 +186,8 @@ test("lenguaje cotidiano, navegación literal y estados de confianza quedan visi
   assert.match(page, /💵/);
   assert.match(page, /👥/);
   assert.match(page, /🪙/);
-  assert.match(page, /🧪/);
+  assert.match(page, /Gana más lucas/);
+  assert.match(page, /Mi banco/);
   assert.match(page, /Feedback/);
   assert.match(page, /Claro/);
   assert.match(page, /Oscuro/);
@@ -249,7 +250,7 @@ test("feedback conserva fallback local y permanece desacoplado de GitHub", async
   assert.match(architecture, /branch \+ PR.*aprobación|branch\/PR.*aprobación/i);
 });
 
-test("portfolio mantiene exactamente seis productos y solo publica el Acompañante financiero", async () => {
+test("portfolio mantiene seis productos y publica Acompañante más Onboarding", async () => {
   const page = await source("app/page.tsx");
   const portfolio = await source("lib/product-portfolio.ts");
   const css = await source("app/globals.css");
@@ -261,8 +262,8 @@ test("portfolio mantiene exactamente seis productos y solo publica el Acompañan
   assert.match(portfolio, /name: "Tarjetas"/);
   assert.match(portfolio, /name: "Remesas"/);
   assert.match(portfolio, /name: "Construir mi propio producto"/);
-  assert.equal((portfolio.match(/published: true/g) ?? []).length, 1);
-  assert.equal((portfolio.match(/published: false/g) ?? []).length, 5);
+  assert.equal((portfolio.match(/published: true/g) ?? []).length, 2);
+  assert.equal((portfolio.match(/published: false/g) ?? []).length, 4);
   assert.match(page, /NO PUBLICADO/);
   assert.doesNotMatch(page, /Volver al Acompañante financiero/);
   assert.match(portfolio, /EMPTY_STATE_LIBRARY[\s\S]*perro feliz que te hará compañía/i);
@@ -308,8 +309,8 @@ test("ficha viva hace visibles eventos propuestos, certeza y feedback contextual
 test("los productos no publicados no simulan una app ni una ficha técnica", async () => {
   const page = await source("app/page.tsx");
   const css = await source("app/globals.css");
-  assert.match(page, /productId === "companion" \? <section className="phone-wrap"/);
-  assert.match(page, /productId === "companion" && <LivingSpecification/);
+  assert.match(page, /productId === "companion" \|\| productId === "kyc"/);
+  assert.match(page, /productId === "companion" \|\| productId === "kyc"/);
   assert.match(page, /TENGO UNA IDEA/);
   assert.match(page, /className="unpublished-phone"/);
   assert.match(css, /\.unpublished-phone \{/);

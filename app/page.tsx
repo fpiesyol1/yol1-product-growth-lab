@@ -7,7 +7,7 @@ import { submitChatResponse, submitGeneralFeedback } from "../lib/shared-feedbac
 import { DECISION_CONFLICTS, readDecisionResolutions, type DecisionResolution } from "../lib/decision-inbox";
 import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, proposedEventForElement, simpleEventName, type LivingSpec, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
 
-type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "futuro";
+type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
 type Theme = "dark" | "light";
 type MovementAction = "Ya lo vi" | "Revisar" | "Dividir" | "Cobrar";
 type PendingView = "personas" | "grupos";
@@ -31,8 +31,8 @@ const tabLabels: Record<Tab, string> = {
   cartola: "Cartola",
   cobrar: "Cobrar y pagar",
   ahorrar: "Ahorrar",
-  ganar: "Ganar",
-  futuro: "Experimentos",
+  ganar: "Gana más lucas",
+  banco: "Mi banco",
 };
 
 const movements = [
@@ -81,6 +81,8 @@ export default function Home() {
   const [touchInspection, setTouchInspection] = useState(false);
   const [feedbackRecords, setFeedbackRecords] = useState<FeedbackRecord[]>([]);
   const [decisionResolutions, setDecisionResolutions] = useState<Record<string, DecisionResolution>>({});
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("yol1-lab-theme");
@@ -158,6 +160,7 @@ export default function Home() {
     const index = PORTFOLIO_PRODUCTS.findIndex((product) => product.id === next);
     setEmptyStateIndex(next === "builder" ? 1 : Math.max(0, index * 2));
     setFeedbackOpen(false);
+    setProfileOpen(false);
   };
 
   if (messagePreview) return <MessagePreviewScreen preview={messagePreview} theme={theme} onBack={() => setMessagePreview(null)} />;
@@ -165,7 +168,7 @@ export default function Home() {
   return (
     <main className="lab-shell" data-theme={theme} onPointerOver={(event) => inspectTarget(event.target)} onFocusCapture={(event) => inspectTarget(event.target)} onClickCapture={(event) => { if (touchInspection) inspectTarget(event.target); }}>
       <section className="portfolio-rail" aria-label="Portfolio de productos del Lab">
-        <div className="portfolio-heading"><span>PORTFOLIO YOL1</span><strong>6 espacios · 1 publicado</strong></div>
+        <div className="portfolio-heading"><span>PORTFOLIO YOL1</span><strong>6 espacios · 2 publicados</strong></div>
         <nav className="product-selector">
           {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event={`portfolio.${product.id}.select`} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.published ? "PUBLICADO" : "NO PUBLICADO"}</small></button>)}
         </nav>
@@ -185,40 +188,77 @@ export default function Home() {
         <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={!activeProduct.published} onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
       </section>
 
-      {productId === "companion" ? <section className="phone-wrap" aria-label={`YOL1 — ${activeTitle}`}>
+      {(productId === "companion" || productId === "kyc") ? <section className="phone-wrap" aria-label={`YOL1 — ${activeTitle}`}>
         <span className="phone-halo" aria-hidden="true" />
         <div className="phone">
           <div className="phone-notch" />
           <header className="app-top">
-            <Brand compact />
+            <button className="menu-trigger" onClick={() => setProfileOpen(true)} aria-label="Abrir menú de perfil"><Brand compact /></button>
             <span className="app-section">{activeTitle}</span>
             <div className="header-actions"><span className="demo-pill">DATOS FICTICIOS</span><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
           </header>
           <div className={`app-content app-${productId === "companion" ? tab : "unpublished"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
             <>
-              {tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
-              {tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
-              {tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} reviewed={reviewedMovements} onUnreview={(id) => setReviewedMovements((items) => items.filter((item) => item !== id))} notes={movementNotes} setNotes={setMovementNotes} savedNotes={savedMovementNotes} setSavedNotes={setSavedMovementNotes} onAction={handleMovementAction} onNotice={notify} />}
-              {tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} onPreview={setMessagePreview} />}
-              {tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
-              {tab === "ganar" && <ComingSoon onBack={() => go("inicio")} />}
-              {tab === "futuro" && <Future votes={experimentVotes} setVotes={setExperimentVotes} onNotice={notify} />}
+              {productId === "kyc" && <OnboardingFlow step={onboardingStep} setStep={setOnboardingStep} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Pre-registro demo creado. Ya puedes conocer a tu acompañante financiero."); }} />}
+              {productId === "companion" && tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
+              {productId === "companion" && tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
+              {productId === "companion" && tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} reviewed={reviewedMovements} onUnreview={(id) => setReviewedMovements((items) => items.filter((item) => item !== id))} notes={movementNotes} setNotes={setMovementNotes} savedNotes={savedMovementNotes} setSavedNotes={setSavedMovementNotes} onAction={handleMovementAction} onNotice={notify} />}
+              {productId === "companion" && tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} onPreview={setMessagePreview} />}
+              {productId === "companion" && tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
+              {productId === "companion" && tab === "ganar" && <EarnMore onBack={() => go("inicio")} />}
+              {productId === "companion" && tab === "banco" && <MyBank onNotice={notify} />}
             </>
           </div>
           {notice && <div className="phone-toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Cerrar confirmación">×</button></div>}
           <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
-          <nav className="bottom-nav" aria-label="Navegación principal">
+          {profileOpen && <ProfileMenu onClose={() => setProfileOpen(false)} onBank={() => { setProfileOpen(false); go("banco"); }} />}
+          {productId === "companion" && <nav className="bottom-nav bottom-nav-six" aria-label="Navegación principal">
             <NavButton icon="⌂" label="Inicio" current={tab === "inicio"} onClick={() => go("inicio")} />
             <NavButton icon="💵" label="Finanzas" current={tab === "finanzas" || tab === "cartola"} onClick={() => go("finanzas")} />
             <NavButton icon="👥" label="Cobrar/pagar" current={tab === "cobrar"} onClick={() => go("cobrar")} />
             <NavButton icon="🪙" label="Ahorrar" current={tab === "ahorrar"} onClick={() => go("ahorrar")} />
-            <NavButton icon="🧪" label="Experimentos" current={tab === "ganar" || tab === "futuro"} onClick={() => go("futuro")} />
-          </nav>
+            <NavButton icon="✦" label="Ganar" current={tab === "ganar"} onClick={() => go("ganar")} />
+            <NavButton icon="⌂" label="Mi banco" current={tab === "banco"} onClick={() => go("banco")} />
+          </nav>}
         </div>
       </section> : <UnpublishedStage product={activeProduct} stateIndex={emptyStateIndex} />}
-      {productId === "companion" && <LivingSpecification product={activeProduct} screen={activeTitle} spec={livingSpec} inspectedEvent={inspectedEvent || livingSpec.event} feedback={feedbackRecords} resolutions={decisionResolutions} />}
+      {(productId === "companion" || productId === "kyc") && <LivingSpecification product={activeProduct} screen={activeTitle} spec={livingSpec} inspectedEvent={inspectedEvent || livingSpec.event} feedback={feedbackRecords} resolutions={decisionResolutions} />}
     </main>
   );
+}
+
+function OnboardingFlow({ step, setStep, onEnterAdvisor }: { step: number; setStep: (step: number) => void; onEnterAdvisor: () => void }) {
+  const [method, setMethod] = useState<"teléfono" | "email">("teléfono");
+  const [contact, setContact] = useState("");
+  const [otp, setOtp] = useState("");
+  return <section className="onboarding-flow">
+    <div className="onboarding-progress" aria-label={`Paso ${step + 1} de 4`}><span style={{ width: `${(step + 1) * 25}%` }} /></div>
+    {step === 0 && <><p className="kicker">BIENVENIDO A YOL1</p><h2>Tu plata, más clara.<br /><span>A tu ritmo.</span></h2><p className="onboarding-copy">Conoce tu acompañante financiero antes de activar datos propios o productos.</p><div className="onboarding-art" aria-hidden="true">✦</div><button className="primary-action" onClick={() => setStep(1)}>Empezar →</button></>}
+    {step === 1 && <><button className="back-link" onClick={() => setStep(0)}>← Volver</button><p className="kicker">ENTRA A YOL1</p><h2 className="compact-title">¿Cómo te mandamos el código?</h2><div className="auth-choice"><button className={method === "teléfono" ? "selected-option" : ""} onClick={() => setMethod("teléfono")}>Teléfono</button><button className={method === "email" ? "selected-option" : ""} onClick={() => setMethod("email")}>Email</button></div><label className="onboarding-field">{method === "teléfono" ? "Tu número" : "Tu email"}<input value={contact} onChange={(event) => setContact(event.target.value)} placeholder={method === "teléfono" ? "+56 9 1234 5678" : "tu@email.com"} /></label><p className="microcopy">Esto crea un pre-registro. Todavía no activa cuentas ni productos financieros.</p><button className="primary-action" disabled={!contact.trim()} onClick={() => setStep(2)}>Enviar código →</button></>}
+    {step === 2 && <><button className="back-link" onClick={() => setStep(1)}>← Cambiar {method}</button><p className="kicker">CÓDIGO ENVIADO</p><h2 className="compact-title">Confirma que eres tú.</h2><p className="onboarding-copy">Escribe el código que mandamos a {contact || `tu ${method}`}.</p><label className="onboarding-field">Código de 6 dígitos<input inputMode="numeric" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" /></label><button className="primary-action" disabled={otp.length < 6} onClick={() => setStep(3)}>Confirmar →</button><button className="secondary-action" onClick={() => setOtp("123456")}>Usar código demo</button></>}
+    {step === 3 && <><p className="kicker">PRE-REGISTRO LISTO</p><h2 className="compact-title">Ya puedes conocer tu acompañante.</h2><div className="onboarding-check"><span>✓</span><div><strong>Explorar está habilitado</strong><small>Podrás mirar cómo funciona Yol1, sin conectar bancos ni usar datos propios.</small></div></div><div className="onboarding-check muted"><span>○</span><div><strong>Activaciones, después</strong><small>Cuando quieras activar una función, te pediremos solo la información necesaria.</small></div></div><button className="primary-action" onClick={onEnterAdvisor}>Ir al acompañante financiero →</button></>}
+  </section>;
+}
+
+function MyBank({ onNotice }: { onNotice: (message: string) => void }) {
+  const [step, setStep] = useState<"start" | "rut" | "bio" | "done">("start");
+  const [rut, setRut] = useState("");
+  const [serial, setSerial] = useState("");
+  if (step === "start") return <section className="bank-flow"><p className="kicker">ACTIVA MI BANCO</p><h2>Para usar datos propios,<br /><span>primero validemos tu identidad.</span></h2><p>Te pediremos RUT y número de serie. Después viene una prueba de biometría simulada.</p><button className="primary-action" onClick={() => setStep("rut")}>Completar información →</button></section>;
+  if (step === "rut") return <section className="bank-flow"><button className="back-link" onClick={() => setStep("start")}>← Volver</button><p className="kicker">IDENTIDAD · PASO 1 DE 2</p><h2 className="compact-title">Tu RUT y número de serie.</h2><label className="onboarding-field">RUT<input value={rut} onChange={(event) => setRut(event.target.value)} placeholder="12.345.678-9" /></label><label className="onboarding-field">Número de serie<input value={serial} onChange={(event) => setSerial(event.target.value)} placeholder="Ej.: A123456789" /></label><p className="microcopy">Demo: no validamos ni almacenamos tu cédula.</p><button className="primary-action" disabled={!rut || !serial} onClick={() => setStep("bio")}>Continuar a biometría →</button></section>;
+  if (step === "bio") return <section className="bank-flow biometric-flow"><p className="kicker">IDENTIDAD · PASO 2 DE 2</p><div className="biometric-orb" aria-hidden="true">◌</div><h2 className="compact-title">Prueba de vida</h2><p>En producción, esto abriría el proveedor de biometría autorizado. Acá solo simulamos el paso.</p><button className="primary-action" onClick={() => { setStep("done"); onNotice("Biometría simulada: no se capturó ni validó ningún dato."); }}>Simular validación →</button></section>;
+  return <section className="bank-flow"><p className="kicker">VALIDACIÓN SIMULADA</p><h2 className="compact-title">Tu solicitud quedó lista para revisar.</h2><p>No activamos una cuenta ni conectamos bancos en esta versión.</p><button className="primary-action" onClick={() => setStep("start")}>Volver a Mi banco</button></section>;
+}
+
+function ProfileMenu({ onClose, onBank }: { onClose: () => void; onBank: () => void }) {
+  const rows = [
+    ["Pre-registro", "Listo", "✓"],
+    ["Contacto", "Listo", "✓"],
+    ["RUT + serie", "Desbloquea Mi banco", "→"],
+    ["Biometría", "Desbloquea activaciones", "→"],
+    ["Datos financieros", "Desbloquea personalización", "→"],
+  ];
+  return <aside className="profile-menu" aria-label="Menú de perfil"><div className="profile-menu-head"><div><small>TU PERFIL</small><strong>Completa tu información</strong></div><button onClick={onClose} aria-label="Cerrar menú">×</button></div><p>2 de 5 completas</p><div className="profile-checklist">{rows.map(([name, unlock, mark]) => <button key={name} onClick={() => { if (name === "RUT + serie" || name === "Biometría") { onBank(); } }}><span>{mark}</span><div><strong>{name}</strong><small>{unlock}</small></div></button>)}</div></aside>;
 }
 
 function UnpublishedStage({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
@@ -461,6 +501,7 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
 
   return <>
     <section className="home-value"><p className="kicker">TU PLATA, MÁS SIMPLE</p><h2>Entiende tus finanzas.<br /><span>Simplifica tu vida.</span></h2></section>
+    <section className="advisor-entry"><div><small>ACOMPAÑANTE FINANCIERO</small><strong>¿Quieres que te ayude con tus datos?</strong><p>Cuando estés listo, registra una cartola o inicia Mi banco. Tú decides cuándo activar cada cosa.</p></div><button onClick={() => onMove("banco")}>Ver opciones →</button></section>
     <div className="home-section-title"><div><span>{visibleCards.length.toString().padStart(2, "0")}</span><h3>Tienes {visibleCards.length === 1 ? "una cosa" : `${visibleCards.length} cosas`} para revisar</h3></div>{visibleCards.length > 0 && <small>{carouselIndex + 1} de {visibleCards.length}</small>}</div>
     {visibleCards.length ? <><div className="action-carousel" aria-label="Acciones pendientes" ref={carouselRef} onScroll={(event) => {
       const container = event.currentTarget;
@@ -611,8 +652,8 @@ function Save({ onNotice, onLedger, onCollect }: { onNotice: (message: string) =
   return <><section className="save-heading"><p className="kicker">POTENCIAL DE ESTE EJEMPLO</p><strong className="saving-total">$0–$28.000</strong><h2 className="compact-title">Ya entendimos cómo se mueve tu plata.<br /><span>Ahora te guiamos para hacerla rendir mejor.</span></h2><p>Rango estimado, no ahorro real ni garantizado.</p></section>{hidden.length > 0 && <div className="ignored-strip"><span>✓ {hidden.length} {hidden.length === 1 ? "oportunidad ignorada" : "oportunidades ignoradas"}</span><button onClick={() => setHidden((items) => items.slice(0, -1))}>Recuperar última</button></div>}<p className="swipe-hint swipe-hint-top">Usa el botón Ignorar. También puedes deslizar a la izquierda.</p><div className="opportunity-list">{opportunities.filter((item) => !hidden.includes(item.id)).map((item, index) => <article key={item.id} className={`opportunity ${open === item.id ? "opportunity-open" : ""}`} onPointerDown={(event) => { swipeStart.current = event.clientX; }} onPointerUp={(event) => { if (swipeStart.current !== null && event.clientX - swipeStart.current < -70) dismiss(item.id, item.title); swipeStart.current = null; }}><button className="opportunity-toggle" onClick={() => setOpen(open === item.id ? null : item.id)}><span className="opportunity-index">0{index + 1}</span><span><span className={`issue-tag ${item.tone}`}>{item.tag}</span><strong>{item.title}</strong><small>{item.value}</small></span><b>{open === item.id ? "−" : "+"}</b></button><button className="opportunity-dismiss" onClick={() => dismiss(item.id, item.title)} aria-label={`Ignorar ${item.title}`}>Ignorar</button>{open === item.id && <div className="opportunity-detail"><p className="opportunity-conclusion">{item.conclusion}</p><details className="opportunity-evidence"><summary>Ver por qué</summary><dl><div><dt>Evidencia</dt><dd>{item.signal}</dd></div><div><dt>Fuente</dt><dd>{item.source}</dd></div><div><dt>Certeza</dt><dd>{item.certainty}</dd></div><div><dt>Estimación</dt><dd>{item.estimate}</dd></div><div><dt>Acción</dt><dd>{item.reversible}</dd></div><div><dt>Disclosure</dt><dd>{item.disclosure}</dd></div></dl></details><div className="opportunity-actions"><button onClick={() => act(item.id, item.action)}>{item.action} →</button><button onClick={() => dismiss(item.id, item.title)}>Ignorar</button></div></div>}</article>)}</div>{purchasePreview && <section className="purchase-sheet"><div><p className="kicker">COMPRA SIMULADA</p><button onClick={() => setPurchasePreview(false)}>×</button></div><h3>Plan móvil alternativo</h3><strong>$14.990 / mes</strong><ul><li>Precio y prestaciones ficticias</li><li>Falta revisar cobertura y permanencia</li><li>YOL1 no recibe compensación en esta simulación</li></ul><button onClick={() => { setPurchasePreview(false); onNotice("Simulación cerrada: no se abrió un comercio, no se contrató el plan y no se inició un pago real."); }}>Confirmar simulación</button><small>No abre un comercio ni inicia un pago real.</small></section>}</>;
 }
 
-function ComingSoon({ onBack }: { onBack: () => void }) {
-  return <section className="empty-state"><span className="empty-icon">＋</span><p className="kicker">GANAR</p><h2>Próximamente</h2><p>Este módulo no tiene flujo ni representa una capacidad disponible.</p><button className="primary-action" onClick={onBack}>Volver al inicio</button></section>;
+function EarnMore({ onBack }: { onBack: () => void }) {
+  return <section className="empty-state earn-more"><span className="empty-icon">＋</span><p className="kicker">GANA MÁS LUCAS</p><h2>Ideas para ganar más,<br />sin vender humo.</h2><p>Este espacio va a ordenar oportunidades que sean relevantes para ti. Todavía no activa programas ni promete ingresos.</p><button className="primary-action" onClick={onBack}>Volver al acompañante</button></section>;
 }
 
 function Future({ votes, setVotes, onNotice }: { votes: Record<string, boolean>; setVotes: (votes: Record<string, boolean>) => void; onNotice: (message: string) => void }) {
