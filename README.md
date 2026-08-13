@@ -1,100 +1,72 @@
-# vinext-starter
+# YOL1 Product Growth Lab
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Prototipo exploratorio para recorrer y discutir la experiencia cotidiana de YOL1 con datos sintéticos. **No conecta bancos, no mueve dinero y no representa capacidades disponibles ni un roadmap comprometido.**
 
-## Prerequisites
+La propuesta que explora esta versión es: **“Encuentra dónde pierdes plata o desaprovechas beneficios y decide qué hacer”**. YOL1 detecta señales, explica evidencia y recomienda; la persona confirma cada acción.
 
-- Node.js `>=22.13.0`
+## Qué incluye esta primera versión
 
-## Quick Start
+- **Inicio:** “Tu plata, bajo control”, dos formas de entrada —explorar con ejemplo o probar con información propia de forma simulada— y elección de tarea sin datos obligatorios.
+- **Mis Finanzas:** fuentes demo con estado, consolidados con criterios visibles, por cobrar/pagar y hallazgos explicables.
+- **Cartola:** fuentes navegables, movimientos con fecha, hora, código, monto y banco; acciones Revisar, Lo reconozco, Dividir y Crear solicitud de cobro.
+- **Ahorrar:** journey prioritario cargo dudoso → beneficio desaprovechado → cuenta recurrente ineficiente. Cada oportunidad muestra evidencia, certeza, rango estimado, acción reversible y disclosure.
+- **Cobrar/Repartir:** utilidad secundaria que prueba gasto, participantes, división igual o distinta, confirmación, link y WhatsApp simulados. No cobra ni inicia pagos.
+- **Ganar:** solo “Próximamente”.
+- **Experimentos por explorar:** feedback local sobre ideas ya conversadas, sin prometer fechas ni disponibilidad.
+
+El detalle de arquitectura, journeys, criterios de aceptación, límites y gates de aprendizaje está en [`MVP-SPEC.md`](./MVP-SPEC.md). Las reglas visuales del laboratorio están en [`PRODUCT-DESIGN.md`](./PRODUCT-DESIGN.md).
+
+## Cómo probar
+
+Requiere Node.js 22.13 o superior.
 
 ```bash
 npm install
 npm run dev
-npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+Abre la dirección local que aparece en la terminal. Recorridos recomendados:
 
-## Included Shape
+1. Inicio → Explorar ejemplo → Disney+ aparece dos veces → Ver movimientos → Revisar o Lo reconozco.
+2. Inicio → Encontrar oportunidades → beneficio → evidencia, certeza, rango y acción.
+3. Inicio → Ordenar pendientes → Registrar gasto → participantes → división → confirmar → link simulado.
+4. Inicio → Simular con mi información → leer consentimiento simulado → continuar con datos ficticios.
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+Para verificar que la versión compila y conserva los guardrails:
 
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```bash
+npm test
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## Cómo se organiza el Lab
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+- `app/page.tsx`: prototipo navegable y datos sintéticos.
+- `app/globals.css`: estética básica del Lab, responsive y estados interactivos.
+- `app/layout.tsx`: metadatos del sitio.
+- `public/og.png`: tarjeta social del prototipo.
+- `public/yol1-icon.png`, `public/yol1-wordmark-dark.png` y `public/yol1-life.jpg`: activos oficiales tomados del brandbook local para esta demo.
+- `MVP-SPEC.md`: arquitectura de información, alcance, journeys y aprendizaje.
+- `PRODUCT-DESIGN.md`: criterio visual y de experiencia vigente.
+- `tests/`: comprobaciones mínimas de contenido y seguridad de la demo.
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+La estética toma del brandbook YOL1 el contraste Night/cream, acid concentrado, aqua interactivo y ritmo editorial. El producto es móvil-first; en desktop se presenta dentro de un teléfono protagonista. Esta traducción no reemplaza un design system oficial.
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+## Publicación
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+Antes de publicar, Felipe revisa los cambios locales. Este trabajo no hace commit ni push.
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+Después de aprobar:
 
-## Useful Commands
+1. Ejecutar `npm test`.
+2. Revisar el diff y crear un commit descriptivo.
+3. Hacer push al repositorio conectado.
+4. Vercel generará la publicación según la configuración ya vinculada al repositorio.
+5. Recorrer los journeys prioritarios en la URL publicada y verificar que los rótulos de prototipo sigan visibles.
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+Para que la tarjeta social use la URL pública correcta, configurar `NEXT_PUBLIC_SITE_URL` en Vercel con el dominio final (por ejemplo, `https://tu-dominio.vercel.app`).
 
-## Learn More
+No agregar secretos, credenciales, datos personales, proveedores bancarios ni llaves de pago a este repositorio.
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+## Qué demuestra y qué no
+
+La versión navegable permite probar comprensión y usabilidad inicial. No demuestra demanda, product-market fit, economics, readiness operacional o regulatoria. Los siguientes gates de aprendizaje son E2 comprensión, E3 acción voluntaria y E4 resultado/retorno.

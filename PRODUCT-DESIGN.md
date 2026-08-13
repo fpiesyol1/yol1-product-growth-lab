@@ -1,4 +1,4 @@
-# YOL1 Product Lab — criterio de diseño
+# YOL1 Product Growth Lab — criterio de diseño
 
 ## Propósito
 
@@ -6,12 +6,23 @@ Probar la experiencia del asistente financiero cotidiano de YOL1 con datos sint�
 
 ## Fuente de marca vigente para este laboratorio
 
-- Night `#022F3D`: contexto y fondo principal.
-- Deep `#05282D`: superficies profundas y contraste.
-- Acid `#80EF0C`: avance, valor y acción principal.
-- Aqua `#57D6CF`: información, navegación y exploración.
-- Coral `#FF7D63`: algo que requiere revisión, nunca un fraude afirmado.
-- Cream `#F2ECDE`: lectura principal, en lugar de blanco puro.
+La referencia visual es `Brand Yol1.pptx`. Esta implementación usa activos oficiales extraídos del archivo y traduce sus principios a una experiencia B2C móvil. Sigue siendo un prototipo exploratorio: no pretende reemplazar un design system oficial.
+
+- Night / petrol `#112E3C`: contexto, foco y contraste profundo.
+- Acid `#80EF0C`: resultado y acción principal, usado con concentración.
+- Cream / mist `#FAEDDC`: superficie principal y respiro editorial.
+- Aqua: interacción e hipótesis.
+- Amarillo: advertencias o decisiones abiertas.
+- Coral: riesgo o algo que requiere revisión, nunca fraude afirmado.
+- Söhne cuando esté disponible, con fallback de sistema; mono para montos, fechas y códigos.
+
+## Dirección de interfaz
+
+- El producto es móvil primero. En escritorio, el teléfono es protagonista dentro de un escenario editorial, no una miniatura decorativa.
+- Una idea dominante por pantalla, con acciones primarias evidentes y rutas secundarias de menor intensidad.
+- Jerarquía por escala, ritmo, bloques de color y aire; evitar grillas de tarjetas homogéneas y estética de banca fría.
+- Gestos gráficos abstractos —halo, subrayado, señal— pueden dar energía, pero nunca sustituyen la marca oficial.
+- Alto contraste, foco visible, áreas táctiles amplias, lectura sin overflow y movimiento opcional.
 
 ## Reglas de experiencia
 
@@ -24,10 +35,13 @@ Probar la experiencia del asistente financiero cotidiano de YOL1 con datos sint�
 
 ## Pantallas actuales
 
-- Inicio: decide por dónde comenzar.
-- Mis Finanzas: fuentes, resumen mensual y hallazgos explicables.
-- Cartola: movimientos y acciones de revisar, confirmar, dividir, cobrar o excluir.
-- Cobrar: deudas pendientes y un flujo futuro de reparto de gastos.
+- Inicio: bienvenida viva con “Explorar ejemplo” y “Simular con mi información”.
+- Mis Finanzas: resultado del período, fuentes, reglas revisables y hallazgos explicables.
+- Cartola: movimientos y acciones de revisar, reconocer, dividir o crear una solicitud simulada.
+- Cobrar/Repartir: utilidad social secundaria y explícitamente simulada.
+- Ahorrar: oportunidad protagonista con evidencia, certeza, rango y acción reversible.
+- Ganar: tratamiento editorial “Próximamente”, sin flujo.
+- Experimentos por explorar: feedback sin fechas, disponibilidad ni promesas de roadmap.
 
 ## Cómo mejorar una pantalla
 

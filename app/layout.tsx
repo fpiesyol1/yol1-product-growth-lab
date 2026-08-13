@@ -2,11 +2,24 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "YOL1 Product Lab",
-  description: "Laboratorio local para probar el piloto de YOL1.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  title: "YOL1 Product Growth Lab — Prototipo exploratorio",
+  description: "Experiencia de prueba con datos ficticios para explorar oportunidades financieras cotidianas. No conecta bancos ni mueve dinero.",
+  openGraph: {
+    title: "YOL1 Product Growth Lab",
+    description: "Encuentra dónde pierdes plata o desaprovechas beneficios y decide qué hacer.",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "YOL1 Product Growth Lab — prototipo exploratorio con datos sintéticos" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "YOL1 Product Growth Lab",
+    description: "Prototipo exploratorio con datos sintéticos.",
+    images: ["/og.png"],
+  },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: "/yol1-icon.png",
+    shortcut: "/yol1-icon.png",
+    apple: "/yol1-icon.png",
   },
 };
 
