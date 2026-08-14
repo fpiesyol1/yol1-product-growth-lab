@@ -5,9 +5,8 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const source = (path) => readFile(new URL(path, root), "utf8");
 
-test("Inicio conserva datos ficticios, bandeja y elección IA/demo", async () => {
+test("Inicio conserva bandeja, acciones contextuales y elección IA/demo", async () => {
   const page = await source("app/page.tsx");
-  assert.match(page, /DATOS FICTICIOS/);
   assert.match(page, /Entiende tus finanzas/);
   assert.match(page, /Tienes \{visibleCards\.length/);
   assert.match(page, /Disney\+ aparece dos veces/);
@@ -17,10 +16,11 @@ test("Inicio conserva datos ficticios, bandeja y elección IA/demo", async () =>
   assert.match(page, /Pregúntale a YOL1/);
   assert.match(page, /Usar IA/);
   assert.match(page, /Seguir en demo/);
-  assert.match(page, /Ya lo vi/);
+  assert.match(page, /Ignorar/);
+  assert.match(page, /Distribuir/);
   assert.match(page, /carousel-dots/);
   assert.match(page, /Deshacer última/);
-  assert.match(page, /no compartas datos personales o financieros reales/i);
+  assert.match(page, /Se guarda para revisión por parte del equipo creador/i);
   assert.doesNotMatch(page, /Explorar ejemplo|Simular con mi información/);
   assert.doesNotMatch(page, /Micrófono de demo/);
 });
@@ -269,7 +269,7 @@ test("portfolio mantiene seis productos y publica Acompañante más Onboarding",
   assert.match(portfolio, /EMPTY_STATE_LIBRARY[\s\S]*perro feliz que te hará compañía/i);
   assert.match(portfolio, /acá hay un gato tecleando/i);
   assert.match(portfolio, /Alguien no hizo la pega/i);
-  assert.match(portfolio, /Aún no desciframos por completo cómo lo queremos construir/i);
+  assert.match(portfolio, /Remesas todavía está tomando forma/i);
   assert.match(portfolio, /ChatGPT o Claude/);
   assert.match(portfolio, /Un robot está ordenando los post-its/i);
   assert.ok((portfolio.match(/gesture: "/g) ?? []).length >= 12);
@@ -279,14 +279,13 @@ test("portfolio mantiene seis productos y publica Acompañante más Onboarding",
   assert.doesNotMatch(page, /MCP conectado|banco conectado|KYC aprobado|remesa enviada/i);
 });
 
-test("ficha viva hace visibles eventos propuestos, certeza y feedback contextual", async () => {
+test("ficha viva hace visibles eventos, metadata, certeza y feedback contextual", async () => {
   const page = await source("app/page.tsx");
   const portfolio = await source("lib/product-portfolio.ts");
   const feedback = await source("lib/feedback-intake.ts");
-  assert.match(page, /EVENTO PROPUESTO · NO ANALYTICS/);
+  assert.match(page, /<small>EVENTO<\/small>/);
   assert.match(page, /onPointerOver/);
   assert.match(page, /onFocusCapture/);
-  assert.match(page, /Inspeccionar en touch/);
   assert.match(page, /Ficha de producto/);
   assert.match(page, /ARQUITECTURA/);
   assert.match(page, /LICENCIAS · CHILE/);
@@ -294,6 +293,8 @@ test("ficha viva hace visibles eventos propuestos, certeza y feedback contextual
   assert.match(page, /FEEDBACK RELACIONADO/);
   assert.match(page, /TODO LO QUE PUEDE SALIR MAL/);
   assert.match(page, /eventMetadata\(/);
+  assert.match(portfolio, /user_id/);
+  assert.match(portfolio, /timestamp/);
   assert.match(page, /simpleEventName\(/);
   assert.match(page, /spec\.data\.store/);
   assert.match(page, /spec\.data\.query/);

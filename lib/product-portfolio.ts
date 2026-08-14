@@ -22,8 +22,8 @@ export type LivingSpec = {
 };
 
 export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
+  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", published: true, description: "Registro y activación progresiva: KYC y licencias liberan productos de forma incremental." },
   { id: "companion", shortLabel: "Acompañante", name: "Acompañante financiero", icon: "✦", published: true, description: "El prototipo activo del Lab: finanzas, cobrar y pagar, ahorrar, ganar más lucas y Mi banco." },
-  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", published: true, description: "Entrada por teléfono o email con OTP, pre-registro y activación progresiva." },
   { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", published: false, description: "Espacio reservado. No representa banca construida ni disponible." },
   { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", published: false, description: "Espacio reservado. No hay emisión, procesamiento ni producto publicado." },
   { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", published: false, description: "Espacio reservado. No hay envíos, tipo de cambio ni licencias definidas." },
@@ -31,12 +31,12 @@ export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
 ];
 
 export const EMPTY_STATE_LIBRARY = [
-  { id: "paper", icon: "✎", eyebrow: "FELIPE, TE TENEMOS IDENTIFICADO", title: "Alguien no hizo la pega…", body: "Perdón por las molestias. Ya estamos apurando al equipo para que deje de pavear.", gesture: "scribble" },
+  { id: "paper", icon: "✎", eyebrow: "ALGO ESTÁ PASANDO ACÁ", title: "Alguien no hizo la pega…", body: "Perdón por las molestias. Ya estamos apurando al equipo para que deje de pavear.", gesture: "scribble" },
   { id: "dog", icon: "", eyebrow: "PAUSA CON MOVIMIENTO", title: "Aún no está listo esto.", body: "Pero para que no esperes solo, acá tenemos un perro feliz que te hará compañía.", gesture: "dog" },
   { id: "cat", icon: "", eyebrow: "SORY, NO HICE LA PEGA", title: "Pero acá hay un gato tecleando.", body: "Nos pareció suficientemente útil mientras Felipe termina de armar esta parte.", gesture: "cat" },
   { id: "robot", icon: "", eyebrow: "IDEAS EN ORDEN", title: "Un robot está ordenando los post-its.", body: "Tu idea después podrá pasar de conversación a propuesta, pantalla y revisión.", gesture: "robot" },
   { id: "coffee", icon: "", eyebrow: "TARJETAS EN ESPERA", title: "Las tarjetas todavía están en modo avión.", body: "Por ahora no hay nada que tocar. Apenas exista algo aprobado, aparece acá.", gesture: "coffee" },
-  { id: "rhyme", icon: "✦", eyebrow: "REMESAS EN PAUSA", title: "Las rosas son rojas. Las violetas, azules. Esto aún no funciona y no vendemos humo con luces.", body: "Aún no desciframos por completo cómo lo queremos construir.", gesture: "orbit" },
+  { id: "remittance-robot", icon: "", eyebrow: "IDEAS EN ORDEN", title: "Un robot está ordenando los post-its.", body: "Remesas todavía está tomando forma. Cuando tengamos las piezas claras, aparecerán acá.", gesture: "robot" },
   { id: "lamp", icon: "◉", eyebrow: "IDEA EN REVISIÓN", title: "Hay una luz prendida, no un producto listo.", body: "Felipe decide qué rescatar antes de que una pantalla entre al Lab.", gesture: "halo" },
   { id: "door", icon: "▥", eyebrow: "PUERTA CERRADA POR AHORA", title: "Todavía no se abre esta experiencia.", body: "Preferimos mostrar el vacío antes que inventar una capacidad.", gesture: "door" },
   { id: "blocks", icon: "▦", eyebrow: "PIEZAS SIN ARMAR", title: "Tenemos preguntas. No una promesa.", body: "Arquitectura, datos y regulación siguen por validar antes de diseñar flujo.", gesture: "blocks" },
@@ -149,14 +149,18 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
 export function simpleEventName(event: string, product: ProductDefinition, screen: string) {
   if (event.endsWith(".view")) return screen === "Inicio" ? "Home" : screen;
   const readable = event.split(".").slice(-2, -1)[0]?.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) || "Acción";
-  return `${readable} en ${screen}`;
+  return `${screen} · ${readable}`;
 }
 
 export function eventMetadata(event: string, product: ProductDefinition, screen: string) {
   return [
+    ["user_id", "anon_id / user_id"],
+    ["timestamp", "ISO 8601"],
     ["producto", product.name],
     ["pantalla", screen],
     ["acción", event.split(".").slice(-2, -1)[0] || "view"],
+    ["plataforma", "mobile"],
+    ["versión", "lab"],
     ["origen", "prototipo"],
   ];
 }

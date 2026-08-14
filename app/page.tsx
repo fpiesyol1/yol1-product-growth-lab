@@ -126,7 +126,7 @@ export default function Home() {
 
   const archiveCard = (id: string, label: string) => {
     setArchivedCards((cards) => cards.includes(id) ? cards : [...cards, id]);
-    notify(`${label}: quedó como “Ya lo vi” durante esta sesión demo.`);
+    notify(`${label}: lo ocultamos por ahora.`);
   };
 
   const handleMovementAction = (action: MovementAction, movement: typeof movements[number]) => {
@@ -172,11 +172,10 @@ export default function Home() {
   return (
     <main className="lab-shell" data-theme={theme} onPointerOver={(event) => inspectTarget(event.target)} onFocusCapture={(event) => inspectTarget(event.target)} onClickCapture={(event) => { if (touchInspection) inspectTarget(event.target); }}>
       <section className="portfolio-rail" aria-label="Portfolio de productos del Lab">
-        <div className="portfolio-heading"><span>PORTFOLIO YOL1</span><strong>6 espacios · 2 publicados</strong></div>
+        <div className="portfolio-heading"><span>PORTFOLIO YOL1</span></div>
         <nav className="product-selector">
           {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event={`portfolio.${product.id}.select`} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.published ? "PUBLICADO" : "NO PUBLICADO"}</small></button>)}
         </nav>
-        <div className="event-inspector" aria-live="polite"><span><small>EVENTO PROPUESTO · NO ANALYTICS</small><strong>{simpleEventName(inspectedEvent || livingSpec.event, activeProduct, activeTitle)}</strong></span><button className={touchInspection ? "active" : ""} onClick={() => setTouchInspection((current) => !current)} data-event="lab.event-inspection.toggle" aria-pressed={touchInspection}>{touchInspection ? "Inspección touch activa" : "Inspeccionar en touch"}</button></div>
       </section>
       <section className="lab-intro">
         <div className="brand-plate"><Brand /><span>PRODUCT GROWTH LAB · 01</span></div>
@@ -188,7 +187,6 @@ export default function Home() {
         {productId === "companion" && <div className="module-map" aria-label="Módulos del Acompañante financiero">
           {(Object.keys(tabLabels) as Tab[]).map((item) => <button key={item} className={tab === item ? "module-active" : ""} onClick={() => go(item)}>{tabLabels[item]}</button>)}
         </div>}
-        <div className="lab-status"><span className="status-dot" /><span>Ejemplo con datos ficticios · sin bancos, pagos ni envíos reales.</span></div>
         <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={!activeProduct.published} onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
       </section>
 
@@ -199,7 +197,7 @@ export default function Home() {
           <header className="app-top">
             <button className="menu-trigger" onClick={() => setProfileOpen(true)} aria-label="Abrir menú de perfil"><Brand compact /></button>
             <span className="app-section">{activeTitle}</span>
-            <div className="header-actions"><span className="demo-pill">{productId === "builder" ? "MCP · PRÓXIMAMENTE" : "DATOS FICTICIOS"}</span><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
+            <div className="header-actions"><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
           </header>
           <div className={`app-content app-${productId === "companion" ? tab : productId === "builder" ? "builder" : "unpublished"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
             <>
@@ -400,8 +398,8 @@ function LivingSpecification({ product, screen, spec, inspectedEvent, feedback, 
   return <section className="living-spec" aria-label={`Ficha de producto de ${product.name}`}>
     <header className="living-spec-head"><div><small>ESPECIFICACIÓN VIVA · CHILE</small><h2>Ficha de producto</h2></div><div><strong>{product.name}</strong><span>{screen}</span></div><p>Propuesta técnica para revisar. No envía analytics ni afirma requisitos legales cerrados.</p></header>
     <div className="spec-grid">
-      <article className="spec-event"><small>EVENTO</small><strong>{simpleEventName(inspectedEvent, product, screen)}</strong><div className="event-metadata">{eventMetadata(inspectedEvent, product, screen).map(([key, value]) => <span key={key}><b>{key}</b>{value}</span>)}</div><p>Hover/focus cambia el evento. El click sigue ejecutando la demo.</p></article>
-      <article><small>ARQUITECTURA</small><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><em>SIMULADA / POR VALIDAR</em></article>
+      <article className="spec-event"><small>EVENTO</small><strong>{simpleEventName(inspectedEvent, product, screen)}</strong><div className="event-metadata">{eventMetadata(inspectedEvent, product, screen).map(([key, value]) => <span key={key}><b>{key}</b>{value}</span>)}</div><p>Nombre corto para instrumentación; sus parámetros quedan separados para que producto e ingeniería los revisen.</p></article>
+      <article><small>ARQUITECTURA · SUGERIDA</small><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><em>HIPÓTESIS TÉCNICA / VALIDAR CON INGENIERÍA</em></article>
       <article className="spec-data"><small>DATOS</small><strong>Guardar</strong><ul>{spec.data.store.map((item) => <li key={item}>{item}</li>)}</ul><strong>Consultar</strong><ul>{spec.data.query.map((item) => <li key={item}>{item}</li>)}</ul><p>{spec.data.handling}</p></article>
       <article><small>KYC</small><StateBadge state={spec.kyc.state} /><p>{spec.kyc.reason}</p></article>
       <article><small>LICENCIAS · CHILE</small><StateBadge state={spec.licenses.state} /><p>{spec.licenses.reason}</p></article>
@@ -444,7 +442,6 @@ function MessagePreviewScreen({ preview, theme, onBack }: { preview: MessagePrev
 function FeedbackPanel({ product, screen, open, onToggle, variant, compact = false, onSubmitted }: { product: string; screen: string; open: boolean; onToggle: () => void; variant: "desktop" | "mobile"; compact?: boolean; onSubmitted: () => void }) {
   const [kind, setKind] = useState<FeedbackKind>("like");
   const [message, setMessage] = useState("");
-  const [topics, setTopics] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const requiresMessage = kind !== "like";
@@ -457,12 +454,12 @@ function FeedbackPanel({ product, screen, open, onToggle, variant, compact = fal
   const submitFeedback = async (event: FormEvent) => {
     event.preventDefault();
     if (requiresMessage && !message.trim()) return;
-    const input = { product, screen, kind, message: message.trim(), topics: topics.trim() };
+    const input = { product, screen, kind, message: message.trim(), topics: "" };
     localFeedbackIntake.submit(input);
     onSubmitted();
     setSubmitting(true);
     try {
-      const shared = await submitGeneralFeedback({ screen: `${product} · ${screen}`, kind, message: message.trim(), topics: topics.trim() });
+      const shared = await submitGeneralFeedback({ screen: `${product} · ${screen}`, kind, message: message.trim(), topics: "" });
       setConfirmation(shared ? `Enviado a la bandeja compartida · ${screen}` : `Guardado localmente · ${screen}`);
     } catch {
       setConfirmation(`Guardado en este navegador; la bandeja compartida aún no está disponible.`);
@@ -470,12 +467,11 @@ function FeedbackPanel({ product, screen, open, onToggle, variant, compact = fal
       setSubmitting(false);
     }
     setMessage("");
-    setTopics("");
   };
 
   const panelHeading = <>
       <span className="feedback-mark">✦</span>
-      <span><small>{compact ? "TENGO UNA IDEA" : "AYÚDANOS A MEJORAR"}</small><strong>{compact ? "Déjala aquí" : "Feedback"}</strong></span>
+      <span><small>{compact ? "TENGO UNA IDEA" : "TU OPINIÓN IMPORTA"}</small><strong>{compact ? "Déjala aquí" : "Deja tu feedback acá."}</strong></span>
       {variant === "mobile" && <b>{open ? "−" : "+"}</b>}
     </>;
 
@@ -483,15 +479,13 @@ function FeedbackPanel({ product, screen, open, onToggle, variant, compact = fal
     {variant === "desktop" ? <div className="feedback-panel-head">{panelHeading}</div> : <button className="feedback-panel-head" onClick={onToggle} aria-expanded={open}>{panelHeading}</button>}
     {!open && <p className="feedback-peek">Estás viendo <strong>{screen}</strong>. Cuéntanos qué funciona y qué cambiarías.</p>}
     {open && <form className="feedback-form" onSubmit={submitFeedback}>
-      {!compact && <div className="feedback-context"><span>PRODUCTO · PANTALLA</span><strong>{product} · {screen}</strong></div>}
-      {!compact && <div className="feedback-kinds" aria-label="Tipo de feedback">{([
+      {!compact && <><p className="feedback-select-label">Selecciona qué quieres dejar</p><div className="feedback-kinds" aria-label="Tipo de feedback">{([
         ["like", "Me gusta"],
         ["improve", "Mejoraría"],
         ["idea", "Idea"],
-      ] as [FeedbackKind, string][]).map(([value, label]) => <button type="button" key={value} className={kind === value ? "selected" : ""} onClick={() => { setKind(value); setConfirmation(""); }}>{label}</button>)}</div>}
+      ] as [FeedbackKind, string][]).map(([value, label]) => <button type="button" key={value} className={kind === value ? "selected" : ""} onClick={() => { setKind(value); setConfirmation(""); }}>{label}</button>)}</div></>}
       <label>{compact ? "¿Qué producto o problema deberíamos trabajar?" : prompts[kind].label}<textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder={compact ? "Ej.: Quiero una forma simple de…" : prompts[kind].placeholder} required={compact || requiresMessage} maxLength={700} /></label>
-      {!compact && <label>Temas clave (opcional)<input value={topics} onChange={(event) => setTopics(event.target.value)} placeholder="Ej.: claridad, confianza, navegación" maxLength={180} /></label>}
-      {!compact && <p className="feedback-privacy">Se guarda para revisión cuando la bandeja compartida está activa. No incluyas datos financieros ni personales.</p>}
+      {!compact && <p className="feedback-privacy">Se guarda para revisión por parte del equipo creador. No incluyas datos financieros ni personales.</p>}
       <button className="feedback-submit" type="submit" disabled={submitting || ((compact || requiresMessage) && !message.trim())}>{submitting ? "Enviando…" : compact ? "Guardar idea" : "Enviar feedback"}</button>
       {confirmation && <p className="feedback-confirmation" role="status">✓ {confirmation}</p>}
     </form>}
@@ -526,11 +520,11 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
       .catch(() => setAiChoice("demo"));
   }, []);
   const actionCards = [
-    { id: "disney", tag: "CARGO DUDOSO", title: "Disney+ aparece dos veces", detail: "Mismo monto · 1 minuto", amount: "$11.990", tone: "alert", third: "Ver cargos", review: () => onLedger("General", "disney-bci"), act: () => onLedger("General", "disney-bci") },
-    { id: "maria", tag: "POR COBRAR", title: "María te debe del almuerzo", detail: "Pendiente desde el viernes", amount: "$18.000", tone: "social", third: "Cobrar", review: () => onMove("cobrar"), act: () => onMove("cobrar") },
-    { id: "camila", tag: "POR PAGAR", title: "Le debes a Camila", detail: "Depto agosto · @camila", amount: "$42.000", tone: "social", third: "Pagar", review: () => onMove("cobrar"), act: () => onMove("cobrar") },
-    { id: "benefit", tag: "BENEFICIO", title: "Tu tarjeta tiene restaurantes con descuento", detail: "BCI Visa · ejemplo de esta semana", amount: "20%", tone: "benefit", third: "Ver beneficio", review: () => onMove("ahorrar"), act: () => onMove("ahorrar") },
-    { id: "liguria", tag: "PARA DIVIDIR", title: "La cuenta de Liguria parece compartida", detail: "Boleta mayor a tu consumo habitual", amount: "$41.600", tone: "split", third: "Dividir", review: () => onLedger("General", "liguria"), act: () => onCollect("Liguria") },
+    { id: "disney", tag: "CARGO DUDOSO", title: "Disney+ aparece dos veces", detail: "Mismo monto · 1 minuto", amount: "$11.990", tone: "alert", actions: [{ label: "Ignorar", run: () => onArchive("disney", "Disney+") }, { label: "Revisar", run: () => onLedger("General", "disney-bci") }] },
+    { id: "maria", tag: "POR COBRAR", title: "María te debe del almuerzo", detail: "Pendiente desde el viernes", amount: "$18.000", tone: "social", actions: [{ label: "Cobrar", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("maria", "Cobro de María") }] },
+    { id: "camila", tag: "POR PAGAR", title: "Le debes a Camila", detail: "Depto agosto · @camila", amount: "$42.000", tone: "social", actions: [{ label: "Pagar", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("camila", "Deuda con Camila") }] },
+    { id: "benefit", tag: "BENEFICIO", title: "Tu tarjeta tiene restaurantes con descuento", detail: "BCI Visa · ejemplo de esta semana", amount: "20%", tone: "benefit", actions: [{ label: "Ignorar", run: () => onArchive("benefit", "Beneficio") }, { label: "Revisar", run: () => onMove("ahorrar") }] },
+    { id: "liguria", tag: "PARA DIVIDIR", title: "La cuenta de Liguria parece compartida", detail: "Boleta mayor a tu consumo habitual", amount: "$41.600", tone: "split", actions: [{ label: "Ignorar", run: () => onArchive("liguria", "Cuenta de Liguria") }, { label: "Revisar", run: () => onLedger("General", "liguria") }, { label: "Distribuir", run: () => onCollect("Liguria") }] },
   ];
   const visibleCards = actionCards.filter((card) => !archived.includes(card.id));
   const archivedLabels = actionCards.filter((card) => archived.includes(card.id));
@@ -605,9 +599,8 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
   };
 
   return <>
-    <section className="home-value"><p className="kicker">TU PLATA, MÁS SIMPLE</p><h2>Entiende tus finanzas.<br /><span>Simplifica tu vida.</span></h2></section>
-    <section className="advisor-entry"><div><small>ACOMPAÑANTE FINANCIERO</small><strong>¿Quieres que te ayude con tus datos?</strong><p>Cuando estés listo, registra una cartola o inicia Mi banco. Tú decides cuándo activar cada cosa.</p></div><button onClick={() => onMove("banco")}>Ver opciones →</button></section>
-    <div className="home-section-title"><div><span>{visibleCards.length.toString().padStart(2, "0")}</span><h3>Tienes {visibleCards.length === 1 ? "una cosa" : `${visibleCards.length} cosas`} para revisar</h3></div>{visibleCards.length > 0 && <small>{carouselIndex + 1} de {visibleCards.length}</small>}</div>
+    <section className="home-value"><h2>Entiende tus finanzas.<br /><span>Simplifica tu vida.</span></h2></section>
+    <div className="home-section-title"><div><h3>Tienes {visibleCards.length === 1 ? "una cosa" : `${visibleCards.length} cosas`} para revisar</h3></div>{visibleCards.length > 0 && <small>{carouselIndex + 1} de {visibleCards.length}</small>}</div>
     {visibleCards.length ? <><div className="action-carousel" aria-label="Acciones pendientes" ref={carouselRef} onScroll={(event) => {
       const container = event.currentTarget;
       const firstCard = container.firstElementChild as HTMLElement | null;
@@ -616,19 +609,18 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
     }}>
       {visibleCards.map((card) => <article className={`action-card action-${card.tone}`} key={card.id}>
         <div className="action-card-top"><span>{card.tag}</span><b>{card.amount}</b></div><h3>{card.title}</h3><p>{card.detail}</p>
-        <div className="action-buttons"><button onClick={() => onArchive(card.id, card.title)}>Ya lo vi</button><button onClick={card.review}>Revisar</button><button onClick={card.act}>{card.third}</button></div>
+        <div className="action-buttons">{card.actions.map((action) => <button key={action.label} onClick={action.run}>{action.label}</button>)}</div>
       </article>)}
     </div><div className="carousel-dots" aria-label={`Pendiente ${carouselIndex + 1} de ${visibleCards.length}`}>{visibleCards.map((card, index) => <button key={card.id} className={index === carouselIndex ? "active" : ""} onClick={() => (carouselRef.current?.children[index] as HTMLElement | undefined)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" })} aria-label={`Ver pendiente ${index + 1}: ${card.title}`} />)}</div></> : <div className="all-clear"><strong>Todo revisado por ahora.</strong><span>Puedes seguir preguntándole a YOL1.</span></div>}
     {archivedLabels.length > 0 && <div className="reviewed-strip"><span>✓ {archivedLabels.length} {archivedLabels.length === 1 ? "revisada" : "revisadas"} en esta sesión</span><button onClick={() => onRestore(archivedLabels[archivedLabels.length - 1].id)}>Deshacer última</button></div>}
 
     <section className="finance-chat">
-      <div className="chat-heading"><div><span className="chat-orb">Y</span><div><small>DATOS FICTICIOS</small><h3>Pregúntale a YOL1</h3></div></div><span>{aiChoice === "ai" ? "IA activa" : aiChoice === "pending" ? "Elige modo" : "Demo local"}</span></div>
+      <div className="chat-heading"><div><span className="chat-orb">Y</span><div><h3>Pregúntale a YOL1</h3><small>Cuéntame un poco más de tus finanzas y las analizamos juntos.</small></div></div></div>
       {aiConfigured && aiChoice === "pending" && <div className="chat-consent"><strong>¿Cómo quieres conversar?</strong><p>Con IA, tu texto se procesa en OpenAI desde el servidor. La pregunta y respuesta pueden guardarse en la bandeja del Lab para revisión. No incluyas datos personales, claves ni finanzas reales.</p><div><button onClick={() => chooseAiMode("ai")}>Usar IA</button><button onClick={() => chooseAiMode("demo")}>Seguir en demo</button></div></div>}
       {aiConfigured && aiChoice !== "pending" && <button className="chat-mode-link" onClick={() => setAiChoice("pending")}>Cambiar modo · {aiChoice === "ai" ? "IA" : "demo"}</button>}
       <div className="chat-suggestions">{["¿Qué cambió este mes?", "¿A quién le debo?", "¿Quién me debe?", "¿Qué beneficio tengo?", "¿Cuánto podría ahorrar?", "¿Qué pasó con Disney+?"].map((suggestion) => <button key={suggestion} disabled={chatBusy || aiChoice === "pending"} onClick={() => answer(suggestion)}>{suggestion}</button>)}</div>
       <div className="chat-thread" aria-live="polite">{messages.slice(-8).map((message) => <article key={message.id} className={message.role}><p>{message.text}</p>{message.role === "assistant" && message.id !== "welcome" && <div className="chat-rating"><span>{message.mode === "ai" ? "IA" : message.mode === "knowledge" ? "APROBADA" : "DEMO"}</span><button className={message.feedback === "useful" ? "selected" : ""} onClick={() => rateAnswer(message, "useful")}>Útil</button><button className={message.feedback === "improve" ? "selected" : ""} onClick={() => rateAnswer(message, "improve")}>Mejoraría</button></div>}</article>)}{chatBusy && <p className="chat-thinking">YOL1 está pensando…</p>}</div>
-      <form className="chat-compose" onSubmit={submitChat}><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={aiChoice === "pending" ? "Elige IA o demo para empezar" : "Pregunta sobre el ejemplo…"} aria-label="Pregunta financiera sobre datos ficticios" maxLength={700} disabled={chatBusy || aiChoice === "pending"} /><button type="submit" aria-label="Enviar pregunta" disabled={chatBusy || aiChoice === "pending"}>↑</button></form>
-      <p className="chat-privacy">Ejemplo ficticio · preguntas y respuestas pueden guardarse para revisión · no compartas datos personales o financieros reales.</p>
+      <form className="chat-compose" onSubmit={submitChat}><input value={chatInput} onChange={(event) => setChatInput(event.target.value)} placeholder={aiChoice === "pending" ? "Elige cómo conversar para empezar" : "Pregunta sobre tus finanzas…"} aria-label="Pregunta financiera" maxLength={700} disabled={chatBusy || aiChoice === "pending"} /><button type="submit" aria-label="Enviar pregunta" disabled={chatBusy || aiChoice === "pending"}>↑</button></form>
     </section>
   </>;
 }
