@@ -420,3 +420,35 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
 4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
 5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 22. Revisión nocturna incremental — 14 de agosto de 2026, 10:50 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación consolidada y cambios locales posteriores al cierre 09:46. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 nuevo. Onboarding conserva exploración antes de identidad, intención y explicación antes del OTP, pre-registro separado de KYC/capacidad y fallbacks seguros; Tarjetas permanece en investigación y Builder no afirma sincronización externa.
+- Los ajustes locales recientes alinean la escena de escritorio y dejan la ficha completa de feedback disponible también en productos en investigación, sin cambiar su estado ni concederles capacidad operativa.
+- Se encontró un P1 de atribución: el estado interno del formulario de feedback sobrevivía al cambio de producto o pantalla. Una opinión empezada en un contexto podía enviarse después con el producto/pantalla nuevos.
+
+### Mejora local reversible aplicada
+
+- Las instancias desktop y mobile de Feedback se reinician ahora al cambiar `productId` o `activeTitle`. El texto, tipo y confirmación no migran silenciosamente entre productos o pantallas.
+- Se amplió el guardrail de producto para exigir ambas claves de contexto y conservar el formulario completo de escritorio decidido en los cambios locales de esta pasada.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; rutas `/`, `/review`, `/review/knowledge`, `/api/chat`, `/api/feedback` y `/api/mcp` generadas.
+- Guardrails focalizados de producto/feedback: **19/19 PASS**.
+- Suite completa: **71/71 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento usó el wrapper de `pnpm` sin Node en su `PATH`; al ejecutar la misma suite con el runtime local explícito, build y pruebas cerraron correctamente. No fue una falla del producto.
+- No se hizo QA visual de navegador: la corrección funcional queda cubierta por el remount explícito, guardrail, build y revisión estática; la validación visual compartida continúa abierta junto con Postgres + token largo.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si el borrador navegable en investigación sigue accesible desde el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.

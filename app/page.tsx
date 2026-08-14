@@ -191,14 +191,14 @@ export default function Home() {
           {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event="portfolio_product_selected" data-product-key={product.id} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.published ? "PARA EXPLORAR" : "EN INVESTIGACIÓN"}</small></button>)}
         </nav>
       </section>
-      <section className="lab-intro">
+      <section className={`lab-intro product-${productId}`}>
         <div className="brand-plate"><Brand /><span>PRODUCT GROWTH LAB · 01</span></div>
         <div className="editorial-copy">
           <p className="eyebrow">{editorialEyebrow}</p>
           <h1>{editorialHeading}</h1>
           <p className="lede">{activeProduct.description}</p>
         </div>
-        <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={!activeProduct.published} onSubmitted={() => undefined} />
+        <FeedbackPanel key={`desktop-feedback-${productId}-${activeTitle}`} product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={false} onSubmitted={() => undefined} />
       </section>
 
       {(productId === "companion" || productId === "kyc" || productId === "builder") ? <section className={`phone-wrap ${productId === "builder" ? "builder-phone-wrap" : ""}`} aria-label={`YOL1 — ${activeTitle}`}>
@@ -224,7 +224,7 @@ export default function Home() {
             </>
           </div>
           {notice && <div className="phone-toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Cerrar confirmación">×</button></div>}
-          <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" onSubmitted={() => undefined} />
+          <FeedbackPanel key={`mobile-feedback-${productId}-${activeTitle}`} product={activeProduct.name} screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" onSubmitted={() => undefined} />
           {profileOpen && <ProfileMenu snapshot={demoSnapshot} onClose={() => setProfileOpen(false)} onOnboarding={() => { setProfileOpen(false); setProductId("kyc"); }} onBank={() => { setProfileOpen(false); setProductId("companion"); setBankCapability(demoSnapshot?.selected_capability === "receive_value" ? "receive_value" : "direct"); go("banco"); }} onClearDemo={() => { clearDemoFromLedger(); setProfileOpen(false); }} />}
           {productId === "companion" && <nav className="bottom-nav bottom-nav-six" aria-label="Navegación principal">
             <NavButton icon="⌂" label="Inicio" current={tab === "inicio"} onClick={() => go("inicio")} />

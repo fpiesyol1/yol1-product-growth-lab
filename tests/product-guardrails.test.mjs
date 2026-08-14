@@ -241,7 +241,10 @@ test("feedback conserva fallback local y permanece desacoplado de GitHub", async
   const css = await source("app/globals.css");
   const adapter = await source("lib/feedback-intake.ts");
   const architecture = await source("FEEDBACK-INTAKE.md");
-  assert.match(page, /FeedbackPanel product=\{activeProduct\.name\} screen=\{activeTitle\} open=\{true\}/);
+  assert.match(page, /product=\{activeProduct\.name\} screen=\{activeTitle\} open=\{true\}/);
+  assert.match(page, /key=\{`desktop-feedback-\$\{productId\}-\$\{activeTitle\}`\}/);
+  assert.match(page, /key=\{`mobile-feedback-\$\{productId\}-\$\{activeTitle\}`\}/);
+  assert.match(page, /variant="desktop" compact=\{false\}/);
   assert.match(page, /Me gusta/);
   assert.match(page, /Mejoraría/);
   assert.match(page, /Idea/);
