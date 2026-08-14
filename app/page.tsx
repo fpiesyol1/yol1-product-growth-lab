@@ -9,6 +9,7 @@ import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, 
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
 type Theme = "dark" | "light";
+type BuilderGuide = "chatgpt" | "claude" | "how" | null;
 type MovementAction = "Ya lo vi" | "Revisar" | "Dividir" | "Cobrar";
 type PendingView = "personas" | "grupos";
 type SplitMode = "equal" | "custom";
@@ -55,6 +56,7 @@ const initialDraft: CollectDraft = {
 };
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL || "https://yol1-product-growth-lab.vercel.app/api/mcp";
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
@@ -83,6 +85,8 @@ export default function Home() {
   const [decisionResolutions, setDecisionResolutions] = useState<Record<string, DecisionResolution>>({});
   const [profileOpen, setProfileOpen] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
+  const [projectSubmitOpen, setProjectSubmitOpen] = useState(false);
+  const [builderGuide, setBuilderGuide] = useState<BuilderGuide>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("yol1-lab-theme");
@@ -188,18 +192,19 @@ export default function Home() {
         <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={!activeProduct.published} onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
       </section>
 
-      {(productId === "companion" || productId === "kyc") ? <section className="phone-wrap" aria-label={`YOL1 — ${activeTitle}`}>
+      {(productId === "companion" || productId === "kyc" || productId === "builder") ? <section className={`phone-wrap ${productId === "builder" ? "builder-phone-wrap" : ""}`} aria-label={`YOL1 — ${activeTitle}`}>
         <span className="phone-halo" aria-hidden="true" />
         <div className="phone">
           <div className="phone-notch" />
           <header className="app-top">
             <button className="menu-trigger" onClick={() => setProfileOpen(true)} aria-label="Abrir menú de perfil"><Brand compact /></button>
             <span className="app-section">{activeTitle}</span>
-            <div className="header-actions"><span className="demo-pill">DATOS FICTICIOS</span><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
+            <div className="header-actions"><span className="demo-pill">{productId === "builder" ? "MCP · PRÓXIMAMENTE" : "DATOS FICTICIOS"}</span><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
           </header>
-          <div className={`app-content app-${productId === "companion" ? tab : "unpublished"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
+          <div className={`app-content app-${productId === "companion" ? tab : productId === "builder" ? "builder" : "unpublished"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
             <>
               {productId === "kyc" && <OnboardingFlow step={onboardingStep} setStep={setOnboardingStep} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Pre-registro demo creado. Ya puedes conocer a tu acompañante financiero."); }} />}
+              {productId === "builder" && <ProjectBuilderScreen guide={builderGuide} onGuide={setBuilderGuide} />}
               {productId === "companion" && tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
               {productId === "companion" && tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
               {productId === "companion" && tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} reviewed={reviewedMovements} onUnreview={(id) => setReviewedMovements((items) => items.filter((item) => item !== id))} notes={movementNotes} setNotes={setMovementNotes} savedNotes={savedMovementNotes} setSavedNotes={setSavedMovementNotes} onAction={handleMovementAction} onNotice={notify} />}
@@ -221,8 +226,9 @@ export default function Home() {
             <NavButton icon="⌂" label="Mi banco" current={tab === "banco"} onClick={() => go("banco")} />
           </nav>}
         </div>
+        {productId === "builder" && <ProjectSubmitPanel open={projectSubmitOpen} onToggle={() => setProjectSubmitOpen((current) => !current)} onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />}
       </section> : <UnpublishedStage product={activeProduct} stateIndex={emptyStateIndex} />}
-      {(productId === "companion" || productId === "kyc") && <LivingSpecification product={activeProduct} screen={activeTitle} spec={livingSpec} inspectedEvent={inspectedEvent || livingSpec.event} feedback={feedbackRecords} resolutions={decisionResolutions} />}
+      {(productId === "companion" || productId === "kyc" || productId === "builder") && <LivingSpecification product={activeProduct} screen={activeTitle} spec={livingSpec} inspectedEvent={inspectedEvent || livingSpec.event} feedback={feedbackRecords} resolutions={decisionResolutions} />}
     </main>
   );
 }
@@ -259,6 +265,105 @@ function ProfileMenu({ onClose, onBank }: { onClose: () => void; onBank: () => v
     ["Datos financieros", "Desbloquea personalización", "→"],
   ];
   return <aside className="profile-menu" aria-label="Menú de perfil"><div className="profile-menu-head"><div><small>TU PERFIL</small><strong>Completa tu información</strong></div><button onClick={onClose} aria-label="Cerrar menú">×</button></div><p>2 de 5 completas</p><div className="profile-checklist">{rows.map(([name, unlock, mark]) => <button key={name} onClick={() => { if (name === "RUT + serie" || name === "Biometría") { onBank(); } }}><span>{mark}</span><div><strong>{name}</strong><small>{unlock}</small></div></button>)}</div></aside>;
+}
+
+function ProjectBuilderScreen({ guide, onGuide }: { guide: BuilderGuide; onGuide: (guide: BuilderGuide) => void }) {
+  if (guide) return <BuilderGuideScreen guide={guide} onBack={() => onGuide(null)} />;
+  return <section className="builder-phone-empty" aria-label="Vista previa de proyecto en construcción">
+    <div className="builder-phone-art" aria-hidden="true"><span>✦</span><i /><i /><i /></div>
+    <p className="kicker">YOL1 MCP · PRÓXIMAMENTE</p>
+    <h2>Las pantallas<br /><span>parten acá.</span></h2>
+    <p>Parte conversando con la IA las ideas que tienes. Cuando se vayan materializando, aparecerán acá.</p>
+    <div className="builder-connect-grid" aria-label="Conectar una IA">
+      <button onClick={() => onGuide("chatgpt")} data-event="builder.connect-chatgpt.click"><span>◌</span><strong>Conectar mi<br />ChatGPT</strong><small>Guía de instalación</small></button>
+      <button onClick={() => onGuide("claude")} data-event="builder.connect-claude.click"><span>✦</span><strong>Conectar mi<br />Claude</strong><small>Guía de instalación</small></button>
+    </div>
+    <button className="builder-how-button" onClick={() => onGuide("how")} data-event="builder.how-to.click">Cómo ocupar <span>→</span></button>
+    <small className="builder-phone-disclaimer">GitHub versiona el MCP y las decisiones aprobadas. Tu chat personal no se lee ni se copia desde YOL1.</small>
+  </section>;
+}
+
+function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, null>; onBack: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+  const isHow = guide === "how";
+  const provider = guide === "chatgpt" ? "ChatGPT" : "Claude";
+  const menuPath = guide === "chatgpt" ? "Configuración → Conectores → Agregar conector" : "Configuración → Conectores → Agregar conector personalizado";
+  const template = `Quiero crear una propuesta para YOL1.\n\n1. Lee el contexto y las especificaciones aprobadas que entrega el MCP de YOL1.\n2. Antes de diseñar, ayúdame a definir: problema, persona, momento de uso y criterio de éxito.\n3. Propón un flujo de 5 a 7 pantallas. Para cada pantalla indica: objetivo, contenido, CTA, evento simple, datos que guarda/consulta y qué puede salir mal.\n4. Usa el sistema visual YOL1: dark-first, acid para acción, aqua para explicación, rosa suave solo para lo social; no uses rosa como alerta.\n5. No inventes productos financieros, licencias, KYC, pagos, datos o integraciones. Marca lo incierto como “Por validar”.\n6. Crea una propuesta breve para enviar a revisión de Felipe.\n\nMi idea inicial es: [ESCRIBE AQUÍ TU IDEA]`;
+  const copyTemplate = async () => {
+    try { await navigator.clipboard.writeText(template); setCopied(true); } catch { setCopied(false); }
+  };
+  const copyUrl = async () => {
+    try { await navigator.clipboard.writeText(YOL1_MCP_URL); setUrlCopied(true); } catch { setUrlCopied(false); }
+  };
+  if (isHow) return <section className="builder-how-screen" aria-label="Cómo ocupar YOL1 MCP">
+    <button className="back-link" onClick={onBack}>← Volver</button>
+    <p className="kicker">CÓMO OCUPARLO</p><h2>Hablas.<br /><span>Se materializa.</span></h2>
+    <div className="builder-demo-window" aria-label="Demostración animada de una conversación que materializa una pantalla">
+      <div className="builder-demo-head"><span>YOL1 MCP</span><i /><i /><i /></div>
+      <div className="builder-demo-chat"><p className="user">“Quiero ordenar los gastos de un viaje.”</p><p className="assistant">Entiendo. Voy a proponer el flujo y sus reglas.</p><p className="tool">↳ Contexto YOL1 leído</p></div>
+      <div className="builder-demo-preview"><small>VISTA PREVIA</small><strong>Viaje sin<br />cuentas pendientes</strong><span>Gasto · participantes · cobro</span></div>
+    </div>
+    <ol className="builder-how-list"><li>Cuéntale la idea a tu IA.</li><li>El MCP trae el contexto aprobado de YOL1.</li><li>Itera hasta que la pantalla tenga sentido.</li><li>La propuesta aparece acá; después puedes enviarla a revisión.</li></ol>
+  </section>;
+  return <section className="builder-install-screen" aria-label={`Instalar YOL1 MCP en ${provider}`}>
+    <button className="back-link" onClick={onBack}>← Volver</button>
+    <p className="kicker">CONECTA TU IA</p><h2>{provider}<br /><span>con YOL1.</span></h2>
+    <p className="builder-guide-intro">Harás dos pegados distintos: primero la URL en configuración; después el texto de trabajo dentro de un chat nuevo. No pegues el texto de trabajo en el campo URL.</p>
+    <div className="builder-install-steps">
+      <article><span>01</span><div><strong>Abre Conectores</strong><small>Ve a <b>{menuPath}</b>. Si tu cuenta no muestra Conectores, aún no podrá usar este flujo.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
+      <article><span>02</span><div><strong>Completa solo esto</strong><small><b>Nombre:</b> YOL1 MCP<br /><b>URL:</b> pega este link: <code>{YOL1_MCP_URL}</code></small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
+      <article><span>03</span><div><strong>Autoriza y abre un chat</strong><small>Aprueba únicamente los permisos que veas. Luego activa YOL1 MCP desde herramientas y abre una conversación nueva.</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1 MCP</i></article>
+    </div>
+    <button className="builder-copy-url" onClick={copyUrl}>{urlCopied ? "URL MCP copiada ✓" : "Copiar URL MCP"}</button>
+    <div className="builder-paste-box"><small>04 · EN EL CHAT NUEVO, PEGA ESTO</small><p>{template}</p></div>
+    <button className="builder-copy-template" onClick={copyTemplate}>{copied ? "Prompt de trabajo copiado ✓" : "Copiar prompt de trabajo"}</button>
+    <small className="builder-install-note">Este endpoint es de solo lectura: entrega contexto YOL1 y crea briefs, pero no lee tu conversación, no guarda ideas, no pide contraseña ni API key.</small>
+  </section>;
+}
+
+function ProjectSubmitPanel({ open, onToggle, onSubmitted }: { open: boolean; onToggle: () => void; onSubmitted: () => void }) {
+  const [idea, setIdea] = useState("");
+  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [fit, setFit] = useState("");
+  const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitProject = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!name.trim() || !title.trim() || !purpose.trim() || !fit.trim()) return;
+    const message = `${title.trim()}\n\nBusca hacer: ${purpose.trim()}\n\nPor qué tiene sentido con YOL1: ${fit.trim()}\n\nIdea de trabajo: ${idea.trim() || "Sin idea inicial adjunta."}`.slice(0, 700);
+    localFeedbackIntake.submit({ product: "Construir mi propio producto", screen: "Propuesta de producto", kind: "idea", message, topics: `Propuesta de ${name.trim()}` });
+    onSubmitted();
+    setSubmitting(true);
+    try {
+      const shared = await submitGeneralFeedback({ screen: "Construir mi propio producto · Propuesta de producto", kind: "idea", message, topics: `Propuesta de ${name.trim()}` });
+      setNotice(shared ? "Proyecto enviado a la bandeja de revisión de YOL1." : "Proyecto guardado localmente para revisión.");
+      if (shared) { setName(""); setTitle(""); setPurpose(""); setFit(""); }
+    } catch {
+      setNotice("Proyecto guardado solo en este navegador. La bandeja compartida no respondió.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return <section className={`project-submit-panel ${open ? "is-open" : ""}`} aria-label="Enviar proyecto a revisión">
+    {!open ? <button className="project-submit-trigger" onClick={onToggle}>Enviar proyecto <span>→</span></button> : <>
+      <header><div><small>CUANDO YA TENGA FORMA</small><h2>Mándalo a revisión.</h2></div><button onClick={onToggle} aria-label="Cerrar formulario">×</button></header>
+      <form onSubmit={submitProject}>
+        <label>Tu nombre<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Cómo te identificamos" required /></label>
+        <label>Nombre o título del proyecto<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ej.: Viajes sin cuentas pendientes" required /></label>
+        <label>¿Qué busca hacer?<textarea value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="Qué problema resuelve y para quién" required /></label>
+        <label>¿Por qué tiene sentido con YOL1?<textarea value={fit} onChange={(event) => setFit(event.target.value)} placeholder="Cómo conecta con la propuesta de valor" required /></label>
+        <label className="project-optional">Link o resumen de lo que trabajaste <textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Opcional: pega un resumen, link o decisiones de tu sesión" /></label>
+        <button className="project-submit-action" disabled={submitting}>{submitting ? "Enviando…" : "Enviar proyecto"}</button>
+      </form>
+      <p>Se envía a revisión editorial. No publica el proyecto ni cambia una pantalla automáticamente.</p>
+      {notice && <p className="project-submit-notice" role="status">{notice}</p>}
+    </>}
+  </section>;
 }
 
 function UnpublishedStage({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {

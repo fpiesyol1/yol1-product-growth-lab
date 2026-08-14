@@ -262,8 +262,8 @@ test("portfolio mantiene seis productos y publica Acompañante más Onboarding",
   assert.match(portfolio, /name: "Tarjetas"/);
   assert.match(portfolio, /name: "Remesas"/);
   assert.match(portfolio, /name: "Construir mi propio producto"/);
-  assert.equal((portfolio.match(/published: true/g) ?? []).length, 2);
-  assert.equal((portfolio.match(/published: false/g) ?? []).length, 4);
+  assert.equal((portfolio.match(/published: true/g) ?? []).length, 3);
+  assert.equal((portfolio.match(/published: false/g) ?? []).length, 3);
   assert.match(page, /NO PUBLICADO/);
   assert.doesNotMatch(page, /Volver al Acompañante financiero/);
   assert.match(portfolio, /EMPTY_STATE_LIBRARY[\s\S]*perro feliz que te hará compañía/i);
@@ -314,6 +314,43 @@ test("los productos no publicados no simulan una app ni una ficha técnica", asy
   assert.match(page, /TENGO UNA IDEA/);
   assert.match(page, /className="unpublished-phone"/);
   assert.match(css, /\.unpublished-phone \{/);
+});
+
+test("el builder separa la conversación externa de la vista previa y el envío editorial", async () => {
+  const page = await source("app/page.tsx");
+  const knowledge = await source("knowledge/construir-mi-propio-producto.md");
+  assert.match(page, /function ProjectBuilderScreen/);
+  assert.match(page, /Las pantallas[\s\S]*parten acá/);
+  assert.match(page, /Parte conversando con la IA las ideas que tienes/i);
+  assert.match(page, /Conectar mi[\s\S]*ChatGPT/);
+  assert.match(page, /Conectar mi[\s\S]*Claude/);
+  assert.match(page, /Cómo ocupar/);
+  assert.match(page, /Harás dos pegados distintos/i);
+  assert.match(page, /https:\/\/yol1-product-growth-lab\.vercel\.app\/api\/mcp/);
+  assert.match(page, /Copiar URL MCP/);
+  assert.match(page, /No pegues el texto de trabajo en el campo URL/i);
+  assert.match(page, /Mi idea inicial es: \[ESCRIBE AQUÍ TU IDEA\]/);
+  assert.match(page, /Nombre:<\/b> YOL1 MCP/);
+  assert.match(page, /Hablas[\s\S]*Se materializa/);
+  assert.match(page, /function ProjectSubmitPanel/);
+  assert.match(page, /Enviar proyecto/);
+  assert.match(page, /No publica el proyecto ni cambia una pantalla automáticamente/i);
+  assert.doesNotMatch(page, /function BuilderWorkspace/);
+  assert.match(knowledge, /servidor HTTPS desplegado, OAuth/i);
+  assert.match(knowledge, /GitHub versiona el código/i);
+});
+
+test("el MCP publicado expone solo contexto y briefs sin escribir ni pedir credenciales", async () => {
+  const route = await source("app/api/mcp/route.ts");
+  assert.match(route, /export async function GET/);
+  assert.match(route, /export async function POST/);
+  assert.match(route, /public-read-only/);
+  assert.match(route, /yol1_get_context/);
+  assert.match(route, /yol1_create_project_brief/);
+  assert.match(route, /tools\/list/);
+  assert.match(route, /tools\/call/);
+  assert.match(route, /No solicita credenciales/);
+  assert.doesNotMatch(route, /DATABASE_URL|process\.env\.(?!NEXT_PUBLIC_MCP_URL)/);
 });
 
 test("bandeja de decisiones resuelve contradicciones solo en estado local", async () => {

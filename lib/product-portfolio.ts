@@ -27,7 +27,7 @@ export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
   { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", published: false, description: "Espacio reservado. No representa banca construida ni disponible." },
   { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", published: false, description: "Espacio reservado. No hay emisión, procesamiento ni producto publicado." },
   { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", published: false, description: "Espacio reservado. No hay envíos, tipo de cambio ni licencias definidas." },
-  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", published: false, description: "Escribe una idea en ChatGPT o Claude. YOL1 la convierte en pantallas y funcionalidades para que las edites, las pruebes y las envíes a revisión." },
+  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", published: true, description: "Trabaja una idea en ChatGPT o Claude, ordénala con el contexto de YOL1 y envíala a revisión cuando esté lista." },
 ];
 
 export const EMPTY_STATE_LIBRARY = [
@@ -125,6 +125,15 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
     licenses: { state: "Por validar", reason: "Chile es la base. La capacidad financiera depende de vehículo, partner y revisión Legal." },
     questions: ["¿Cuándo nace el ID definitivo Yol1?", "¿Cuál es el SLA y ruta de Customer Success ante revisión o pérdida de acceso?"],
     risks: ["OTP no recibido o expirado", "Pre-registros duplicados por teléfono o email", "Abandono durante la validación de identidad", "Explicar biometría como demo cuando no hay proveedor conectado"],
+  };
+  if (product.id === "builder") return {
+    event: "builder.view",
+    architecture: ["React Native · experiencia futura para colaboradores", "Paquete de contexto versionado · diseño, producto y límites", "MCP remoto con OAuth · etapa posterior, no conectado aún", "AWS · API de propuestas y revisión editorial (por validar)"],
+    data: { store: ["Borrador local de idea", "Resumen de propuesta enviado", "Versión del paquete de contexto"], query: ["Sistema visual y patrones aprobados", "Especificaciones de producto publicadas", "Estado de revisión de la propuesta"], handling: "No conectar cuentas personales de IA ni leer conversaciones privadas. La persona decide qué pega y qué envía." },
+    kyc: { state: "No aplica", reason: "Crear una propuesta no identifica ni activa productos financieros." },
+    licenses: { state: "No aplica", reason: "Es un espacio editorial de ideación; cualquier producto resultante se evalúa por separado en Chile." },
+    questions: ["¿Qué permisos y OAuth exigirá un MCP remoto antes de habilitarlo?", "¿Qué parte del contexto puede ser pública para colaboradores externos?"],
+    risks: ["Hacer creer que YOL1 ve el chat privado de una persona", "Enviar una idea sin caso de uso ni criterio de éxito", "Convertir un borrador en promesa de producto sin revisión editorial"],
   };
   return {
     event: `portfolio.${product.id}.view`,

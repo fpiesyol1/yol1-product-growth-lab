@@ -7,6 +7,7 @@ Esta carpeta es la fuente editorial legible del Product Growth Lab. Contiene ún
 - `INDEX.md`: catálogo breve, estado y archivo fuente de cada pregunta madre.
 - `finanzas.md`, `cartola.md`, `cobrar-y-pagar.md`, `ahorrar.md`: fichas por dominio.
 - `WORKFLOW-POR-VOZ.md`: guía para convertir un dictado de Felipe en conocimiento revisable.
+- `construir-mi-propio-producto.md`: marco de ideación colaborativa, contexto exportable y límites del futuro MCP.
 - `lib/ai/knowledge-catalog.ts`: representación TypeScript manual que usa el Lab en runtime. Cada entrada enlaza su Markdown mediante `source`.
 - `lib/ai/knowledge-router.ts`: resuelve reglas, preguntas aprobadas y fallback.
 
