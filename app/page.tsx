@@ -1,20 +1,25 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { localFeedbackIntake, type FeedbackKind, type FeedbackRecord } from "../lib/feedback-intake";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { localFeedbackIntake, type FeedbackKind } from "../lib/feedback-intake";
 import { localChatFeedbackIntake, type ChatFeedbackRating } from "../lib/chat-feedback";
 import { submitChatResponse, submitGeneralFeedback } from "../lib/shared-feedback-client";
-import { DECISION_CONFLICTS, readDecisionResolutions, type DecisionResolution } from "../lib/decision-inbox";
-import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, proposedEventForElement, simpleEventName, type LivingSpec, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
+import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, simpleEventName, type LivingSpec, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
+import { ONBOARDING_STAGE_META, transitionOnboarding, type OnboardingStage, type OnboardingTransition } from "../lib/onboarding-state-machine";
+import { buildOnboardingDemoSnapshot, ONBOARDING_DEMO_STORAGE_KEY, parseOnboardingDemoSnapshot, type OnboardingDemoSnapshot } from "../lib/onboarding-demo-storage";
+import { buildAccessLedger } from "../lib/onboarding-access-ledger";
+import { validateAccessContact, type AccessMethod } from "../lib/onboarding-validation";
+import { normalizeKycState, type NormalizedKycState } from "../lib/onboarding-safety";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
 type Theme = "dark" | "light";
 type BuilderGuide = "chatgpt" | "claude" | "how" | null;
-type MovementAction = "Ya lo vi" | "Revisar" | "Dividir" | "Cobrar";
+type MovementAction = "Marcar revisado" | "Revisar" | "Preparar reparto" | "Preparar cobro";
 type PendingView = "personas" | "grupos";
 type SplitMode = "equal" | "custom";
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string; mode?: "ai" | "demo" | "knowledge"; feedback?: ChatFeedbackRating; knowledgeVersion?: string };
 type MessagePreview = { name: string; alias?: string; amount: string; expense: string; direction: "collect" | "pay" };
+type OnboardingCapability = "financial_data_connect" | "receive_value";
 type CollectDraft = {
   step: number;
   expense: string;
@@ -56,7 +61,8 @@ const initialDraft: CollectDraft = {
 };
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
-const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL || "https://yol1-product-growth-lab.vercel.app/api/mcp";
+const YOL1_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
+const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL || `${YOL1_SITE_URL}/api/mcp`;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
@@ -79,18 +85,26 @@ export default function Home() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [messagePreview, setMessagePreview] = useState<MessagePreview | null>(null);
   const [emptyStateIndex, setEmptyStateIndex] = useState(0);
-  const [inspectedEvent, setInspectedEvent] = useState("");
-  const [touchInspection, setTouchInspection] = useState(false);
-  const [feedbackRecords, setFeedbackRecords] = useState<FeedbackRecord[]>([]);
-  const [decisionResolutions, setDecisionResolutions] = useState<Record<string, DecisionResolution>>({});
   const [profileOpen, setProfileOpen] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [onboardingStage, setOnboardingStage] = useState<OnboardingStage>("welcome");
+  const [demoSnapshot, setDemoSnapshot] = useState<OnboardingDemoSnapshot | null>(null);
+  const [onboardingResetKey, setOnboardingResetKey] = useState(0);
+  const [bankCapability, setBankCapability] = useState<"direct" | "receive_value">("direct");
   const [projectSubmitOpen, setProjectSubmitOpen] = useState(false);
   const [builderGuide, setBuilderGuide] = useState<BuilderGuide>(null);
+  const appContentRef = useRef<HTMLDivElement>(null);
+  const resetAppContentScroll = useCallback(() => {
+    if (appContentRef.current) appContentRef.current.scrollTop = 0;
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("yol1-lab-theme");
     setTheme(stored === "light" || stored === "dark" ? stored : "dark");
+    setDemoSnapshot(parseOnboardingDemoSnapshot(window.localStorage.getItem(ONBOARDING_DEMO_STORAGE_KEY)));
+    const requestedProduct = new URLSearchParams(window.location.search).get("product");
+    if (PORTFOLIO_PRODUCTS.some((product) => product.id === requestedProduct)) {
+      setProductId(requestedProduct as ProductId);
+    }
   }, []);
 
   useEffect(() => {
@@ -98,9 +112,8 @@ export default function Home() {
   }, [theme]);
 
   useEffect(() => {
-    setFeedbackRecords(localFeedbackIntake.list());
-    setDecisionResolutions(readDecisionResolutions());
-  }, []);
+    resetAppContentScroll();
+  }, [bankCapability, onboardingStage, productId, resetAppContentScroll, tab]);
 
   const chooseTheme = (next: Theme) => {
     setTheme(next);
@@ -108,6 +121,14 @@ export default function Home() {
   };
 
   const notify = (message: string) => setNotice(message);
+  const clearDemoFromLedger = () => {
+    window.localStorage.removeItem(ONBOARDING_DEMO_STORAGE_KEY);
+    setDemoSnapshot(null);
+    setOnboardingStage("welcome");
+    setOnboardingResetKey((current) => current + 1);
+    setBankCapability("direct");
+    notify("Pre-registro demo borrado de este navegador. No había contacto ni OTP guardados.");
+  };
   const go = (next: Tab, message?: string) => {
     setTab(next);
     if (message) notify(message);
@@ -130,12 +151,12 @@ export default function Home() {
   };
 
   const handleMovementAction = (action: MovementAction, movement: typeof movements[number]) => {
-    if (action === "Dividir" || action === "Cobrar") {
+    if (action === "Preparar reparto" || action === "Preparar cobro") {
       openCollect(movement.name);
       notify(`${movement.name}: reparto preparado con datos ficticios.`);
       return;
     }
-    if (action === "Ya lo vi") {
+    if (action === "Marcar revisado") {
       setReviewedMovements((items) => items.includes(movement.id) ? items : [...items, movement.id]);
       notify(`${movement.name}: quedó marcado como revisado en esta sesión.`);
       return;
@@ -145,20 +166,14 @@ export default function Home() {
 
   const activeProduct = PORTFOLIO_PRODUCTS.find((product) => product.id === productId) ?? PORTFOLIO_PRODUCTS[0];
   const activeTitle = productId === "companion" ? tabLabels[tab] : activeProduct.name;
-  const activeScreenKey = productId === "companion" ? tab : productId;
-  const livingSpec = getLivingSpec(activeProduct, activeScreenKey);
-
-  useEffect(() => {
-    setInspectedEvent(livingSpec.event);
-  }, [livingSpec.event]);
-
-  const inspectTarget = (target: EventTarget | null) => {
-    if (!(target instanceof HTMLElement)) return;
-    const actionable = target.closest<HTMLElement>("button,a,[data-event]");
-    if (!actionable) return;
-    setInspectedEvent(proposedEventForElement(actionable, livingSpec.event));
-  };
-
+  const editorialEyebrow = activeProduct.published ? "PRODUCTO PARA EXPLORAR" : "ESPACIO EN INVESTIGACIÓN";
+  const editorialHeading = productId === "companion"
+    ? <>Tu plata,<br /><span>más clara.</span></>
+    : productId === "kyc"
+      ? <>Explora primero.<br /><span>Activa después.</span></>
+      : productId === "builder"
+        ? <>El próximo producto<br /><span>lo construyes tú.</span></>
+        : <>{activeProduct.name}<br /><span>en investigación.</span></>;
   const chooseProduct = (next: ProductId) => {
     setProductId(next);
     const index = PORTFOLIO_PRODUCTS.findIndex((product) => product.id === next);
@@ -170,38 +185,34 @@ export default function Home() {
   if (messagePreview) return <MessagePreviewScreen preview={messagePreview} theme={theme} onBack={() => setMessagePreview(null)} />;
 
   return (
-    <main className="lab-shell" data-theme={theme} onPointerOver={(event) => inspectTarget(event.target)} onFocusCapture={(event) => inspectTarget(event.target)} onClickCapture={(event) => { if (touchInspection) inspectTarget(event.target); }}>
+    <main className="lab-shell" data-theme={theme}>
       <section className="portfolio-rail" aria-label="Portfolio de productos del Lab">
-        <div className="portfolio-heading"><span>PORTFOLIO YOL1</span></div>
         <nav className="product-selector">
-          {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event={`portfolio.${product.id}.select`} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.published ? "PUBLICADO" : "NO PUBLICADO"}</small></button>)}
+          {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event="portfolio_product_selected" data-product-key={product.id} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.published ? "PARA EXPLORAR" : "EN INVESTIGACIÓN"}</small></button>)}
         </nav>
       </section>
       <section className="lab-intro">
         <div className="brand-plate"><Brand /><span>PRODUCT GROWTH LAB · 01</span></div>
         <div className="editorial-copy">
-          <p className="eyebrow">{activeProduct.published ? "FINANZAS QUE AYUDAN A VIVIR" : "ESPACIO NO PUBLICADO"}</p>
-          <h1>{activeProduct.published ? <>Tu plata,<br /><span>más clara.</span></> : <>{activeProduct.name}<br /><span>en pausa.</span></>}</h1>
+          <p className="eyebrow">{editorialEyebrow}</p>
+          <h1>{editorialHeading}</h1>
           <p className="lede">{activeProduct.description}</p>
         </div>
-        {productId === "companion" && <div className="module-map" aria-label="Módulos del Acompañante financiero">
-          {(Object.keys(tabLabels) as Tab[]).map((item) => <button key={item} className={tab === item ? "module-active" : ""} onClick={() => go(item)}>{tabLabels[item]}</button>)}
-        </div>}
-        <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={!activeProduct.published} onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
+        <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={!activeProduct.published} onSubmitted={() => undefined} />
       </section>
 
       {(productId === "companion" || productId === "kyc" || productId === "builder") ? <section className={`phone-wrap ${productId === "builder" ? "builder-phone-wrap" : ""}`} aria-label={`YOL1 — ${activeTitle}`}>
         <span className="phone-halo" aria-hidden="true" />
-        <div className="phone">
+        <div className={`phone phone-${productId}`}>
           <div className="phone-notch" />
           <header className="app-top">
             <button className="menu-trigger" onClick={() => setProfileOpen(true)} aria-label="Abrir menú de perfil"><Brand compact /></button>
             <span className="app-section">{activeTitle}</span>
             <div className="header-actions"><button className="feedback-mobile-trigger" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
           </header>
-          <div className={`app-content app-${productId === "companion" ? tab : productId === "builder" ? "builder" : "unpublished"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
+          <div ref={appContentRef} className={`app-content app-${productId === "companion" ? tab : productId === "kyc" ? "onboarding" : "builder"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
             <>
-              {productId === "kyc" && <OnboardingFlow step={onboardingStep} setStep={setOnboardingStep} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Pre-registro demo creado. Ya puedes conocer a tu acompañante financiero."); }} />}
+              {productId === "kyc" && <OnboardingFlow key={onboardingResetKey} stage={onboardingStage} setStage={setOnboardingStage} onSnapshotChange={setDemoSnapshot} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Ya puedes explorar tu acompañante financiero."); }} onOpenBank={() => { setBankCapability("receive_value"); setProductId("companion"); go("banco", "Handoff demo: revisa los requisitos posibles sin entregar identidad."); }} />}
               {productId === "builder" && <ProjectBuilderScreen guide={builderGuide} onGuide={setBuilderGuide} />}
               {productId === "companion" && tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
               {productId === "companion" && tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
@@ -209,114 +220,219 @@ export default function Home() {
               {productId === "companion" && tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} onPreview={setMessagePreview} />}
               {productId === "companion" && tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
               {productId === "companion" && tab === "ganar" && <EarnMore onBack={() => go("inicio")} />}
-              {productId === "companion" && tab === "banco" && <MyBank onNotice={notify} />}
+              {productId === "companion" && tab === "banco" && <MyBank capability={bankCapability} onNotice={notify} onClearContext={() => setBankCapability("direct")} onResetScroll={resetAppContentScroll} />}
             </>
           </div>
           {notice && <div className="phone-toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Cerrar confirmación">×</button></div>}
-          <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />
-          {profileOpen && <ProfileMenu onClose={() => setProfileOpen(false)} onBank={() => { setProfileOpen(false); go("banco"); }} />}
+          <FeedbackPanel product={activeProduct.name} screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" onSubmitted={() => undefined} />
+          {profileOpen && <ProfileMenu snapshot={demoSnapshot} onClose={() => setProfileOpen(false)} onOnboarding={() => { setProfileOpen(false); setProductId("kyc"); }} onBank={() => { setProfileOpen(false); setProductId("companion"); setBankCapability(demoSnapshot?.selected_capability === "receive_value" ? "receive_value" : "direct"); go("banco"); }} onClearDemo={() => { clearDemoFromLedger(); setProfileOpen(false); }} />}
           {productId === "companion" && <nav className="bottom-nav bottom-nav-six" aria-label="Navegación principal">
             <NavButton icon="⌂" label="Inicio" current={tab === "inicio"} onClick={() => go("inicio")} />
             <NavButton icon="💵" label="Finanzas" current={tab === "finanzas" || tab === "cartola"} onClick={() => go("finanzas")} />
             <NavButton icon="👥" label="Cobrar/pagar" current={tab === "cobrar"} onClick={() => go("cobrar")} />
             <NavButton icon="🪙" label="Ahorrar" current={tab === "ahorrar"} onClick={() => go("ahorrar")} />
             <NavButton icon="✦" label="Ganar" current={tab === "ganar"} onClick={() => go("ganar")} />
-            <NavButton icon="⌂" label="Mi banco" current={tab === "banco"} onClick={() => go("banco")} />
+            <NavButton icon="⌂" label="Mi banco" current={tab === "banco"} onClick={() => { setBankCapability("direct"); go("banco"); }} />
           </nav>}
         </div>
-        {productId === "builder" && <ProjectSubmitPanel open={projectSubmitOpen} onToggle={() => setProjectSubmitOpen((current) => !current)} onSubmitted={() => setFeedbackRecords(localFeedbackIntake.list())} />}
+        {productId === "builder" && <ProjectSubmitPanel open={projectSubmitOpen} onToggle={() => setProjectSubmitOpen((current) => !current)} onSubmitted={() => undefined} />}
       </section> : <UnpublishedStage product={activeProduct} stateIndex={emptyStateIndex} />}
-      {(productId === "companion" || productId === "kyc" || productId === "builder") && <LivingSpecification product={activeProduct} screen={activeTitle} spec={livingSpec} inspectedEvent={inspectedEvent || livingSpec.event} feedback={feedbackRecords} resolutions={decisionResolutions} />}
+      {activeProduct.published && <ProductSpecification product={activeProduct} screen={activeTitle} />}
     </main>
   );
 }
 
-function OnboardingFlow({ step, setStep, onEnterAdvisor }: { step: number; setStep: (step: number) => void; onEnterAdvisor: () => void }) {
-  const [method, setMethod] = useState<"teléfono" | "email">("teléfono");
-  const [contact, setContact] = useState("");
-  const [otp, setOtp] = useState("");
-  return <section className="onboarding-flow">
-    <div className="onboarding-progress" aria-label={`Paso ${step + 1} de 4`}><span style={{ width: `${(step + 1) * 25}%` }} /></div>
-    {step === 0 && <><p className="kicker">BIENVENIDO A YOL1</p><h2>Tu plata, más clara.<br /><span>A tu ritmo.</span></h2><p className="onboarding-copy">Conoce tu acompañante financiero antes de activar datos propios o productos.</p><div className="onboarding-art" aria-hidden="true">✦</div><button className="primary-action" onClick={() => setStep(1)}>Empezar →</button></>}
-    {step === 1 && <><button className="back-link" onClick={() => setStep(0)}>← Volver</button><p className="kicker">ENTRA A YOL1</p><h2 className="compact-title">¿Cómo te mandamos el código?</h2><div className="auth-choice"><button className={method === "teléfono" ? "selected-option" : ""} onClick={() => setMethod("teléfono")}>Teléfono</button><button className={method === "email" ? "selected-option" : ""} onClick={() => setMethod("email")}>Email</button></div><label className="onboarding-field">{method === "teléfono" ? "Tu número" : "Tu email"}<input value={contact} onChange={(event) => setContact(event.target.value)} placeholder={method === "teléfono" ? "+56 9 1234 5678" : "tu@email.com"} /></label><p className="microcopy">Esto crea un pre-registro. Todavía no activa cuentas ni productos financieros.</p><button className="primary-action" disabled={!contact.trim()} onClick={() => setStep(2)}>Enviar código →</button></>}
-    {step === 2 && <><button className="back-link" onClick={() => setStep(1)}>← Cambiar {method}</button><p className="kicker">CÓDIGO ENVIADO</p><h2 className="compact-title">Confirma que eres tú.</h2><p className="onboarding-copy">Escribe el código que mandamos a {contact || `tu ${method}`}.</p><label className="onboarding-field">Código de 6 dígitos<input inputMode="numeric" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="000000" /></label><button className="primary-action" disabled={otp.length < 6} onClick={() => setStep(3)}>Confirmar →</button><button className="secondary-action" onClick={() => setOtp("123456")}>Usar código demo</button></>}
-    {step === 3 && <><p className="kicker">PRE-REGISTRO LISTO</p><h2 className="compact-title">Ya puedes conocer tu acompañante.</h2><div className="onboarding-check"><span>✓</span><div><strong>Explorar está habilitado</strong><small>Podrás mirar cómo funciona Yol1, sin conectar bancos ni usar datos propios.</small></div></div><div className="onboarding-check muted"><span>○</span><div><strong>Activaciones, después</strong><small>Cuando quieras activar una función, te pediremos solo la información necesaria.</small></div></div><button className="primary-action" onClick={onEnterAdvisor}>Ir al acompañante financiero →</button></>}
+function StateBadge({ state }: { state: LivingSpec["kyc"]["state"] }) {
+  return <span className={`certainty-badge certainty-${state.toLowerCase().replaceAll(" ", "-")}`}>{state}</span>;
+}
+
+function ProductSpecification({ product, screen }: { product: ProductDefinition; screen: string }) {
+  const spec = getLivingSpec(product, screen);
+  const event = spec.event;
+  return <section className="living-spec" aria-label={`Ficha de producto de ${product.name}`}>
+    <header className="living-spec-head">
+      <div><small>FICHA DE PRODUCTO · CHILE</small><h2>Cómo se construiría</h2></div>
+      <div><strong>{product.name}</strong><span>{screen}</span></div>
+      <p>Una guía práctica para diseño, producto e ingeniería. Las capacidades, partners y requisitos legales se validan antes de operar.</p>
+    </header>
+    <div className="spec-grid">
+      <article className="spec-event"><small>EVENTO PROPUESTO</small><strong>{simpleEventName(event, product, screen)}</strong><div className="event-metadata">{eventMetadata(event, product, screen).map(([key, value]) => <span key={key}><b>{key}</b>{value}</span>)}</div><p>Evento corto para instrumentación. La metadata permite analizar el contexto sin mezclarla con el nombre.</p></article>
+      <article><small>ARQUITECTURA SUGERIDA</small><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><em>HIPÓTESIS TÉCNICA · REVISAR CON INGENIERÍA</em></article>
+      <article className="spec-data"><small>DATOS Y FUENTES</small><strong>Guardar</strong><ul>{spec.data.store.map((item) => <li key={item}>{item}</li>)}</ul><strong>Consultar</strong><ul>{spec.data.query.map((item) => <li key={item}>{item}</li>)}</ul><strong>Fuentes</strong><ul>{spec.data.sources.map((item) => <li key={item}>{item}</li>)}</ul><p>{spec.data.handling}</p></article>
+      <article><small>KYC</small><StateBadge state={spec.kyc.state} /><p>{spec.kyc.reason}</p></article>
+      <article><small>LICENCIAS · CHILE</small><StateBadge state={spec.licenses.state} /><p>{spec.licenses.reason}</p></article>
+      <article><small>PREGUNTAS PARA CERRAR</small><ol>{spec.questions.map((question) => <li key={question}>{question}</li>)}</ol></article>
+      <article className="spec-risks"><small>TODO LO QUE PUEDE SALIR MAL</small><ul>{spec.risks.map((risk) => <li key={risk}>{risk}</li>)}</ul><p>QA debe recorrer cada acción como una persona promedio y resolver salidas muertas antes de publicar.</p></article>
+    </div>
   </section>;
 }
 
-function MyBank({ onNotice }: { onNotice: (message: string) => void }) {
-  const [step, setStep] = useState<"start" | "rut" | "bio" | "done">("start");
-  const [rut, setRut] = useState("");
-  const [serial, setSerial] = useState("");
-  if (step === "start") return <section className="bank-flow"><p className="kicker">ACTIVA MI BANCO</p><h2>Para usar datos propios,<br /><span>primero validemos tu identidad.</span></h2><p>Te pediremos RUT y número de serie. Después viene una prueba de biometría simulada.</p><button className="primary-action" onClick={() => setStep("rut")}>Completar información →</button></section>;
-  if (step === "rut") return <section className="bank-flow"><button className="back-link" onClick={() => setStep("start")}>← Volver</button><p className="kicker">IDENTIDAD · PASO 1 DE 2</p><h2 className="compact-title">Tu RUT y número de serie.</h2><label className="onboarding-field">RUT<input value={rut} onChange={(event) => setRut(event.target.value)} placeholder="12.345.678-9" /></label><label className="onboarding-field">Número de serie<input value={serial} onChange={(event) => setSerial(event.target.value)} placeholder="Ej.: A123456789" /></label><p className="microcopy">Demo: no validamos ni almacenamos tu cédula.</p><button className="primary-action" disabled={!rut || !serial} onClick={() => setStep("bio")}>Continuar a biometría →</button></section>;
-  if (step === "bio") return <section className="bank-flow biometric-flow"><p className="kicker">IDENTIDAD · PASO 2 DE 2</p><div className="biometric-orb" aria-hidden="true">◌</div><h2 className="compact-title">Prueba de vida</h2><p>En producción, esto abriría el proveedor de biometría autorizado. Acá solo simulamos el paso.</p><button className="primary-action" onClick={() => { setStep("done"); onNotice("Biometría simulada: no se capturó ni validó ningún dato."); }}>Simular validación →</button></section>;
-  return <section className="bank-flow"><p className="kicker">VALIDACIÓN SIMULADA</p><h2 className="compact-title">Tu solicitud quedó lista para revisar.</h2><p>No activamos una cuenta ni conectamos bancos en esta versión.</p><button className="primary-action" onClick={() => setStep("start")}>Volver a Mi banco</button></section>;
+function OnboardingFlow({ stage, setStage, onSnapshotChange, onEnterAdvisor, onOpenBank }: { stage: OnboardingStage; setStage: (stage: OnboardingStage) => void; onSnapshotChange: (snapshot: OnboardingDemoSnapshot | null) => void; onEnterAdvisor: () => void; onOpenBank: () => void }) {
+  const [method, setMethod] = useState<AccessMethod>("teléfono");
+  const [contact, setContact] = useState("");
+  const [contactTouched, setContactTouched] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [capability, setCapability] = useState<OnboardingCapability>("financial_data_connect");
+  const [otpState, setOtpState] = useState<"entry" | "invalid" | "expired" | "rate_limited" | "contact_exists" | "support_required">("entry");
+  const [otpAttempts, setOtpAttempts] = useState(0);
+  const [supportOpen, setSupportOpen] = useState(false);
+  const [e2Result, setE2Result] = useState<"idle" | "pass" | "fail_identity" | "fail_money">("idle");
+  const [storageReady, setStorageReady] = useState(false);
+  const selectedIntent = capability === "financial_data_connect" ? "conectar datos" : "recibir dinero";
+  const contactValidation = validateAccessContact(method, contact);
+  const stageMeta = ONBOARDING_STAGE_META[stage];
+  const move = (event: OnboardingTransition) => setStage(transitionOnboarding(stage, event));
+  const resetOtp = () => { setOtp(""); setOtpState("entry"); setOtpAttempts(0); };
+  const requestSupport = () => { setOtpState("support_required"); setSupportOpen(true); };
+  const confirmOtp = () => {
+    if (otp === "123456") { setOtpState("entry"); move("VERIFY_OTP_DEMO"); return; }
+    const nextAttempts = otpAttempts + 1;
+    setOtpAttempts(nextAttempts);
+    setOtpState(nextAttempts >= 3 ? "rate_limited" : "invalid");
+  };
+  const changeMethod = (nextMethod: AccessMethod) => {
+    setMethod(nextMethod);
+    setContact("");
+    setContactTouched(false);
+  };
+  const requestOtpDemo = (existingContact = false) => {
+    setContactTouched(true);
+    if (!contactValidation.valid) return;
+    resetOtp();
+    if (existingContact) setOtpState("contact_exists");
+    move("REQUEST_OTP_DEMO");
+  };
+  useEffect(() => {
+    const restored = parseOnboardingDemoSnapshot(window.localStorage.getItem(ONBOARDING_DEMO_STORAGE_KEY));
+    if (restored) {
+      setCapability(restored.selected_capability);
+      setMethod(restored.channel_type);
+      setStage(restored.resume_stage);
+    }
+    onSnapshotChange(restored);
+    setStorageReady(true);
+  }, [onSnapshotChange, setStage]);
+  useEffect(() => {
+    if (!storageReady || (stage !== "preregistered_demo" && stage !== "consent_preview")) return;
+    const snapshot = buildOnboardingDemoSnapshot({ capability, channel: method, stage });
+    window.localStorage.setItem(ONBOARDING_DEMO_STORAGE_KEY, JSON.stringify(snapshot));
+    onSnapshotChange(snapshot);
+  }, [capability, method, onSnapshotChange, stage, storageReady]);
+  const clearDemoPreregistration = () => {
+    window.localStorage.removeItem(ONBOARDING_DEMO_STORAGE_KEY);
+    onSnapshotChange(null);
+    setCapability("financial_data_connect");
+    setMethod("teléfono");
+    setContact("");
+    setContactTouched(false);
+    resetOtp();
+    setE2Result("idle");
+    setSupportOpen(false);
+    move("RESET_DEMO");
+  };
+  return <section className="onboarding-flow" data-stage={stage}>
+    <div className="onboarding-progress" aria-label={`Progreso del acceso: ${stageMeta.label}`}><span style={{ width: `${stageMeta.progress * 100}%` }} /></div>
+    {stage === "welcome" && <><p className="kicker">BIENVENIDO A YOL1</p><h2>Entiende tu plata.<br /><span>Antes de pedirte datos.</span></h2><p className="onboarding-copy">Puedes explorar tu acompañante, hacer preguntas y entender cómo funciona YOL1 sin registrarte todavía.</p><div className="onboarding-art" aria-hidden="true">✦</div><button className="primary-action" onClick={onEnterAdvisor}>Explorar YOL1 →</button><button className="secondary-action" onClick={() => move("VIEW_ACTIVATIONS")}>Ver qué se desbloquea después</button></>}
+    {stage === "capability_chooser" && <><button className="back-link" onClick={() => move("BACK_TO_WELCOME")}>← Volver</button><p className="kicker">ACCIÓN MATERIAL · EJEMPLOS</p><h2 className="compact-title">¿Qué quieres preparar?</h2><p className="onboarding-copy">Elige una intención concreta para entender qué pediría. Ninguna está disponible ni se ejecuta en esta demo.</p><div className="auth-choice"><button data-event="material_action_selected" data-capability-key="financial_data_connect" onClick={() => { setCapability("financial_data_connect"); move("SELECT_CAPABILITY"); }}>Conectar datos</button><button data-event="material_action_selected" data-capability-key="receive_value" onClick={() => { setCapability("receive_value"); move("SELECT_CAPABILITY"); }}>Recibir dinero</button></div><button className="secondary-action" onClick={onEnterAdvisor}>Seguir explorando</button></>}
+    {stage === "requirements_explained" && <><button className="back-link" onClick={() => move("BACK_TO_CAPABILITY")}>← Elegir otra acción</button><p className="kicker">ANTES DE CREAR TU ACCESO</p><h2 className="compact-title">{capability === "financial_data_connect" ? "Preparar una conexión de datos." : "Preparar la recepción de dinero."}</h2><p className="onboarding-copy">{capability === "financial_data_connect" ? "Para conectar datos necesitaríamos un acceso recuperable y luego tu consentimiento específico. El KYC aplicable está por validar." : "Para recibir dinero tendría que existir una relación financiera habilitada. Mi banco/KYC pediría identidad sólo con fundamento, partner y capacidad aprobados."}</p><div className="onboarding-check"><span>→</span><div><strong>Qué desbloquea el pre-registro</strong><small>Recuperar esta preparación y saber qué requisito sigue. No verifica identidad ni habilita dinero.</small></div></div><button className="primary-action" onClick={() => move("START_PREREGISTRATION")}>Crear pre-registro →</button></>}
+    {stage === "channel_select" && <><button className="back-link" onClick={() => move("BACK_TO_REQUIREMENTS")}>← Volver</button><p className="kicker">CREA TU ACCESO</p><h2 className="compact-title">¿Cómo te mandamos el código?</h2><p className="onboarding-copy">Conservaremos tu intención de {selectedIntent} aunque cambies de canal o necesites recuperar el acceso.</p><div className="auth-choice"><button className={method === "teléfono" ? "selected-option" : ""} data-event="access_method_selected" data-channel="phone" onClick={() => changeMethod("teléfono")} aria-pressed={method === "teléfono"}>Teléfono</button><button className={method === "email" ? "selected-option" : ""} data-event="access_method_selected" data-channel="email" onClick={() => changeMethod("email")} aria-pressed={method === "email"}>Email</button></div><label className="onboarding-field" htmlFor="onboarding-contact">{method === "teléfono" ? "Tu número" : "Tu email"}<input id="onboarding-contact" type={method === "email" ? "email" : "tel"} autoComplete={method === "email" ? "email" : "tel"} value={contact} onChange={(event) => { setContact(event.target.value); if (contactTouched) setContactTouched(false); }} onBlur={() => setContactTouched(true)} aria-invalid={contactTouched && !contactValidation.valid} aria-describedby={contactTouched && !contactValidation.valid ? "onboarding-contact-help onboarding-contact-error" : "onboarding-contact-help"} placeholder={method === "teléfono" ? "+56 9 1234 5678" : "tu@email.com"} /></label>{contactTouched && !contactValidation.valid && <p id="onboarding-contact-error" className="field-error" role="alert">{contactValidation.error}</p>}<p id="onboarding-contact-help" className="microcopy">Esto crea un pre-registro. No activa cuentas, transferencias ni productos financieros.</p><button className="primary-action" data-event="otp_requested_demo" disabled={!contact.trim()} onClick={() => requestOtpDemo()}>Enviar código de ejemplo →</button><button className="secondary-action" data-event="account_recovery_started" disabled={!contact.trim()} onClick={() => requestOtpDemo(true)}>Simular recuperación de acceso</button></>}
+    {stage === "otp_entry" && <><button className="back-link" onClick={() => move("CHANGE_CHANNEL")}>← Cambiar {method}</button><p className="kicker">CÓDIGO DE EJEMPLO</p><h2 className="compact-title">Confirma que controlas este canal.</h2><p id="onboarding-otp-help" className="onboarding-copy">Escribe el código de ejemplo para {contact || `tu ${method}`}. Esto no verifica tu identidad. Tu intención de {selectedIntent} sigue guardada en esta demo.</p>
+      {(otpState === "entry" || otpState === "invalid") && <><label className="onboarding-field" htmlFor="onboarding-otp">Código de 6 dígitos<input id="onboarding-otp" inputMode="numeric" autoComplete="one-time-code" value={otp} onChange={(event) => { setOtp(event.target.value.replace(/\D/g, "").slice(0, 6)); if (otpState === "invalid") setOtpState("entry"); }} aria-invalid={otpState === "invalid"} aria-describedby={otpState === "invalid" ? "onboarding-otp-help onboarding-otp-error" : "onboarding-otp-help"} placeholder="000000" /></label>{otpState === "invalid" && <div id="onboarding-otp-error" className="onboarding-state error" role="alert" data-state="otp_invalid"><strong>Ese código no coincide.</strong><small>Revisa los 6 dígitos. Te quedan {3 - otpAttempts} intentos en esta simulación.</small></div>}<button className="primary-action" disabled={otp.length < 6} data-event="otp_submitted_demo" onClick={confirmOtp}>Confirmar canal →</button><button className="secondary-action" onClick={() => setOtp("123456")}>Usar código de ejemplo</button><div className="onboarding-demo-actions"><button data-event="otp_recovery_started" onClick={() => setOtpState("expired")}>Simular código vencido</button><button data-event="account_recovery_started" onClick={() => setOtpState("contact_exists")}>Simular recuperación</button></div></>}
+      {otpState === "expired" && <div className="onboarding-state" role="status" data-state="otp_expired"><strong>El código venció.</strong><small>Puedes generar otro código de ejemplo o cambiar de canal. La intención seleccionada no se pierde.</small><button onClick={resetOtp}>Generar otro código</button><button onClick={() => move("CHANGE_CHANNEL")}>Cambiar canal</button></div>}
+      {otpState === "rate_limited" && <div className="onboarding-state error" role="alert" data-state="rate_limited"><strong>Pausa después de varios intentos.</strong><small>No habilitamos más intentos automáticamente. Puedes cambiar de canal o pedir ayuda; tu intención sigue guardada.</small><button onClick={() => move("CHANGE_CHANNEL")}>Cambiar canal</button><button data-event="support_route_started" onClick={requestSupport}>Pedir ayuda</button></div>}
+      {otpState === "contact_exists" && <div className="onboarding-state" role="status" data-state="contact_exists"><strong>Revisa cómo continuar.</strong><small>Por seguridad, esta demo no confirma si el canal ya tiene un acceso. Puedes continuar con una recuperación simulada sin crear otro pre-registro ni cambiar tu intención.</small><button data-event="account_recovery_started" onClick={resetOtp}>Continuar recuperación (demo)</button><button data-event="support_route_started" onClick={requestSupport}>Necesito ayuda</button></div>}
+      {otpState === "support_required" && <div className="onboarding-state" role="status" data-state="support_required"><strong>Ruta de ayuda preparada.</strong><small>No enviamos datos ni creamos un caso real. Customer Success y sus tiempos siguen por definir.</small><button onClick={() => { setSupportOpen(false); resetOtp(); }}>Volver al código</button></div>}
+    </>}
+    {stage === "preregistered_demo" && <><p className="kicker">PRE-REGISTRO DEMO LISTO</p><h2 className="compact-title">Tu acceso ya está preparado.</h2><div className="onboarding-check"><span>✓</span><div><strong>Preparación recuperable en este navegador</strong><small>{capability === "financial_data_connect" ? "Al volver, retomaremos aquí antes de revisar un consentimiento específico." : "Al volver, retomaremos aquí antes de revisar los requisitos de Mi banco/KYC."}</small></div></div><div className="onboarding-check muted"><span>○</span><div><strong>Ninguna capacidad de dinero está habilitada</strong><small>Guardamos sólo capacidad, canal y estado demo; no el contacto ni el OTP. No verificamos identidad, abrimos una cuenta ni conectamos un banco.</small></div></div><div className="onboarding-e2"><p className="kicker">COMPRENSIÓN · E2</p><strong>¿Qué habilitó este paso?</strong><div className="e2-options"><button data-event="onboarding_e2_answered" onClick={() => setE2Result("pass")}>Un pre-registro recuperable; no una cuenta</button><button data-event="onboarding_e2_answered" onClick={() => setE2Result("fail_identity")}>Mi identidad quedó verificada</button><button data-event="onboarding_e2_answered" onClick={() => setE2Result("fail_money")}>Ya puedo recibir dinero</button></div>{e2Result === "pass" && <p className="e2-result pass" role="status">Correcto: confirmaste un canal y puedes recuperar esta preparación.</p>}{e2Result === "fail_identity" && <p className="e2-result fail" role="alert">Todavía no: el OTP no verificó tu identidad.</p>}{e2Result === "fail_money" && <p className="e2-result fail" role="alert">Todavía no: ninguna capacidad de dinero quedó habilitada.</p>}</div><button className="primary-action" data-event={capability === "financial_data_connect" ? "consent_preview_opened" : "kyc_handoff_opened"} onClick={() => { if (capability === "financial_data_connect") move("OPEN_CONSENT_PREVIEW"); else onOpenBank(); }}>{capability === "financial_data_connect" ? "Revisar consentimiento demo →" : "Ver requisitos en Mi banco →"}</button><button className="secondary-action" onClick={onEnterAdvisor}>Volver al acompañante financiero</button><button className="back-link" data-event="preregistration_demo_deleted" onClick={clearDemoPreregistration}>Borrar pre-registro de esta demo</button><p className="microcopy">Si pierdes el canal o una revisión queda pendiente, Customer Success está por definir.</p></>}
+    {stage === "consent_preview" && <><button className="back-link" onClick={() => move("BACK_TO_PREREGISTERED")}>← Volver al pre-registro</button><p className="kicker">CONSENTIMIENTO · VISTA PREVIA</p><h2 className="compact-title">El permiso sería específico y revocable.</h2><p className="onboarding-copy">Para conectar datos habría que autorizar una fuente y un alcance concretos. YOL1 no pediría claves bancarias ni asumiría que tu identidad quedó verificada.</p><div className="onboarding-check"><span>→</span><div><strong>Qué habilitaría este permiso</strong><small>Consultar sólo los datos descritos para preparar una explicación personalizada, si existe un proveedor y contrato aprobados.</small></div></div><div className="onboarding-check muted"><span>○</span><div><strong>Qué no ocurrió</strong><small>No conectamos un banco, no leímos datos reales y no activamos una capacidad financiera.</small></div></div><button className="primary-action" onClick={onEnterAdvisor}>Entendido, volver al Acompañante →</button><button className="back-link" data-event="preregistration_demo_deleted" onClick={clearDemoPreregistration}>Borrar pre-registro de esta demo</button></>}
+    {supportOpen && <aside className="onboarding-support" aria-label="Ayuda de Customer Success"><strong>Customer Success · demo</strong><p>La ruta conservaría tu intención de {selectedIntent} y el estado del pre-registro. Responsable, canal y tiempo de respuesta están por definir.</p><button onClick={() => setSupportOpen(false)}>Cerrar</button></aside>}
+  </section>;
 }
 
-function ProfileMenu({ onClose, onBank }: { onClose: () => void; onBank: () => void }) {
-  const rows = [
-    ["Pre-registro", "Listo", "✓"],
-    ["Contacto", "Listo", "✓"],
-    ["RUT + serie", "Desbloquea Mi banco", "→"],
-    ["Biometría", "Desbloquea activaciones", "→"],
-    ["Datos financieros", "Desbloquea personalización", "→"],
-  ];
-  return <aside className="profile-menu" aria-label="Menú de perfil"><div className="profile-menu-head"><div><small>TU PERFIL</small><strong>Completa tu información</strong></div><button onClick={onClose} aria-label="Cerrar menú">×</button></div><p>2 de 5 completas</p><div className="profile-checklist">{rows.map(([name, unlock, mark]) => <button key={name} onClick={() => { if (name === "RUT + serie" || name === "Biometría") { onBank(); } }}><span>{mark}</span><div><strong>{name}</strong><small>{unlock}</small></div></button>)}</div></aside>;
+function MyBank({ capability, onNotice, onClearContext, onResetScroll }: { capability: "direct" | "receive_value"; onNotice: (message: string) => void; onClearContext: () => void; onResetScroll: () => void }) {
+  const [view, setView] = useState<"start" | "status">("start");
+  const [rawState, setRawState] = useState("requirements_pending");
+  const normalizedState: NormalizedKycState = normalizeKycState(rawState);
+  useEffect(() => {
+    onResetScroll();
+  }, [onResetScroll, view]);
+  const showFixture = (nextRawState: string) => {
+    const normalized = normalizeKycState(nextRawState);
+    setRawState(nextRawState);
+    setView("status");
+    onNotice(`Estado KYC demo: ${normalized}. No habilita capacidades.`);
+  };
+  if (view === "start") return <section className="bank-flow"><p className="kicker">{capability === "receive_value" ? "HANDOFF · RECIBIR DINERO" : "MI BANCO / KYC · POR VALIDAR"}</p><h2>{capability === "receive_value" ? <>Tu intención llegó.<br /><span>No tus datos de identidad.</span></> : <>La identidad aparece<br /><span>solo con una razón concreta.</span></>}</h2><p>{capability === "receive_value" ? "El pre-registro confirmó un canal y conservó la intención de recibir dinero. La capacidad sigue no disponible: faltan vehículo, partner, contrato, controles y política aprobados." : "RUT, número de serie o biometría podrían corresponder únicamente cuando una acción material, partner y fundamento aprobados los requieran."}</p>{capability === "receive_value" && <div className="onboarding-check"><span>→</span><div><strong>Contexto recibido</strong><small>Capability: recibir dinero · canal verificado sólo en demo · disponibilidad: no disponible.</small></div></div>}<div className="onboarding-check muted"><span>○</span><div><strong>En esta demo no pedimos identidad</strong><small>No abrimos una cuenta, conectamos un banco ni habilitamos transferencias.</small></div></div><button className="primary-action" data-event="kyc_requirements_viewed" onClick={() => showFixture("requirements_pending")}>Ver requisitos pendientes →</button><div className="onboarding-demo-actions" aria-label="Fixtures de estado KYC"><button data-event="kyc_requirements_viewed" onClick={() => showFixture("failed_recoverable")}>Simular error recuperable</button><button data-event="kyc_requirements_viewed" onClick={() => showFixture("partner_new_state")}>Simular estado desconocido</button></div>{capability === "receive_value" && <button className="secondary-action" onClick={() => { setView("start"); onClearContext(); }}>Salir del handoff demo</button>}</section>;
+  const isUnknown = rawState !== normalizedState;
+  const content = normalizedState === "requirements_pending"
+    ? { kicker: "REQUISITOS PENDIENTES", title: "Todavía no corresponde pedir más datos.", body: "Faltan capacidad, vehículo, contrato y política aprobados. La acción permanece no disponible." }
+    : normalizedState === "failed_recoverable"
+      ? { kicker: "ERROR RECUPERABLE · DEMO", title: "Este paso se puede volver a intentar.", body: "No perdimos la intención ni pedimos nueva identidad. Un flujo real necesitaría razón normalizada, límites y soporte." }
+      : { kicker: "REVISIÓN · FALLBACK SEGURO", title: "Este estado necesita revisión.", body: "El proveedor devolvió un estado que YOL1 no reconoce. Lo tratamos como revisión, nunca como verificación o capacidad habilitada." };
+  return <section className="bank-flow" data-kyc-state={normalizedState}><button className="back-link" onClick={() => setView("start")}>← Volver</button><p className="kicker">{content.kicker}</p><h2 className="compact-title">{content.title}</h2><p>{content.body}</p><div className="onboarding-check muted"><span>{isUnknown ? "?" : "○"}</span><div><strong>Estado normalizado: {normalizedState}</strong><small>{isUnknown ? "Fixture desconocido degradado a revisión; el valor crudo no se expone." : "Estado local sintético; no existe respuesta de proveedor."}</small></div></div><button className="primary-action" onClick={() => setView("start")}>Volver a Mi banco</button><button className="secondary-action" data-event="support_route_started" onClick={() => onNotice("Customer Success demo: owner, canal y SLA por definir; no se creó un caso.")}>Pedir ayuda (demo)</button><p className="microcopy">Ningún estado demo verifica identidad ni habilita dinero. Customer Success sigue por definir.</p></section>;
+}
+
+function ProfileMenu({ snapshot, onClose, onOnboarding, onBank, onClearDemo }: { snapshot: OnboardingDemoSnapshot | null; onClose: () => void; onOnboarding: () => void; onBank: () => void; onClearDemo: () => void }) {
+  const rows = buildAccessLedger(snapshot);
+  const act = (action: (typeof rows)[number]["action"]) => {
+    if (action === "open_onboarding") onOnboarding();
+    if (action === "open_bank") onBank();
+    if (action === "clear_demo") onClearDemo();
+  };
+  return <aside className="profile-menu" aria-label="Menú de perfil"><div className="profile-menu-head"><div><small>TU PERFIL</small><strong>Accesos y permisos</strong></div><button onClick={onClose} aria-label="Cerrar menú">×</button></div><p>Este ledger muestra sólo el estado local; no necesitas completar datos por adelantado.</p><div className="profile-checklist">{rows.map((row) => { const content = <><span>{row.mark}</span><div><strong>{row.label}</strong><small>{row.status}</small></div></>; return row.action ? <button key={row.key} className={`ledger-row state-${row.mark === "✓" ? "ready" : "pending"}`} data-event={row.action === "clear_demo" ? "preregistration_demo_deleted" : undefined} onClick={() => act(row.action)}>{content}</button> : <div key={row.key} className="ledger-row state-empty">{content}</div>; })}</div></aside>;
 }
 
 function ProjectBuilderScreen({ guide, onGuide }: { guide: BuilderGuide; onGuide: (guide: BuilderGuide) => void }) {
   if (guide) return <BuilderGuideScreen guide={guide} onBack={() => onGuide(null)} />;
   return <section className="builder-phone-empty" aria-label="Vista previa de proyecto en construcción">
     <div className="builder-phone-art" aria-hidden="true"><span>✦</span><i /><i /><i /></div>
-    <p className="kicker">YOL1 MCP · PRÓXIMAMENTE</p>
-    <h2>Las pantallas<br /><span>parten acá.</span></h2>
-    <p>Parte conversando con la IA las ideas que tienes. Cuando se vayan materializando, aparecerán acá.</p>
-    <div className="builder-connect-grid" aria-label="Conectar una IA">
-      <button onClick={() => onGuide("chatgpt")} data-event="builder.connect-chatgpt.click"><span>◌</span><strong>Conectar mi<br />ChatGPT</strong><small>Guía de instalación</small></button>
-      <button onClick={() => onGuide("claude")} data-event="builder.connect-claude.click"><span>✦</span><strong>Conectar mi<br />Claude</strong><small>Guía de instalación</small></button>
+    <p className="kicker">TU ESPACIO DE EXPERIMENTOS</p>
+    <h2>En este espacio,<br /><span>el próximo producto lo construyes tú.</span></h2>
+    <p>Trabaja en tu propio ChatGPT o Claude y trae al Lab sólo el resumen o las pantallas que decidas incorporar.</p>
+    <div className="builder-connect-grid" aria-label="Elegir una guía de IA">
+      <button onClick={() => onGuide("chatgpt")} data-event="builder_guide_viewed" data-client="chatgpt"><span>◌</span><strong>Ver guía para<br />ChatGPT</strong><small>Compatibilidad por validar</small></button>
+      <button onClick={() => onGuide("claude")} data-event="builder_guide_viewed" data-client="claude"><span>✦</span><strong>Ver guía para<br />Claude</strong><small>Compatibilidad por validar</small></button>
     </div>
-    <button className="builder-how-button" onClick={() => onGuide("how")} data-event="builder.how-to.click">Cómo ocupar <span>→</span></button>
-    <small className="builder-phone-disclaimer">GitHub versiona el MCP y las decisiones aprobadas. Tu chat personal no se lee ni se copia desde YOL1.</small>
+    <button className="builder-how-button" onClick={() => onGuide("how")} data-event="builder_how_viewed">Cómo ocupar <span>→</span></button>
+    <small className="builder-phone-disclaimer">YOL1 no lee ni sincroniza tu conversación. Nada aparece en este teléfono hasta que tú lo incorporas explícitamente y nada se publica automáticamente.</small>
   </section>;
 }
 
 function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, null>; onBack: () => void }) {
-  const [copied, setCopied] = useState(false);
-  const [urlCopied, setUrlCopied] = useState(false);
+  const [urlCopyStatus, setUrlCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const isHow = guide === "how";
   const provider = guide === "chatgpt" ? "ChatGPT" : "Claude";
-  const menuPath = guide === "chatgpt" ? "Configuración → Conectores → Agregar conector" : "Configuración → Conectores → Agregar conector personalizado";
-  const template = `Quiero crear una propuesta para YOL1.\n\n1. Lee el contexto y las especificaciones aprobadas que entrega el MCP de YOL1.\n2. Antes de diseñar, ayúdame a definir: problema, persona, momento de uso y criterio de éxito.\n3. Propón un flujo de 5 a 7 pantallas. Para cada pantalla indica: objetivo, contenido, CTA, evento simple, datos que guarda/consulta y qué puede salir mal.\n4. Usa el sistema visual YOL1: dark-first, acid para acción, aqua para explicación, rosa suave solo para lo social; no uses rosa como alerta.\n5. No inventes productos financieros, licencias, KYC, pagos, datos o integraciones. Marca lo incierto como “Por validar”.\n6. Crea una propuesta breve para enviar a revisión de Felipe.\n\nMi idea inicial es: [ESCRIBE AQUÍ TU IDEA]`;
-  const copyTemplate = async () => {
-    try { await navigator.clipboard.writeText(template); setCopied(true); } catch { setCopied(false); }
-  };
+  const hasMcpUrl = Boolean(YOL1_MCP_URL);
+  const compatibility = hasMcpUrl ? "URL configurada · requiere prueba en este cliente" : "Integración MCP por validar";
   const copyUrl = async () => {
-    try { await navigator.clipboard.writeText(YOL1_MCP_URL); setUrlCopied(true); } catch { setUrlCopied(false); }
+    if (!hasMcpUrl) return;
+    try { await navigator.clipboard.writeText(YOL1_MCP_URL); setUrlCopyStatus("copied"); } catch { setUrlCopyStatus("failed"); }
   };
   if (isHow) return <section className="builder-how-screen" aria-label="Cómo ocupar YOL1 MCP">
     <button className="back-link" onClick={onBack}>← Volver</button>
-    <p className="kicker">CÓMO OCUPARLO</p><h2>Hablas.<br /><span>Se materializa.</span></h2>
-    <div className="builder-demo-window" aria-label="Demostración animada de una conversación que materializa una pantalla">
-      <div className="builder-demo-head"><span>YOL1 MCP</span><i /><i /><i /></div>
-      <div className="builder-demo-chat"><p className="user">“Quiero ordenar los gastos de un viaje.”</p><p className="assistant">Entiendo. Voy a proponer el flujo y sus reglas.</p><p className="tool">↳ Contexto YOL1 leído</p></div>
-      <div className="builder-demo-preview"><small>VISTA PREVIA</small><strong>Viaje sin<br />cuentas pendientes</strong><span>Gasto · participantes · cobro</span></div>
+    <p className="kicker">CÓMO OCUPARLO</p><h2>Hablas.<br /><span>Lo conviertes en propuesta.</span></h2>
+    <div className="builder-demo-window" aria-label="Demostración de una conversación externa y una pantalla incorporada manualmente">
+      <div className="builder-demo-head"><span>CHAT EXTERNO · EJEMPLO</span><i /><i /><i /></div>
+      <div className="builder-demo-chat"><p className="user">“Quiero ordenar los gastos de un viaje.”</p><p className="assistant">Entiendo. Voy a proponer el flujo y sus reglas.</p><p className="tool">↳ Referencias YOL1 pegadas o leídas por un MCP validado</p></div>
+      <div className="builder-demo-preview"><small>BORRADOR INCORPORADO</small><strong>Viaje sin<br />cuentas pendientes</strong><span>Copiado manualmente · no sincronizado</span></div>
     </div>
-    <ol className="builder-how-list"><li>Cuéntale la idea a tu IA.</li><li>El MCP trae el contexto aprobado de YOL1.</li><li>Itera hasta que la pantalla tenga sentido.</li><li>La propuesta aparece acá; después puedes enviarla a revisión.</li></ol>
+    <ol className="builder-how-list"><li>Conecta YOL1 una sola vez desde la guía de ChatGPT o Claude.</li><li>Abre un chat nuevo y selecciona <strong>YOL1</strong> con <strong>@YOL1</strong> o desde Herramientas.</li><li>Escribe solamente <strong>“Partamos.”</strong> No debes editar ningún prompt.</li><li>YOL1 te recibe, muestra <strong>“Aprieta acá para abrir la vista del Lab”</strong> y hace la primera pregunta.</li><li>Trae referencias, fotos o dibujos cuando quieras mover, cambiar o mejorar algo.</li></ol>
+    <small className="builder-install-note">La conversación no se sincroniza con YOL1. El teléfono muestra únicamente lo que incorporas de forma explícita.</small>
   </section>;
-  return <section className="builder-install-screen" aria-label={`Instalar YOL1 MCP en ${provider}`}>
+  return <section className="builder-install-screen" aria-label={`Guía de YOL1 para ${provider}`}>
     <button className="back-link" onClick={onBack}>← Volver</button>
-    <p className="kicker">CONECTA TU IA</p><h2>{provider}<br /><span>con YOL1.</span></h2>
-    <p className="builder-guide-intro">Harás dos pegados distintos: primero la URL en configuración; después el texto de trabajo dentro de un chat nuevo. No pegues el texto de trabajo en el campo URL.</p>
+    <p className="kicker">CONÉCTALO UNA VEZ · {compatibility}</p><h2>{provider}<br /><span>con YOL1.</span></h2>
+    <p className="builder-guide-intro">Conecta YOL1 una vez y, después, selecciónalo dentro de un chat nuevo. Escribe <b>“Partamos.”</b> y YOL1 se encarga de darte la bienvenida y guiarte.</p>
     <div className="builder-install-steps">
-      <article><span>01</span><div><strong>Abre Conectores</strong><small>Ve a <b>{menuPath}</b>. Si tu cuenta no muestra Conectores, aún no podrá usar este flujo.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
-      <article><span>02</span><div><strong>Completa solo esto</strong><small><b>Nombre:</b> YOL1 MCP<br /><b>URL:</b> pega este link: <code>{YOL1_MCP_URL}</code></small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
-      <article><span>03</span><div><strong>Autoriza y abre un chat</strong><small>Aprueba únicamente los permisos que veas. Luego activa YOL1 MCP desde herramientas y abre una conversación nueva.</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1 MCP</i></article>
+      <article><span>01</span><div><strong>Crea o abre la App YOL1</strong><small>En <b>Settings → Apps</b>, abre YOL1. Si no la ves, activa modo desarrollador o usa el workspace donde fue creada.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
+      <article><span>02</span><div><strong>Completa exactamente estos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> <code>{YOL1_MCP_URL}</code><br />Sin argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
+      <article><span>03</span><div><strong>Escanea y abre un chat normal</strong><small>Presiona <b>Scan tools</b> y <b>Create</b>. En un chat nuevo usa <b>@YOL1</b>; luego escribe <b>“Partamos.”</b></small></div><i className="guide-ui guide-link" aria-hidden="true">@YOL1</i></article>
     </div>
-    <button className="builder-copy-url" onClick={copyUrl}>{urlCopied ? "URL MCP copiada ✓" : "Copiar URL MCP"}</button>
-    <div className="builder-paste-box"><small>04 · EN EL CHAT NUEVO, PEGA ESTO</small><p>{template}</p></div>
-    <button className="builder-copy-template" onClick={copyTemplate}>{copied ? "Prompt de trabajo copiado ✓" : "Copiar prompt de trabajo"}</button>
-    <small className="builder-install-note">Este endpoint es de solo lectura: entrega contexto YOL1 y crea briefs, pero no lee tu conversación, no guarda ideas, no pide contraseña ni API key.</small>
+    <button className="builder-copy-url" onClick={copyUrl} disabled={!hasMcpUrl}>{urlCopyStatus === "copied" ? "URL MCP copiada ✓" : "Copiar URL de YOL1"}</button>
+    {urlCopyStatus === "failed" && <small className="builder-copy-status" role="alert">No pudimos copiar la URL. Selecciónala manualmente en el paso 02.</small>}
+    <a className="builder-open-lab" href={`${YOL1_SITE_URL}/?product=builder`} target="_blank" rel="noreferrer">Abrir la vista del Lab ahora ↗</a>
+    <div className="builder-paste-box"><small>04 · EMPIEZA SIN EDITAR NADA</small><p>Con <b>@YOL1</b> seleccionado, escribe <b>“Partamos.”</b> YOL1 te dará la bienvenida, pondrá el enlace a esta vista y te preguntará qué producto quieres construir.</p></div>
+    <small className="builder-install-note">YOL1 no lee tu conversación ni recibe sus cambios. Para llevar algo al Lab debes copiar el resumen o completar “Enviar proyecto” de forma explícita.</small>
   </section>;
 }
 
@@ -327,48 +443,49 @@ function ProjectSubmitPanel({ open, onToggle, onSubmitted }: { open: boolean; on
   const [purpose, setPurpose] = useState("");
   const [fit, setFit] = useState("");
   const [notice, setNotice] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const [lastDraftId, setLastDraftId] = useState<string | null>(null);
 
-  const submitProject = async (event: FormEvent) => {
+  const submitProject = (event: FormEvent) => {
     event.preventDefault();
     if (!name.trim() || !title.trim() || !purpose.trim() || !fit.trim()) return;
     const message = `${title.trim()}\n\nBusca hacer: ${purpose.trim()}\n\nPor qué tiene sentido con YOL1: ${fit.trim()}\n\nIdea de trabajo: ${idea.trim() || "Sin idea inicial adjunta."}`.slice(0, 700);
-    localFeedbackIntake.submit({ product: "Construir mi propio producto", screen: "Propuesta de producto", kind: "idea", message, topics: `Propuesta de ${name.trim()}` });
+    const record = localFeedbackIntake.submit({ product: "Construir mi propio producto", screen: "Propuesta de producto", kind: "idea", message, topics: `Propuesta de ${name.trim()}` });
     onSubmitted();
-    setSubmitting(true);
-    try {
-      const shared = await submitGeneralFeedback({ screen: "Construir mi propio producto · Propuesta de producto", kind: "idea", message, topics: `Propuesta de ${name.trim()}` });
-      setNotice(shared ? "Proyecto enviado a la bandeja de revisión de YOL1." : "Proyecto guardado localmente para revisión.");
-      if (shared) { setName(""); setTitle(""); setPurpose(""); setFit(""); }
-    } catch {
-      setNotice("Proyecto guardado solo en este navegador. La bandeja compartida no respondió.");
-    } finally {
-      setSubmitting(false);
-    }
+    setLastDraftId(record.id);
+    setNotice("Borrador guardado sólo en este navegador. No se envió a una bandeja compartida.");
+    setName(""); setTitle(""); setPurpose(""); setFit(""); setIdea("");
+  };
+  const removeLastDraft = () => {
+    if (!lastDraftId) return;
+    localFeedbackIntake.remove(lastDraftId);
+    setLastDraftId(null);
+    setNotice("Borrador local eliminado de este navegador.");
   };
 
-  return <section className={`project-submit-panel ${open ? "is-open" : ""}`} aria-label="Enviar proyecto a revisión">
+  return <section className={`project-submit-panel ${open ? "is-open" : ""}`} aria-label="Preparar proyecto para revisión local">
     {!open ? <button className="project-submit-trigger" onClick={onToggle}>Enviar proyecto <span>→</span></button> : <>
-      <header><div><small>CUANDO YA TENGA FORMA</small><h2>Mándalo a revisión.</h2></div><button onClick={onToggle} aria-label="Cerrar formulario">×</button></header>
+      <header><div><small>CUANDO YA TENGA FORMA</small><h2>Prepáralo para revisión.</h2></div><button onClick={onToggle} aria-label="Cerrar formulario">×</button></header>
       <form onSubmit={submitProject}>
-        <label>Tu nombre<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Cómo te identificamos" required /></label>
-        <label>Nombre o título del proyecto<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ej.: Viajes sin cuentas pendientes" required /></label>
-        <label>¿Qué busca hacer?<textarea value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="Qué problema resuelve y para quién" required /></label>
-        <label>¿Por qué tiene sentido con YOL1?<textarea value={fit} onChange={(event) => setFit(event.target.value)} placeholder="Cómo conecta con la propuesta de valor" required /></label>
-        <label className="project-optional">Link o resumen de lo que trabajaste <textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Opcional: pega un resumen, link o decisiones de tu sesión" /></label>
-        <button className="project-submit-action" disabled={submitting}>{submitting ? "Enviando…" : "Enviar proyecto"}</button>
+        <label>Tu nombre<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Cómo te identificamos" maxLength={80} required /></label>
+        <label>Nombre o título del proyecto<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Ej.: Viajes sin cuentas pendientes" maxLength={120} required /></label>
+        <label>¿Qué busca hacer?<textarea value={purpose} onChange={(event) => setPurpose(event.target.value)} placeholder="Qué problema resuelve y para quién" maxLength={500} required /></label>
+        <label>¿Por qué tiene sentido con YOL1?<textarea value={fit} onChange={(event) => setFit(event.target.value)} placeholder="Cómo conecta con la propuesta de valor" maxLength={500} required /></label>
+        <label className="project-optional">Resumen editorial o referencia que decidiste copiar <textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Opcional: resumen, link o decisiones abiertas; no pegues el chat completo ni datos sensibles" maxLength={700} /></label>
+        <button className="project-submit-action" data-event="proposal_draft_saved">Guardar borrador local</button>
       </form>
-      <p>Se envía a revisión editorial. No publica el proyecto ni cambia una pantalla automáticamente.</p>
+      <p>En este prototipo, guardar conserva un borrador sólo en el almacenamiento local de este navegador. No publica, crea branch, sincroniza el chat ni cambia una pantalla automáticamente.</p>
       {notice && <p className="project-submit-notice" role="status">{notice}</p>}
+      {lastDraftId && <button className="project-submit-undo" type="button" onClick={removeLastDraft}>Borrar este borrador local</button>}
     </>}
   </section>;
 }
 
 function UnpublishedStage({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
-  return <section className="unpublished-stage" aria-label={`${product.name}, en pausa`}>
-    <div className="unpublished-phone" aria-label={`${product.name} en pausa`}>
+  return <section className="unpublished-stage" aria-label={`${product.name}, en investigación`}>
+    <span className="unpublished-halo" aria-hidden="true" />
+    <div className="unpublished-phone" aria-label={`${product.name} en investigación`}>
       <div className="unpublished-notch" />
-      <header><Brand compact /><span>{product.name} · EN PAUSA</span><small>NO PUBLICADO</small></header>
+      <header><Brand compact /><span>{product.name} · EN INVESTIGACIÓN</span><small>SIN FLUJO DISPONIBLE</small></header>
       <UnpublishedProduct product={product} stateIndex={stateIndex} />
     </div>
   </section>;
@@ -377,8 +494,8 @@ function UnpublishedStage({ product, stateIndex }: { product: ProductDefinition;
 function UnpublishedProduct({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
   const fixedState: Record<Exclude<ProductId, "companion">, number> = { kyc: 1, banking: 0, cards: 2, remittances: 5, builder: 3 };
   const empty = EMPTY_STATE_LIBRARY[fixedState[product.id as Exclude<ProductId, "companion">] ?? (stateIndex % EMPTY_STATE_LIBRARY.length)];
-  return <section className={`product-empty product-${product.id} gesture-${empty.gesture}`} aria-label={`${product.name}, no publicado`}>
-    <div className="empty-status"><span>NO PUBLICADO</span><small>PROTOTIPO EXPLORATORIO</small></div>
+  return <section className={`product-empty product-${product.id} gesture-${empty.gesture}`} aria-label={`${product.name}, en investigación`}>
+    <div className="empty-status"><span>EN INVESTIGACIÓN</span><small>SIN FLUJO DISPONIBLE</small></div>
     <div className="empty-gesture" aria-hidden="true">
       {empty.gesture === "dog" ? <div className="tail-dog"><i className="dog-ear" /><i className="dog-eye" /><i className="dog-body" /><i className="dog-tail" /><i className="dog-paw" /></div> : empty.gesture === "cat" ? <div className="typing-cat"><i className="cat-head" /><i className="cat-ear left" /><i className="cat-ear right" /><i className="cat-eye left" /><i className="cat-eye right" /><i className="cat-paw left" /><i className="cat-paw right" /><i className="cat-keyboard" /></div> : empty.gesture === "robot" ? <div className="idea-robot"><i className="robot-head" /><i className="robot-eye left" /><i className="robot-eye right" /><i className="robot-arm left" /><i className="robot-arm right" /><i className="robot-note note-one" /><i className="robot-note note-two" /><i className="robot-note note-three" /></div> : empty.gesture === "coffee" ? <img className="empty-photo" src="/felipe-coffee-break.png" alt="Máquina de café en pausa" /> : <span>{empty.icon}</span>}
     </div>
@@ -388,34 +505,10 @@ function UnpublishedProduct({ product, stateIndex }: { product: ProductDefinitio
   </section>;
 }
 
-function StateBadge({ state }: { state: LivingSpec["kyc"]["state"] }) {
-  return <span className={`certainty-badge certainty-${state.toLowerCase().replaceAll(" ", "-")}`}>{state}</span>;
-}
-
-function LivingSpecification({ product, screen, spec, inspectedEvent, feedback, resolutions }: { product: ProductDefinition; screen: string; spec: LivingSpec; inspectedEvent: string; feedback: FeedbackRecord[]; resolutions: Record<string, DecisionResolution> }) {
-  const relatedFeedback = feedback.filter((item) => (item.product ? item.product === product.name : true) && (item.screen === screen || product.id !== "companion")).slice(0, 3);
-  const relatedDecisions = DECISION_CONFLICTS.filter((conflict) => conflict.context.includes(product.name) && (product.id !== "companion" || conflict.context.includes(screen))).map((conflict) => ({ conflict, resolution: resolutions[conflict.id] })).filter((item) => item.resolution);
-  return <section className="living-spec" aria-label={`Ficha de producto de ${product.name}`}>
-    <header className="living-spec-head"><div><small>ESPECIFICACIÓN VIVA · CHILE</small><h2>Ficha de producto</h2></div><div><strong>{product.name}</strong><span>{screen}</span></div><p>Propuesta técnica para revisar. No envía analytics ni afirma requisitos legales cerrados.</p></header>
-    <div className="spec-grid">
-      <article className="spec-event"><small>EVENTO</small><strong>{simpleEventName(inspectedEvent, product, screen)}</strong><div className="event-metadata">{eventMetadata(inspectedEvent, product, screen).map(([key, value]) => <span key={key}><b>{key}</b>{value}</span>)}</div><p>Nombre corto para instrumentación; sus parámetros quedan separados para que producto e ingeniería los revisen.</p></article>
-      <article><small>ARQUITECTURA · SUGERIDA</small><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><em>HIPÓTESIS TÉCNICA / VALIDAR CON INGENIERÍA</em></article>
-      <article className="spec-data"><small>DATOS</small><strong>Guardar</strong><ul>{spec.data.store.map((item) => <li key={item}>{item}</li>)}</ul><strong>Consultar</strong><ul>{spec.data.query.map((item) => <li key={item}>{item}</li>)}</ul><p>{spec.data.handling}</p></article>
-      <article><small>KYC</small><StateBadge state={spec.kyc.state} /><p>{spec.kyc.reason}</p></article>
-      <article><small>LICENCIAS · CHILE</small><StateBadge state={spec.licenses.state} /><p>{spec.licenses.reason}</p></article>
-      <article><small>PREGUNTAS ABIERTAS</small><ol>{spec.questions.map((question) => <li key={question}>{question}</li>)}</ol></article>
-      <article className="spec-feedback"><small>FEEDBACK RELACIONADO</small>{relatedFeedback.length ? relatedFeedback.map((item) => <p key={item.id}><strong>{item.kind === "like" ? "Me gusta" : item.kind === "improve" ? "Mejoraría" : "Idea"}</strong>{item.message || item.topics || "Feedback rápido sin comentario."}</p>) : <p className="spec-empty">Todavía no hay feedback local para este contexto.</p>}</article>
-      <article className="spec-risks"><small>TODO LO QUE PUEDE SALIR MAL</small><ul>{spec.risks.map((risk) => <li key={risk}>{risk}</li>)}</ul><p>QA interno: recorrer cada click como usuario promedio y corregir cualquier salida muerta antes de publicar.</p></article>
-    </div>
-    {relatedDecisions.length > 0 && <div className="spec-resolution"><strong>✓ Felipe manda · contexto local actualizado</strong>{relatedDecisions.map(({ conflict, resolution }) => <span key={conflict.id}>{conflict.topic}: {resolution?.choice === "a" ? "Fuente A" : resolution?.choice === "b" ? "Fuente B" : "Falta contexto"}{resolution?.comment ? ` · ${resolution.comment}` : ""}</span>)}</div>}
-    <footer><span>Estado de revisión</span><b>Felipe resuelve contradicciones en la bandeja del Lab.</b><a href="/review#decisions">Abrir Bandeja de revisión →</a></footer>
-  </section>;
-}
-
 function MessagePreviewScreen({ preview, theme, onBack }: { preview: MessagePreview; theme: Theme; onBack: () => void }) {
   const initialMessage = preview.direction === "collect"
-    ? `Hola ${preview.name}, me debes ${preview.amount} por ${preview.expense}. Sigue este link si quieres pagar con tu banco o descarga YOL1.`
-    : `Hola ${preview.name}, tengo pendiente pagarte ${preview.amount} por ${preview.expense}. Estoy revisando el detalle en YOL1.`;
+    ? `Hola ${preview.name}, tengo pendiente ${preview.amount} por ${preview.expense}. Este es un texto de ejemplo: todavía no envié una solicitud ni un enlace de pago.`
+    : `Hola ${preview.name}, tengo pendiente pagarte ${preview.amount} por ${preview.expense}. Este es un texto de ejemplo: todavía no inicié un pago.`;
   const [message, setMessage] = useState(initialMessage);
   const [copyNotice, setCopyNotice] = useState("");
   return <main className="message-preview-shell" data-theme={theme} aria-label="Vista previa de mensaje ficticio">
@@ -431,7 +524,7 @@ function MessagePreviewScreen({ preview, theme, onBack }: { preview: MessagePrev
       <div className="message-demo-note"><strong>Este enlace es ficticio y no se puede abrir.</strong><span>No inicia pagos, no conecta bancos y no envía nada por WhatsApp.</span></div>
       <div className="message-preview-actions">
         <button className="message-back" onClick={onBack}>← Volver a YOL1</button>
-        <button onClick={() => setCopyNotice("Así se vería al compartir. No usamos el portapapeles ni abrimos otra app.")}>Ver cómo se compartiría</button>
+        <button onClick={() => setCopyNotice("Este es solo un texto de ejemplo. No usamos el portapapeles ni abrimos otra app.")}>Ver texto de ejemplo</button>
       </div>
       {copyNotice && <p className="message-copy-notice" role="status">{copyNotice}</p>}
       <p className="message-production-note">En producción, compartir requeriría tu consentimiento explícito, un link generado en servidor y un partner de pagos autorizado.</p>
@@ -501,7 +594,9 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
   const [messages, setMessages] = useState<ChatMessage[]>([{ id: "welcome", role: "assistant", text: "Hola. Puedo ayudarte a entender el mes, ordenar pendientes o revisar una oportunidad del ejemplo.", mode: "demo" }]);
   const [chatBusy, setChatBusy] = useState(false);
   const [aiConfigured, setAiConfigured] = useState(false);
-  const [aiChoice, setAiChoice] = useState<"pending" | "ai" | "demo">("pending");
+  // La demo debe estar disponible desde el primer render. Si el servidor confirma
+  // que existe IA configurada, recién entonces se ofrece la elección informada.
+  const [aiChoice, setAiChoice] = useState<"pending" | "ai" | "demo">("demo");
   const [carouselIndex, setCarouselIndex] = useState(0);
   const sessionId = useRef("");
   const carouselRef = useRef<HTMLDivElement | null>(null);
@@ -515,16 +610,16 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
       .then((status: { configured?: boolean }) => {
         const configured = status.configured === true;
         setAiConfigured(configured);
-        setAiChoice(configured && storedChoice === "ai" ? "ai" : configured && storedChoice === "demo" ? "demo" : configured ? "pending" : "demo");
+        setAiChoice(configured && storedChoice === "ai" ? "ai" : "demo");
       })
       .catch(() => setAiChoice("demo"));
   }, []);
   const actionCards = [
     { id: "disney", tag: "CARGO DUDOSO", title: "Disney+ aparece dos veces", detail: "Mismo monto · 1 minuto", amount: "$11.990", tone: "alert", actions: [{ label: "Ignorar", run: () => onArchive("disney", "Disney+") }, { label: "Revisar", run: () => onLedger("General", "disney-bci") }] },
-    { id: "maria", tag: "POR COBRAR", title: "María te debe del almuerzo", detail: "Pendiente desde el viernes", amount: "$18.000", tone: "social", actions: [{ label: "Cobrar", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("maria", "Cobro de María") }] },
-    { id: "camila", tag: "POR PAGAR", title: "Le debes a Camila", detail: "Depto agosto · @camila", amount: "$42.000", tone: "social", actions: [{ label: "Pagar", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("camila", "Deuda con Camila") }] },
+    { id: "maria", tag: "POR COBRAR", title: "María te debe del almuerzo", detail: "Pendiente desde el viernes", amount: "$18.000", tone: "social", actions: [{ label: "Preparar cobro", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("maria", "Cobro de María") }] },
+    { id: "camila", tag: "POR PAGAR", title: "Le debes a Camila", detail: "Depto agosto · @camila", amount: "$42.000", tone: "social", actions: [{ label: "Preparar pago", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("camila", "Deuda con Camila") }] },
     { id: "benefit", tag: "BENEFICIO", title: "Tu tarjeta tiene restaurantes con descuento", detail: "BCI Visa · ejemplo de esta semana", amount: "20%", tone: "benefit", actions: [{ label: "Ignorar", run: () => onArchive("benefit", "Beneficio") }, { label: "Revisar", run: () => onMove("ahorrar") }] },
-    { id: "liguria", tag: "PARA DIVIDIR", title: "La cuenta de Liguria parece compartida", detail: "Boleta mayor a tu consumo habitual", amount: "$41.600", tone: "split", actions: [{ label: "Ignorar", run: () => onArchive("liguria", "Cuenta de Liguria") }, { label: "Revisar", run: () => onLedger("General", "liguria") }, { label: "Distribuir", run: () => onCollect("Liguria") }] },
+    { id: "liguria", tag: "PARA DIVIDIR", title: "La cuenta de Liguria parece compartida", detail: "Boleta mayor a tu consumo habitual", amount: "$41.600", tone: "split", actions: [{ label: "Ignorar", run: () => onArchive("liguria", "Cuenta de Liguria") }, { label: "Revisar", run: () => onLedger("General", "liguria") }, { label: "Preparar reparto", run: () => onCollect("Liguria") }] },
   ];
   const visibleCards = actionCards.filter((card) => !archived.includes(card.id));
   const archivedLabels = actionCards.filter((card) => archived.includes(card.id));
@@ -659,12 +754,12 @@ function Ledger({ source, setSource, selected, setSelected, reviewed, onUnreview
     <div className="filter-row" aria-label="Navegar cartolas">{["General", "BCI", "MACH"].map((filter) => <button key={filter} className={source === filter ? "filter-active" : ""} onClick={() => { setSource(filter); setSelected(null); }}>{filter}</button>)}</div>
     <div className="table-head"><span>FECHA</span><span>MOVIMIENTO</span><span>MONTO</span></div>
     <div className="ledger">{filtered.map((movement) => {
-      const thirdAction: MovementAction = movement.amount > 0 && !movement.ownTransfer ? "Cobrar" : "Dividir";
+      const thirdAction: MovementAction | null = movement.ownTransfer || movement.name === "Disney+" ? null : movement.amount > 0 ? "Preparar cobro" : "Preparar reparto";
       const isReviewed = reviewed.includes(movement.id);
       return <article className={`movement${selected === movement.id ? " selected" : ""}${isReviewed ? " reviewed" : ""}`} key={movement.id}>
         <button className="row-main" onClick={() => setSelected(selected === movement.id ? null : movement.id)} aria-expanded={selected === movement.id}><time>{movement.date}<small>{movement.time}</small></time><span><strong>{movement.name}</strong><small className={movement.tone}>{movement.bank}</small>{isReviewed && <em>✓ Revisado</em>}</span><b className={movement.amount > 0 ? "positive" : ""}>{movement.amount > 0 ? "+" : "−"}{money.format(Math.abs(movement.amount))}</b></button>
         <p className={`movement-hint ${movement.tone}`}>{movement.hint}</p>
-        <div className="row-actions"><button onClick={() => { if (isReviewed) { onUnreview(movement.id); onNotice(`${movement.name}: volvió a pendientes de revisión.`); } else onAction("Ya lo vi", movement); }}>{isReviewed ? "Deshacer" : "Ya lo vi"}</button><button onClick={() => reviewMovement(movement)}>Revisar</button><button onClick={() => onAction(thirdAction, movement)}>{thirdAction}</button></div>
+        <div className="row-actions"><button onClick={() => { if (isReviewed) { onUnreview(movement.id); onNotice(`${movement.name}: volvió a pendientes de revisión.`); } else onAction("Marcar revisado", movement); }}>{isReviewed ? "Deshacer" : "Marcar revisado"}</button><button onClick={() => reviewMovement(movement)}>Revisar</button>{thirdAction && <button onClick={() => onAction(thirdAction, movement)}>{thirdAction}</button>}</div>
         {selected === movement.id && <><div className="movement-detail-meta"><span>Banco <strong>{movement.bank}</strong></span><span>Código <code>{movement.code}</code></span><span>Hora <strong>{movement.time}</strong></span></div><section className="movement-assistant"><div><span>Y</span><div><small>ASISTENTE DEMO</small><strong>{movement.name === "Disney+" ? "Hay una coincidencia que vale revisar" : "Revisa el contexto antes de decidir"}</strong></div></div><p>{movement.name === "Disney+" ? "Vimos el mismo comercio y monto con un minuto de diferencia en dos fuentes. Podrían ser compras válidas. Revisa tu suscripción, forma de pago y condiciones antes de marcar una acción." : "Esta señal usa datos ficticios y no ejecuta cambios. Puedes dejar una nota para recordarte el siguiente paso."}</p><label>Nota propia<input value={notes[movement.id] ?? ""} onChange={(event) => { setNotes({ ...notes, [movement.id]: event.target.value }); setSavedNotes(savedNotes.filter((id) => id !== movement.id)); }} placeholder="Ej.: revisar suscripción" /></label><button onClick={() => { if (!(notes[movement.id] ?? "").trim()) return onNotice("Escribe una nota antes de guardarla."); setSavedNotes(savedNotes.includes(movement.id) ? savedNotes : [...savedNotes, movement.id]); onNotice(`Nota guardada durante esta sesión para ${movement.name}.`); }}>{savedNotes.includes(movement.id) ? "✓ Nota guardada" : "Guardar nota del ejemplo"}</button></section></>}
       </article>;
     })}</div>
@@ -710,8 +805,8 @@ function Collect({ draft, setDraft, view, setView, onNotice, onPreview }: { draf
     <section className="collect-hero"><p className="kicker">COBRAR Y PAGAR · EJEMPLO</p><h2 className="compact-title">Lo pendiente,<br />por ambos lados.</h2><div className="pending-totals"><span><small>ME DEBEN</small><strong>$228.000</strong></span><span><small>LE DEBO</small><strong>$42.000</strong></span></div></section>
     <div className="pending-view"><button className={view === "personas" ? "selected-option" : ""} onClick={() => setView("personas")}>Por persona</button><button className={view === "grupos" ? "selected-option" : ""} onClick={() => setView("grupos")}>Por grupo / gasto</button></div>
     <div className="pending-board">
-      <section className="pending-lane"><div className="lane-heading"><div><small>POR COBRAR</small><strong>$228.000</strong></div><button onClick={() => setDraft({ ...initialDraft, step: 1 })}>＋ Nuevo gasto compartido</button></div><div className="pending-lane-track">{receivableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio preparado para ${row.name}. No se envió nada.`)}>Recordar</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "collect" })}>Enviar cobro</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: marcado “ya me pagaron”. YOL1 buscará una coincidencia solo en las cartolas ficticias.`); }}>Ya me pagaron</button></div>}</article>)}</div></section>
-      <section className="pending-lane"><div className="lane-heading"><div><small>POR PAGAR</small><strong>$42.000</strong></div><button onClick={() => { setPayableDraftAdded(true); onNotice("Borrador de deuda pendiente guardado en esta sesión. No se cargó ni transfirió dinero."); }}>＋ Agregar deuda pendiente</button></div><div className="pending-lane-track">{payableDraftAdded && <div className="lane-state"><span>✓ Borrador guardado</span><button onClick={() => setPayableDraftAdded(false)}>Deshacer</button></div>}{payableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio personal creado para pagar a ${row.name}.`)}>Recordarme</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "pay" })}>Simular pago</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pago marcado en el ejemplo; YOL1 revisará si aparece una coincidencia ficticia.`); }}>Ya pagué</button></div>}</article>)}</div></section>
+      <section className="pending-lane"><div className="lane-heading"><div><small>POR COBRAR</small><strong>$228.000</strong></div><button onClick={() => setDraft({ ...initialDraft, step: 1 })}>＋ Nuevo gasto compartido</button></div><div className="pending-lane-track">{receivableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio preparado para ${row.name}. No se envió nada.`)}>Recordar</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "collect" })}>Preparar cobro</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pendiente marcado como resuelto. YOL1 buscará una coincidencia solo en las cartolas ficticias.`); }}>Marcar como resuelto</button></div>}</article>)}</div></section>
+      <section className="pending-lane"><div className="lane-heading"><div><small>POR PAGAR</small><strong>$42.000</strong></div><button onClick={() => { setPayableDraftAdded(true); onNotice("Borrador de deuda pendiente guardado en esta sesión. No se cargó ni transfirió dinero."); }}>＋ Agregar deuda pendiente</button></div><div className="pending-lane-track">{payableDraftAdded && <div className="lane-state"><span>✓ Borrador guardado</span><button onClick={() => setPayableDraftAdded(false)}>Deshacer</button></div>}{payableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio personal creado para pagar a ${row.name}.`)}>Recordarme</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "pay" })}>Preparar pago</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pendiente marcado como resuelto; YOL1 revisará si aparece una coincidencia ficticia.`); }}>Marcar como resuelto</button></div>}</article>)}</div></section>
     </div>
     <div className="reconcile-note"><span>↻</span><p><strong>Revisar si este pago ya quedó resuelto</strong>Cuando marcas un pago, YOL1 busca una coincidencia en las cartolas ficticias antes de cerrarlo.</p></div>
   </div>;

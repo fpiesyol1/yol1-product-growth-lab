@@ -17,6 +17,7 @@ export type FeedbackRecord = FeedbackSubmission & {
 export interface FeedbackIntakeAdapter {
   submit(input: FeedbackSubmission): FeedbackRecord;
   list(): FeedbackRecord[];
+  remove(id: string): void;
 }
 
 const STORAGE_KEY = "yol1-lab-feedback-v1";
@@ -53,4 +54,12 @@ export const localFeedbackIntake: FeedbackIntakeAdapter = {
     return record;
   },
   list: readRecords,
+  remove(id) {
+    if (!canUseStorage()) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(readRecords().filter((record) => record.id !== id)));
+    } catch {
+      // The draft remains local when browser storage cannot be updated.
+    }
+  },
 };

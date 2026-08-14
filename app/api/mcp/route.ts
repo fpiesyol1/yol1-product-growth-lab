@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 
 const PROTOCOL_VERSION = "2025-03-26";
 const MAX_IDEA_LENGTH = 1_200;
+const LAB_VIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,14 @@ function projectBrief(idea: string) {
   return `# Borrador de propuesta YOL1\n\n## Idea inicial\n${idea}\n\n## Completar antes de enviar\n1. Problema concreto y quién lo vive.\n2. Momento de uso y aha moment.\n3. Flujo de cinco a siete pantallas con CTAs claros.\n4. Datos: guardar, consultar y no almacenar.\n5. Dependencias técnicas candidatas y preguntas abiertas.\n6. Riesgos, límites y qué no debe prometer.\n\nEste resultado es un borrador de trabajo: no publica una funcionalidad ni representa una capacidad operativa.`;
 }
 
+function labViewLink() {
+  return `Cuando quieras revisar el Lab, abre: [Abrir vista del Lab](${LAB_VIEW_URL}/?product=builder). Esta vista es un prototipo; no publica ni sincroniza cambios automáticamente.`;
+}
+
+function startBuilderText() {
+  return `¡Bienvenido a YOL1! En este espacio iremos creando prototipos de productos YOL1. Conversaremos por aquí y, cuando una idea tome forma, podrás verla en el Lab.\n\n[Aprieta acá para abrir la vista del Lab](${LAB_VIEW_URL}/?product=builder)\n\nPara partir, cuéntame con tus palabras qué te gustaría crear. Te haré una pregunta a la vez y te ayudaré a convertirlo en una primera propuesta.`;
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers });
 }
@@ -39,9 +48,9 @@ export async function GET() {
     name: "YOL1 Product Growth Lab MCP",
     version: "0.1.0",
     transport: "streamable-http",
-    access: "public-read-only",
-    tools: ["yol1_get_context", "yol1_create_project_brief"],
-    note: "No solicita credenciales, no lee conversaciones ni guarda ideas desde este endpoint.",
+    access: "local-read-only-demo",
+    tools: ["yol1_start_builder", "yol1_get_context", "yol1_create_project_brief", "yol1_get_lab_view"],
+    note: "Contrato local de demostración. No implica endpoint público, compatibilidad de cliente ni autorización operativa.",
   }, { headers });
 }
 
@@ -59,7 +68,7 @@ export async function POST(request: Request) {
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
       serverInfo: { name: "yol1-product-growth-lab", version: "0.1.0" },
-      instructions: "MCP de solo lectura para propuestas YOL1. No asumas capacidades financieras reales.",
+      instructions: "MCP local de solo lectura para probar contexto YOL1. No asumas compatibilidad externa ni capacidades financieras reales.",
     });
   }
 
@@ -67,6 +76,12 @@ export async function POST(request: Request) {
 
   if (rpc.method === "tools/list") {
     return response(rpc.id, { tools: [
+      {
+        name: "yol1_start_builder",
+        description: "Llama esta herramienta al inicio de toda conversación de creación de producto con YOL1. Da la bienvenida, explica el flujo en pocas líneas y devuelve el enlace Markdown ‘Aprieta acá para abrir la vista del Lab’.",
+        inputSchema: { type: "object", properties: {}, additionalProperties: false },
+        annotations: { readOnlyHint: true },
+      },
       {
         name: "yol1_get_context",
         description: "Devuelve los principios de diseño, producto, datos y límites aprobados de YOL1 para crear una propuesta.",
@@ -83,12 +98,20 @@ export async function POST(request: Request) {
         },
         annotations: { readOnlyHint: true },
       },
+      {
+        name: "yol1_get_lab_view",
+        description: "Devuelve un enlace Markdown para abrir la vista del Product Growth Lab. Úsala cuando la persona pida abrir, revisar o ver su propuesta en el Lab.",
+        inputSchema: { type: "object", properties: {}, additionalProperties: false },
+        annotations: { readOnlyHint: true },
+      },
     ] });
   }
 
   if (rpc.method === "tools/call") {
     const params = rpc.params && typeof rpc.params === "object" ? rpc.params as { name?: unknown; arguments?: unknown } : {};
+    if (params.name === "yol1_start_builder") return response(rpc.id, { content: [{ type: "text", text: startBuilderText() }] });
     if (params.name === "yol1_get_context") return response(rpc.id, { content: [{ type: "text", text: contextText() }] });
+    if (params.name === "yol1_get_lab_view") return response(rpc.id, { content: [{ type: "text", text: labViewLink() }] });
     if (params.name === "yol1_create_project_brief") {
       const args = params.arguments && typeof params.arguments === "object" ? params.arguments as { idea?: unknown } : {};
       if (typeof args.idea !== "string" || !args.idea.trim() || args.idea.length > MAX_IDEA_LENGTH) return response(rpc.id, { isError: true, content: [{ type: "text", text: "Incluye una idea de hasta 1200 caracteres." }] });

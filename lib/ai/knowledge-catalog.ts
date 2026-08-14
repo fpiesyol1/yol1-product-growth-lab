@@ -17,7 +17,7 @@ export type KnowledgeCard = {
   tags: readonly string[];
 };
 
-export const YOL1_KNOWLEDGE_VERSION = "lab-kb-2026-08-13.1";
+export const YOL1_KNOWLEDGE_VERSION = "lab-kb-2026-08-14.1";
 
 export const knowledgeCatalog: readonly KnowledgeCard[] = [
   {
@@ -41,15 +41,15 @@ export const knowledgeCatalog: readonly KnowledgeCard[] = [
     id: "collect-receivables-001", status: "approved", domain: "cobrar-y-pagar", intent: "quien-me-debe",
     canonicalQuestion: "¿Quién me debe plata?",
     variants: ["¿Quién me debe?", "¿Cuánto tengo por cobrar?", "Muéstrame lo que me deben", "¿Qué cobros tengo pendientes?", "¿Josefa todavía me debe?", "¿María me pagó el almuerzo?", "¿Cuánto me deben entre todos?", "¿Qué personas aparecen por cobrar?", "¿Tengo algo pendiente del viaje a Pucón?", "¿Puedo recordarles que me paguen?"],
-    expectedAnswer: { see: "En el ejemplo te deben $228.000: Josefa $210.000 por Viaje a Pucón y María $18.000 por Almuerzo viernes.", meaning: "Son pendientes ficticios ordenados por persona; YOL1 no sabe si ya fueron pagados hasta que tú lo confirmes y revises la cartola de ejemplo.", next: "Abre Cobrar y pagar para revisar a cada persona, preparar un recordatorio o marcar Ya me pagaron." },
+    expectedAnswer: { see: "En el ejemplo te deben $228.000: Josefa $210.000 por Viaje a Pucón y María $18.000 por Almuerzo viernes.", meaning: "Son pendientes ficticios ordenados por persona; YOL1 no sabe si ya fueron pagados hasta que tú lo confirmes y revises la cartola de ejemplo.", next: "Abre Cobrar y pagar para revisar a cada persona, preparar un recordatorio o marcar el pendiente como resuelto." },
     requiredContext: ["Josefa: $210.000", "María: $18.000", "Total: $228.000", "Aliases ficticios"], limits: ["No afirmar que la deuda es real", "No enviar mensajes ni iniciar cobros"], nextQuestions: ["¿Qué me debe Josefa?", "¿Cómo se vería un recordatorio?"], knownFeedback: "Cobrar debe mostrar personas y grupos sin convertir la solicitud en un pago real.", source: "knowledge/cobrar-y-pagar.md", tags: ["me debe", "me deben", "cobrar", "por cobrar", "josefa", "maría", "pucón", "almuerzo"],
   },
   {
     id: "collect-payables-001", status: "approved", domain: "cobrar-y-pagar", intent: "a-quien-debo",
     canonicalQuestion: "¿A quién le debo plata?",
     variants: ["¿A quién le debo?", "¿Cuánto tengo por pagar?", "Muéstrame lo que debo", "¿Qué pagos tengo pendientes?", "¿Le debo algo a Camila?", "¿Cuánto debo del departamento?", "¿Qué persona aparece por pagar?", "¿Tengo deudas pendientes en el ejemplo?", "¿Ya le pagué a Camila?", "¿Cómo ordeno lo que tengo que pagar?"],
-    expectedAnswer: { see: "En el ejemplo le debes $42.000 a Camila por Depto agosto.", meaning: "Es un pendiente ficticio; no confirma que siga abierto ni que haya que transferir ahora.", next: "Abre Cobrar y pagar para revisarlo, crear un recordatorio personal o marcar Ya pagué y contrastarlo con la cartola ficticia." },
-    requiredContext: ["Camila: $42.000", "Concepto: Depto agosto", "Alias ficticio: @camila"], limits: ["No pagar ni iniciar transferencia", "No afirmar que el pago quedó conciliado"], nextQuestions: ["¿Por qué le debo a Camila?", "¿Cómo marco que ya pagué?"], knownFeedback: "Felipe pidió separar claramente ME DEBEN y LE DEBO y usar texto cotidiano.", source: "knowledge/cobrar-y-pagar.md", tags: ["le debo", "debo a", "por pagar", "pagar", "camila", "departamento", "depto", "42.000"],
+    expectedAnswer: { see: "En el ejemplo le debes $42.000 a Camila por Depto agosto.", meaning: "Es un pendiente ficticio; no confirma que siga abierto ni que haya que transferir ahora.", next: "Abre Cobrar y pagar para revisarlo, crear un recordatorio personal o marcar el pendiente como resuelto y contrastarlo con la cartola ficticia." },
+    requiredContext: ["Camila: $42.000", "Concepto: Depto agosto", "Alias ficticio: @camila"], limits: ["No pagar ni iniciar transferencia", "No afirmar que el pago quedó conciliado"], nextQuestions: ["¿Por qué le debo a Camila?", "¿Cómo marco el pendiente como resuelto?"], knownFeedback: "Felipe pidió separar claramente ME DEBEN y LE DEBO y usar texto cotidiano.", source: "knowledge/cobrar-y-pagar.md", tags: ["le debo", "debo a", "por pagar", "pagar", "camila", "departamento", "depto", "42.000"],
   },
   {
     id: "save-restaurant-benefit-001", status: "approved", domain: "ahorrar", intent: "beneficio-restaurante",

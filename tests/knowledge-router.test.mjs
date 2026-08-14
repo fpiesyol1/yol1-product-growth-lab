@@ -20,10 +20,20 @@ const cases = JSON.parse(await readFile(new URL("evals/knowledge-router-cases.js
 
 test("cada ficha aprobada mantiene diez variantes trazables", () => {
   assert.equal(catalog.knowledgeCatalog.length, 6);
+  assert.equal(catalog.YOL1_KNOWLEDGE_VERSION, "lab-kb-2026-08-14.1");
   for (const card of catalog.knowledgeCatalog) {
     assert.equal(card.status, "approved");
     assert.equal(card.variants.length, 10, card.id);
     assert.match(card.source, /^knowledge\//);
+  }
+});
+
+test("el conocimiento aprobado usa el mismo cierre de pendientes que la interfaz", () => {
+  const pendingCards = catalog.knowledgeCatalog.filter((card) => ["collect-receivables-001", "collect-payables-001"].includes(card.id));
+  assert.equal(pendingCards.length, 2);
+  for (const card of pendingCards) {
+    assert.match(card.expectedAnswer.next, /marcar el pendiente como resuelto/i);
+    assert.doesNotMatch(card.expectedAnswer.next, /Ya me pagaron|Ya pagué/);
   }
 });
 

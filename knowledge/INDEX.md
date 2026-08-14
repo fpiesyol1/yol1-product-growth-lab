@@ -1,4 +1,4 @@
-# Índice de conocimiento — `lab-kb-2026-08-13.1`
+# Índice de conocimiento — `lab-kb-2026-08-14.1`
 
 | ID | Estado | Dominio | Pregunta madre | Fuente |
 |---|---|---|---|---|
@@ -10,4 +10,3 @@
 | `split-liguria-001` | aprobada | Cobrar y pagar | ¿Conviene dividir el gasto de Liguria? | `cobrar-y-pagar.md` |
 
 Todas las fichas son contenido demo con datos ficticios. “Aprobada” significa aprobada para este Lab, no verdad financiera, disponibilidad de producto ni consejo profesional.
-

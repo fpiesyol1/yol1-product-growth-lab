@@ -1,24 +1,19 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { listLearningItems, setLearningStatus, type LearningItem, type LearningStatus } from "../../lib/learning-review";
 import { getFeedbackServiceStatus, listSharedFeedback, updateSharedFeedback } from "../../lib/shared-feedback-client";
-import { localFeedbackIntake, type FeedbackRecord } from "../../lib/feedback-intake";
 import { DECISION_CONFLICTS, readDecisionResolutions, saveDecisionResolution, type DecisionChoice, type DecisionResolution } from "../../lib/decision-inbox";
 
 const REVIEW_TOKEN_KEY = "yol1-review-token-session-v1";
-const statusLabels: Record<LearningStatus, string> = { new: "Pendiente", approve: "Aprobar", wrong: "Equivocado", discard: "Descartar" };
 type InboxMode = "checking" | "local" | "locked" | "shared";
 
 function DecisionInbox() {
   const [resolutions, setResolutions] = useState<Record<string, DecisionResolution>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [contextOpen, setContextOpen] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackRecord[]>([]);
-
   useEffect(() => {
     setResolutions(readDecisionResolutions());
-    setFeedback(localFeedbackIntake.list());
   }, []);
 
   const decide = (conflictId: string, choice: DecisionChoice) => {
@@ -32,24 +27,21 @@ function DecisionInbox() {
     setContextOpen(null);
   };
 
-  return <section className="decision-inbox" id="decisions" aria-label="Bandeja local de decisiones">
-    <header><div><small>BANDEJA DE DECISIONES · DEMO LOCAL</small><h2>Cuando las fuentes chocan, Felipe manda.</h2></div><p>Estas resoluciones viven solo en este navegador. No modifican archivos, GitHub ni requisitos legales.</p></header>
+  return <section className="decision-inbox" id="decisions" aria-label="Decisiones pendientes">
+    <header><div><small>02 · DECISIONES</small><h2>Cuando dos fuentes dicen cosas distintas.</h2></div><p>Elige la que manda o deja el caso abierto. Esta decisión guía el próximo diseño; no cambia ningún producto por sí sola.</p></header>
     <div className="decision-grid">{DECISION_CONFLICTS.map((conflict) => {
       const resolution = resolutions[conflict.id];
       return <article className={resolution ? "resolved" : ""} key={conflict.id}>
-        <div className="decision-topic"><small>{conflict.context} · POR VALIDAR</small><h3>{conflict.topic}</h3></div>
+        <div className="decision-topic"><small>{conflict.context} · DECISIÓN PENDIENTE</small><h3>{conflict.topic}</h3></div>
         <div className="decision-sources"><div><span>FUENTE A</span><strong>{conflict.sourceA.label}</strong><p>{conflict.sourceA.value}</p><small>{conflict.sourceA.date} · {conflict.sourceA.state}</small></div><div><span>FUENTE B</span><strong>{conflict.sourceB.label}</strong><p>{conflict.sourceB.value}</p><small>{conflict.sourceB.date} · {conflict.sourceB.state}</small></div></div>
         {!resolution ? <><label>Comentario breve (opcional)<input value={comments[conflict.id] ?? ""} onChange={(event) => setComments((current) => ({ ...current, [conflict.id]: event.target.value }))} placeholder="Qué debe quedar registrado" maxLength={220} /></label><div className="decision-actions"><button onClick={() => decide(conflict.id, "a")}>A manda</button><button onClick={() => decide(conflict.id, "b")}>B manda</button><button className={contextOpen === conflict.id ? "selected" : ""} onClick={() => decide(conflict.id, "context")}>{contextOpen === conflict.id ? "Guardar contexto" : "Necesito más contexto"}</button></div></> : <div className="decision-result"><strong>✓ Felipe manda · resolución local visible</strong><span>{resolution.choice === "a" ? "A manda" : resolution.choice === "b" ? "B manda" : "Necesita más contexto"}{resolution.comment ? ` · ${resolution.comment}` : ""}</span><button onClick={() => setResolutions((current) => { const next = { ...current }; delete next[conflict.id]; window.localStorage.setItem("yol1-lab-decisions-v1", JSON.stringify(next)); return next; })}>Revisar decisión</button></div>}
       </article>;
     })}</div>
-    <div className="decision-feedback"><div><small>FEEDBACK RELACIONADO</small><strong>{feedback.length} {feedback.length === 1 ? "entrada local" : "entradas locales"}</strong></div>{feedback.length ? feedback.slice(0, 3).map((item) => <p key={item.id}><span>{item.product ?? "Acompañante financiero"} · {item.screen}</span>{item.message || item.topics || "Feedback rápido sin comentario."}</p>) : <p>No hay feedback local todavía. Las entradas compartidas siguen en la bandeja principal.</p>}</div>
   </section>;
 }
 
 export default function ReviewPage() {
   const [items, setItems] = useState<LearningItem[]>([]);
-  const [statusFilter, setStatusFilter] = useState<"all" | LearningStatus>("all");
-  const [sourceFilter, setSourceFilter] = useState<"all" | "feedback" | "chat">("all");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mode, setMode] = useState<InboxMode>("checking");
   const [reviewToken, setReviewToken] = useState("");
@@ -88,18 +80,8 @@ export default function ReviewPage() {
     });
   }, []);
 
-  const visible = useMemo(() => items.filter((item) => {
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    const matchesSource = sourceFilter === "all" || item.source === sourceFilter;
-    return matchesStatus && matchesSource;
-  }), [items, sourceFilter, statusFilter]);
-
-  const counts = useMemo(() => ({
-    new: items.filter((item) => item.status === "new").length,
-    approve: items.filter((item) => item.status === "approve").length,
-    wrong: items.filter((item) => item.status === "wrong").length,
-    discard: items.filter((item) => item.status === "discard").length,
-  }), [items]);
+  const feedbackItems = items.filter((item) => item.source === "feedback");
+  const aiItems = items.filter((item) => item.source === "chat");
 
   const login = async (event: FormEvent) => {
     event.preventDefault();
@@ -143,11 +125,17 @@ export default function ReviewPage() {
     setMode("locked");
   };
 
+  const chooseTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    window.localStorage.setItem("yol1-lab-theme", next);
+  };
+
   return <main className="review-shell" data-theme={theme}>
     <header className="review-header">
       <a href="/" aria-label="Volver al Product Growth Lab"><img src="/yol1-wordmark-dark.png" alt="YOL1" /></a>
-      <div><small>PRODUCT GROWTH LAB · INTERNO</small><h1>Bandeja de aprendizaje</h1><p>Separa feedback y respuestas de IA. Tú decides qué aprobar, corregir o descartar; nada cambia el modelo automáticamente.</p></div>
-      <div className="review-header-actions"><a href="/review/knowledge">Conocimiento del Lab</a><button onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button>{mode === "shared" && <button onClick={logout}>Cerrar bandeja</button>}</div>
+      <div><small>PRODUCT GROWTH LAB · INTERNO</small><h1>Bandeja de aprendizaje</h1><p>Separa feedback y respuestas de IA. Tú decides qué revisar, resolver o ignorar; nada cambia el modelo automáticamente.</p></div>
+      <div className="review-header-actions"><a href="/review/knowledge">Conocimiento del Lab</a><button onClick={chooseTheme}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button>{mode === "shared" && <button onClick={logout}>Cerrar bandeja</button>}</div>
     </header>
 
     <details className="review-postgres-guide">
@@ -158,32 +146,34 @@ export default function ReviewPage() {
     {mode === "locked" && <section className="review-login"><span>↳</span><div><small>BANDEJA PRIVADA</small><h2>Entra con tu clave de revisión</h2><p>Esta clave es distinta de GitHub, Vercel y OpenAI. Vive como secreto del servidor.</p><form onSubmit={login}><input type="password" value={loginToken} onChange={(event) => setLoginToken(event.target.value)} placeholder="YOL1_REVIEW_TOKEN" aria-label="Clave privada de revisión" autoComplete="current-password" /><button type="submit">Abrir bandeja</button></form>{error && <p className="review-error" role="alert">{error}</p>}</div></section>}
 
     {mode !== "locked" && <>
-      <DecisionInbox />
-      <section className="review-summary" aria-label="Resumen de revisión">
-        <button className={statusFilter === "all" ? "active" : ""} onClick={() => setStatusFilter("all")}><small>TOTAL</small><strong>{items.length}</strong></button>
-        <button className={statusFilter === "new" ? "active" : ""} onClick={() => setStatusFilter("new")}><small>PENDIENTES</small><strong>{counts.new}</strong></button>
-        <button className={statusFilter === "approve" ? "active" : ""} onClick={() => setStatusFilter("approve")}><small>APROBADAS</small><strong>{counts.approve}</strong></button>
-        <button className={statusFilter === "wrong" ? "active" : ""} onClick={() => setStatusFilter("wrong")}><small>EQUIVOCADAS</small><strong>{counts.wrong}</strong></button>
-        <button className={statusFilter === "discard" ? "active" : ""} onClick={() => setStatusFilter("discard")}><small>DESCARTADAS</small><strong>{counts.discard}</strong></button>
+      <div className="review-mode"><span>{mode === "shared" ? "BANDEJA COMPARTIDA" : mode === "checking" ? "CONECTANDO…" : "MODO LOCAL · AÚN NO COMPARTIDO"}</span><strong>{mode === "shared" ? "Cada envío llega al equipo." : "Lo que ves no se comparte entre dispositivos todavía."}</strong></div>
+      {error && <p className="review-error" role="alert">{error}</p>}
+
+      <section className="review-section" aria-labelledby="feedback-heading">
+        <header><div><small>01 · PERSONAS</small><h2 id="feedback-heading">Feedback que dejó la gente.</h2><p>Producto, pantalla y tipo quedan visibles. Tú decides qué se atiende ahora y qué se guarda para después.</p></div><span>{feedbackItems.length} entradas</span></header>
+        <div className="kanban-statuses" aria-label="Estados del feedback"><span>Nuevo</span><span>En revisión</span><span>Guardar para después</span><span>Resuelto</span><span>Ignorado</span></div>
+        <div className="review-list" aria-live="polite">
+          {feedbackItems.length === 0 && <div className="review-empty"><span>✦</span><h3>Aún no llega feedback.</h3><p>Cuando alguien deje una opinión desde una pantalla, aparecerá acá con su contexto.</p></div>}
+          {feedbackItems.map((item) => <article className={`review-item status-${item.status}`} key={item.id}>
+            <div className="review-item-meta"><span>FEEDBACK · {item.label}</span><strong>{item.context}</strong><time>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}</time></div>
+            <div className="review-item-copy"><h3>{item.title}</h3><p>{item.body}</p>{item.reviewNote && <blockquote><strong>Destino editorial</strong>{item.reviewNote}</blockquote>}</div>
+            <div className="review-decision"><div className="review-status review-status-human" aria-label="Estado del feedback"><button className={item.status === "reviewing" ? "selected reviewing" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "reviewing")}>En revisión</button><button className={item.status === "later" ? "selected later" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "later")}>Para después</button><button className={item.status === "resolved" ? "selected resolved" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "resolved")}>Marcar resuelto</button><button className={item.status === "ignored" ? "selected ignored" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "ignored")}>Ignorar</button></div></div>
+          </article>)}
+        </div>
       </section>
 
-      <div className="review-toolbar"><div className="review-source-filter" aria-label="Separar por tipo"><button className={sourceFilter === "all" ? "selected" : ""} onClick={() => setSourceFilter("all")}>Todo</button><button className={sourceFilter === "feedback" ? "selected" : ""} onClick={() => setSourceFilter("feedback")}>Feedback</button><button className={sourceFilter === "chat" ? "selected" : ""} onClick={() => setSourceFilter("chat")}>Respuestas IA</button></div><span>{mode === "shared" ? "POSTGRES COMPARTIDO" : mode === "checking" ? "CONECTANDO…" : "MODO LOCAL · CONECTA POSTGRES"}</span></div>
+      <DecisionInbox />
 
-      {error && <p className="review-error" role="alert">{error}</p>}
-      <section className="review-list" aria-live="polite">
-        {visible.length === 0 && <div className="review-empty"><span>✦</span><h2>No hay elementos en esta vista.</h2><p>Vuelve al Lab, deja feedback o conversa con YOL1 para crear una entrada.</p><a href="/">Abrir Product Growth Lab</a></div>}
-        {visible.map((item) => <article className={`review-item status-${item.status}`} key={item.id}>
-          <div className="review-item-meta"><span>{item.source === "chat" ? "RESPUESTA IA" : "FEEDBACK"}</span><strong>{item.label}</strong><time>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}</time></div>
-          <div className="review-item-copy"><small>{item.context}</small><h2>{item.title}</h2><p>{item.body}</p>{item.reviewNote && <blockquote><strong>Qué estaba mal</strong>{item.reviewNote}</blockquote>}</div>
-          <div className="review-decision">
-            <div className="review-status" aria-label="Decisión editorial">
-              <button className={item.status === "approve" ? "selected approve" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "approve")}>Aprobar</button>
-              <button className={item.status === "wrong" ? "selected wrong" : ""} disabled={savingId === item.id} onClick={() => setWrongOpen(wrongOpen === item.id ? null : item.id)}>Equivocado</button>
-              <button className={item.status === "discard" ? "selected discard" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "discard")}>Descartar</button>
-            </div>
-            {wrongOpen === item.id && <form className="wrong-editor" onSubmit={(event) => { event.preventDefault(); void changeStatus(item.id, "wrong", wrongNotes[item.id] ?? item.reviewNote); }}><label>¿Qué está mal?<textarea value={wrongNotes[item.id] ?? item.reviewNote} onChange={(event) => setWrongNotes({ ...wrongNotes, [item.id]: event.target.value })} placeholder="Ej.: confundió resultado mensual con saldo disponible" maxLength={500} required /></label><button type="submit" disabled={savingId === item.id || !(wrongNotes[item.id] ?? item.reviewNote).trim()}>Guardar corrección</button></form>}
-          </div>
-        </article>)}
+      <section className="review-section review-ai-section" aria-labelledby="ai-heading">
+        <header><div><small>03 · IA</small><h2 id="ai-heading">Hallazgos para interpretar.</h2><p>Las respuestas de IA no se mezclan con opiniones de personas. Puedes convertirlas en conocimiento, mejora o descartarlas.</p></div><span>{aiItems.length} hallazgos</span></header>
+        <div className="review-list">
+          {aiItems.length === 0 && <div className="review-empty"><span>✦</span><h3>No hay respuestas de IA por ordenar.</h3><p>Las que una persona marque como útiles o a mejorar llegarán a este bloque.</p></div>}
+          {aiItems.map((item) => <article className={`review-item status-${item.status}`} key={item.id}>
+            <div className="review-item-meta"><span>IA · {item.label}</span><strong>{item.context}</strong><time>{new Intl.DateTimeFormat("es-CL", { dateStyle: "medium", timeStyle: "short" }).format(new Date(item.createdAt))}</time></div>
+            <div className="review-item-copy"><h3>{item.title}</h3><p>{item.body}</p>{item.reviewNote && <blockquote><strong>Corrección registrada</strong>{item.reviewNote}</blockquote>}</div>
+            <div className="review-decision"><div className="review-status" aria-label="Decisión sobre respuesta de IA"><button className={item.status === "resolved" ? "selected resolved" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "resolved", "Útil para conocimiento o guía")}>Útil</button><button className={item.status === "wrong" ? "selected wrong" : ""} disabled={savingId === item.id} onClick={() => setWrongOpen(wrongOpen === item.id ? null : item.id)}>Corregir</button><button className={item.status === "ignored" ? "selected ignored" : ""} disabled={savingId === item.id} onClick={() => changeStatus(item.id, "ignored")}>Ignorar</button></div>{wrongOpen === item.id && <form className="wrong-editor" onSubmit={(event) => { event.preventDefault(); void changeStatus(item.id, "wrong", wrongNotes[item.id] ?? item.reviewNote); }}><label>¿Qué debe cambiar?<textarea value={wrongNotes[item.id] ?? item.reviewNote} onChange={(event) => setWrongNotes({ ...wrongNotes, [item.id]: event.target.value })} placeholder="Ej.: confundió resultado mensual con saldo disponible" maxLength={500} required /></label><button type="submit" disabled={savingId === item.id || !(wrongNotes[item.id] ?? item.reviewNote).trim()}>Guardar corrección</button></form>}</div>
+          </article>)}
+        </div>
       </section>
     </>}
   </main>;

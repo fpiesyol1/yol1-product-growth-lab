@@ -33,13 +33,13 @@ El **intake de feedback** es una utilidad transversal del Lab, no un octavo mód
 
 **Trabajo a resolver:** entender qué hace YOL1 y resolver una señal cotidiana sin buscarla en varios módulos.
 
-Abre con la propuesta **“Tu plata, más simple. Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal cuenta los pendientes visibles e incluye cinco situaciones sintéticas: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. Un contador y puntos hacen descubrible el carrusel sin reinstalar instrucciones redundantes. **Ya lo vi** archiva durante la sesión; **Revisar** abre evidencia o detalle; la tercera acción lleva al destino pertinente. Los elementos archivados dejan una señal persistente y recuperable. La conversación acepta texto o seis sugerencias y usa IA server-side únicamente después de elección explícita; sin clave o consentimiento responde desde reglas de demo. No se muestra micrófono porque no existe captura de audio.
+Abre con la propuesta **“Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal reúne situaciones de ejemplo: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. **Ignorar** archiva durante la sesión; **Revisar** abre evidencia o detalle; **Preparar reparto** o **Preparar cobro** aparece solo cuando corresponde. Los elementos archivados dejan una señal persistente y recuperable. La conversación parte disponible en demo; pasar a IA server-side exige una elección explícita y consentimiento. No se muestra micrófono porque no existe captura de audio.
 
-**Aceptación:** una acción responde con confirmación visible en móvil y desktop; Ya lo vi retira una tarjeta, incrementa el contador persistente y permite deshacer durante la sesión; Revisar y la tercera acción tienen destino útil. Si el fallback no reconoce una pregunta, ofrece preguntas concretas que sí puede responder. La IA no recibe texto antes de consentimiento, la clave vive solo en servidor, el request usa `store: false` y ningún camino usa audio real.
+**Aceptación:** una acción responde con confirmación visible en móvil y desktop; Ignorar retira una tarjeta, incrementa el contador persistente y permite deshacer durante la sesión; Revisar y cualquier acción contextual tienen destino útil. Si el fallback no reconoce una pregunta, ofrece preguntas concretas que sí puede responder. La IA no recibe texto antes de consentimiento, la clave vive solo en servidor, el request usa `store: false` y ningún camino usa audio real.
 
 ### Bandeja de aprendizaje interna
 
-`/review` queda fuera de los siete módulos consumer. Con Postgres conectado reúne feedback de producto y preguntas/respuestas de IA de todos los visitantes, separados por tipo. Permite Aprobar, marcar Equivocado con explicación obligatoria o Descartar. Ningún estado modifica por sí solo el prompt o el conocimiento. Sin secretos configurados funciona en modo local explícito.
+`/review` queda fuera de los siete módulos consumer. Con Postgres conectado reúne tres capas separadas: feedback de producto en Kanban editorial, conflictos de decisión y preguntas/respuestas de IA. Ningún estado modifica por sí solo el prompt o el conocimiento. Sin secretos configurados funciona en modo local explícito.
 
 ### Conocimiento conversacional interno
 
@@ -61,7 +61,7 @@ Incluye resultado mensual compacto, carrusel horizontal de cuentas, **Te entró/
 
 **Trabajo a resolver:** inspeccionar movimientos y convertirlos en acciones concretas.
 
-Incluye navegación General/BCI/MACH, fecha, hora, monto y fuente. El código técnico se conserva en el detalle, no en la fila principal. Cada fila ofrece **Ya lo vi, Revisar y Dividir/Cobrar**. Ya lo vi deja la fila atenuada con check y permite deshacer; Revisar abre un asistente contextual de demo que explica evidencia y permite guardar o editar una nota con estado persistente durante la sesión; no entrega resultados garantizados ni enlaces externos.
+Incluye navegación General/BCI/MACH, fecha, hora, monto y fuente. El código técnico se conserva en el detalle, no en la fila principal. Cada fila ofrece **Marcar revisado** y **Revisar**; **Preparar reparto/cobro** aparece solo cuando existe evidencia compatible y nunca en transferencias propias o cargos sin contexto social. Revisar abre un asistente contextual de demo que explica evidencia y permite guardar o editar una nota durante la sesión.
 
 **Aceptación:** se puede cambiar de cartola, confirmar cualquier acción y ver feedback; Disney abre evidencia contextual; una transferencia propia permanece como clasificación revisable.
 
@@ -69,7 +69,7 @@ Incluye navegación General/BCI/MACH, fecha, hora, monto y fuente. El código t�
 
 **Trabajo a resolver:** entender lo pendiente en ambos sentidos y transformar un gasto en montos claros por persona.
 
-La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos bandejas verticales 50/50 del alto: **Por cobrar arriba** y **Por pagar abajo**. Cada lista se desplaza de manera independiente; la otra bandeja, cabecera, selector y navegación inferior permanecen estables. En móvil pequeño se comprimen encabezados y acciones sin cambiar el orden ni convertirlo en carrusel. Personas con YOL1 pueden mostrar un alias ficticio `@nombre`. Cada pendiente se abre dentro de su bandeja y permite simular recordatorio o marcar “ya me pagaron/ya pagué”; luego se invita a **revisar si este pago ya quedó resuelto** contra cartolas ficticias. **Nuevo gasto compartido** abre el flujo gasto → contacto → división → confirmación; **Agregar deuda pendiente** crea un borrador visible y reversible. En montos distintos, **Repartir lo que falta** distribuye la diferencia positiva en partes iguales y confirma el resultado sin ejecutar un pago.
+La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos bandejas verticales 50/50 del alto: **Por cobrar arriba** y **Por pagar abajo**. Cada lista se desplaza de manera independiente. Cada pendiente distingue **Preparar cobro**, **Preparar pago** y **Marcar como resuelto**; ninguna etiqueta implica envío o movimiento de dinero. **Nuevo gasto compartido** abre el flujo gasto → contacto → división → confirmación; **Agregar deuda pendiente** crea un borrador visible y reversible.
 
 Después de confirmar una solicitud, el prototipo muestra una superficie separada del marco YOL1: una **vista previa de mensaje** con texto ajustable, datos ficticios y URL `.example` sin vínculo. “Volver a YOL1” restaura la solicitud y el borrador de sesión. No se abre WhatsApp ni se copia, envía o cobra nada. Producción exigiría consentimiento explícito antes de compartir, generación server-side de un link de pago y un partner autorizado; ninguno se integra en este Lab.
 
@@ -103,7 +103,7 @@ En desktop reemplaza la fotografía editorial por un recuadro compacto siempre a
 
 ### Journey A — cargo dudoso
 
-Inicio → tarjeta Disney+ → Revisar → Cartola general con Disney+ → asistente contextual → guardar nota o marcar Ya lo vi.
+Inicio → tarjeta Disney+ → Revisar → Cartola general con Disney+ → asistente contextual → guardar nota o marcar revisado.
 
 ### Journey B — beneficio desaprovechado
 
@@ -141,28 +141,28 @@ La navegabilidad de este dummy solo aporta evidencia de usabilidad y comprensió
 
 ## 8. Onboarding y activación progresiva
 
-**Onboarding y KYC progresivo** pasa a ser el segundo producto publicado del Lab. El recorrido de demo es: bienvenida → teléfono o email → OTP → pre-registro → acceso de exploración al Acompañante financiero. T0 permite conocer la app sin datos financieros propios ni activaciones.
+**Onboarding y KYC progresivo** es un prototipo para explorar. El recorrido de demo es: bienvenida → explorar el Acompañante sin datos → entender qué se desbloquearía → gate de activación → teléfono o email + OTP → pre-registro. OTP confirma un canal; no equivale a KYC ni habilita dinero.
 
-`Mi banco` vive dentro del Acompañante: cuando la persona decide activar una función personal, pide RUT + número de serie y luego muestra biometría **simulada**. No valida identidad, no abre cuenta, no conecta banca y no decide KYC real. Cognito, API Gateway/Lambda, DynamoDB y CDP son referencias del discovery; proveedor KYC, ID definitivo y soporte/revisión manual siguen por definir.
+`Mi banco` vive dentro del Acompañante: recibe una intención material concreta sólo después del pre-registro y explica requisitos posibles sin pedir RUT, número de serie, biometría ni documentos en esta demo. Esos datos aplicarían únicamente con fundamento, partner y capacidad aprobados; KYC nunca habilita dinero por sí solo. La experiencia no valida identidad, abre una cuenta ni conecta banca. Cognito, API Gateway/Lambda y el resto de la arquitectura son referencias candidatas del discovery; proveedor KYC, ID definitivo y soporte/revisión manual siguen por definir.
 
 El menú de perfil se abre desde el logo superior izquierdo y muestra un checklist de información: lo completo, lo pendiente y qué capacidad desbloquearía cada paso.
 
-## 9. Arquitectura de portfolio aprobada
+## 9. Arquitectura de portfolio vigente
 
-El producto publicado del Lab se llama **Acompañante financiero** y contiene Mis finanzas, Cobrar y pagar, Ahorrar, Gana más lucas y Mi banco. El selector de portfolio contiene exactamente seis productos: Acompañante financiero, Onboarding y KYC progresivo, Home Banking, Tarjetas, Remesas y Construir mi propio producto. Borradores o propuestas no entran a este selector hasta que Felipe los autorice.
+El producto principal del Lab se llama **Acompañante financiero** y contiene Mis finanzas, Cartola, Cobrar y pagar, Ahorrar, Ganar y Mi banco. El selector contiene exactamente seis espacios: Acompañante, Onboarding, Home Banking, Tarjetas, Remesas y Construir mi propio producto. La UI usa **Para explorar** y **En investigación**; ninguno equivale a readiness operacional.
 
-Los cinco espacios no publicados muestran únicamente estados vacíos. No contienen journeys, formularios operacionales, integraciones ni claims. “Construir mi propio producto” puede explicar que a futuro ordenará propuestas revisables, pero no implementa intake, MCP, automatización de ramas ni publicación.
+Tarjetas conserva un borrador local de discovery con datos sintéticos y gates explícitos; requiere decisión de Felipe sobre si sigue visible en el selector público o pasa a modo Equipo. Remesas permanece pausado y no se investiga ni prototipa en este ciclo. Builder guía una conversación externa y un envío local explícito; no sincroniza chats, crea branches ni publica.
 
 ## 10. Ficha de producto y eventos propuestos
 
-La ficha contextual es una superficie editorial interna del Lab. Sus semillas son propuestas no definitivas:
+La ficha contextual es material editorial interno del Lab y no se renderiza en la experiencia pública. Sus semillas son propuestas no definitivas:
 
-- evento humano de entrada o acción, visible en hover/focus y en modo touch; sus parámetros quedan como metadata separada;
+- evento de entrada o acción en `snake_case`; sus parámetros quedan como metadata separada;
 - arquitectura candidata con React Native y AWS como base a validar; datos separados entre qué guardar, qué consultar y cómo tratarlos;
 - KYC y licencias en Chile con estado `No aplica`, `Por validar` o `Requerido` y razón;
 - preguntas abiertas, feedback relacionado y bloque de QA interno “todo lo que puede salir mal”.
 
-Los eventos viven como atributos o mapeo local y no se envían a analytics. Un click conserva su comportamiento real de demo. La ficha no reemplaza documentación técnica, legal ni regulatoria.
+Los eventos viven como atributos o mapeo local y no se envían a analytics. La ficha no reemplaza documentación técnica, legal ni regulatoria y debe residir en PRD, archivos de producto o una futura vista Equipo.
 
 ## 11. Contradicciones y jerarquía de fuentes
 

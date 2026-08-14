@@ -1,0 +1,53 @@
+{
+  "schema_version": "0.2",
+  "authority_source": "DIRECCION-PRODUCTOS-FELIPE.md",
+  "demo_only": true,
+  "external_service_connections": false,
+  "defaults": {
+    "unknown_provider_state_fallback": "review",
+    "capability_inference_allowed": false,
+    "preregistration_trigger": "material_action_selected",
+    "recovery_preserves_capability_intent": true,
+    "customer_success_owner": "to_validate",
+    "otp_confirms": "channel_control_only",
+    "e2_expected_understanding": "recoverable_preregistration_without_identity_or_money_capability"
+  },
+  "capabilities": [
+    {
+      "capability_key": "save_recommendation_local",
+      "materiality": "non_material",
+      "availability_state": "demo_local",
+      "preregistration_required": false,
+      "identity_level_required": "none",
+      "demo_requirements": ["local_storage_notice"],
+      "forbidden_claims": ["pre-registro creado", "identidad verificada", "cuenta activa"]
+    },
+    {
+      "capability_key": "financial_data_connect",
+      "materiality": "sensitive_data_access",
+      "availability_state": "not_available",
+      "preregistration_required": true,
+      "identity_level_required": "to_validate",
+      "demo_requirements": ["material_action_selected", "requirements_explained_before_preregistration", "channel_otp_simulated", "consent_preview"],
+      "forbidden_claims": ["banco conectado", "datos sincronizados", "cobertura SFA disponible"]
+    },
+    {
+      "capability_key": "receive_value",
+      "materiality": "financial_effect",
+      "availability_state": "not_available",
+      "preregistration_required": true,
+      "identity_level_required": "mi_banco_kyc_policy_if_approved",
+      "demo_requirements": ["material_action_selected", "capability_unlock_explained", "channel_otp_simulated", "mi_banco_kyc_handoff_simulated"],
+      "forbidden_claims": ["cuenta abierta", "KYC aprobado", "dinero recibido", "saldo disponible"]
+    },
+    {
+      "capability_key": "transfer_value",
+      "materiality": "financial_effect",
+      "availability_state": "not_available",
+      "preregistration_required": true,
+      "identity_level_required": "mi_banco_kyc_policy_if_approved",
+      "demo_requirements": ["material_action_selected", "capability_unlock_explained", "channel_otp_simulated", "mi_banco_kyc_handoff_simulated"],
+      "forbidden_claims": ["transferencia preparada", "transferencia enviada", "KYC aprobado"]
+    }
+  ]
+}

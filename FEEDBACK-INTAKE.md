@@ -42,7 +42,7 @@ YOL1_REVIEW_TOKEN=...
 YOL1_FEEDBACK_ALLOWED_ORIGIN=https://...
 ```
 
-La cola usa `new → approve | wrong | discard`. `wrong` exige nota editorial. Una promoción posterior a branch/PR necesita otro permiso y otra acción explícita.
+La bandeja separa el feedback de personas de los hallazgos de IA. Para feedback usa un Kanban editorial: `new → reviewing | later | resolved | ignored`; los hallazgos de IA añaden `wrong` cuando la respuesta requiere corrección. Una promoción posterior a branch/PR necesita otro permiso y otra acción explícita.
 
 ## Estructura de una Issue futura
 

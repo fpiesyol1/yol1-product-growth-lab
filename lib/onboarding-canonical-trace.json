@@ -1,0 +1,80 @@
+{
+  "schema_version": "0.1",
+  "authority_source": "DIRECCION-PRODUCTOS-FELIPE.md",
+  "audited_at": "2026-08-14",
+  "scope": "onboarding_kyc_progressive",
+  "rules": [
+    {
+      "id": "ONB-CAN-01",
+      "requirement": "La persona explora valor antes de entregar contacto u OTP.",
+      "status": "verified",
+      "evidence_files": ["app/page.tsx", "tests/onboarding-capabilities.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-02",
+      "requirement": "La persona puede entrar al Acompañante y entender una conexión posible sin datos reales.",
+      "status": "verified",
+      "evidence_files": ["app/page.tsx", "lib/product-portfolio.ts"]
+    },
+    {
+      "id": "ONB-CAN-03",
+      "requirement": "Una acción material concreta y su intercambio se explican antes de pedir contacto.",
+      "status": "verified",
+      "evidence_files": ["app/page.tsx", "lib/onboarding-state-machine.ts", "tests/onboarding-state-machine.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-04",
+      "requirement": "Teléfono o email más OTP crean sólo un pre-registro recuperable.",
+      "status": "verified",
+      "evidence_files": ["app/page.tsx", "lib/onboarding-demo-storage.ts", "tests/onboarding-demo-storage.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-05",
+      "requirement": "OTP confirma control de canal; no KYC, cuenta ni dinero.",
+      "status": "verified",
+      "evidence_files": ["app/page.tsx", "lib/onboarding-capabilities.json", "tests/onboarding-capabilities.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-06",
+      "requirement": "RUT, número de serie y biometría permanecen en Mi banco/KYC y sólo bajo fundamento, partner y capacidad aprobados.",
+      "status": "verified",
+      "evidence_files": ["app/page.tsx", "lib/product-portfolio.ts", "tests/onboarding-capabilities.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-07",
+      "requirement": "KYC verificado no habilita capacidad sin vehículo, contrato, controles y operación.",
+      "status": "verified",
+      "evidence_files": ["lib/onboarding-capabilities.json", "lib/product-portfolio.ts", "tests/onboarding-capabilities.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-08",
+      "requirement": "Revisión y pérdida de canal derivan a Customer Success por definir, sin promesa operacional.",
+      "status": "verified",
+      "evidence_files": ["app/page.tsx", "lib/onboarding-safety.ts", "tests/onboarding-safety.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-09",
+      "requirement": "Felipe debe validar qué primera acción material hace justo y valioso completar datos.",
+      "status": "open_decision",
+      "evidence_files": ["PRD-ONBOARDING-KYC-PROGRESIVO.md", "lib/onboarding-capabilities.json"]
+    },
+    {
+      "id": "ONB-CAN-10",
+      "requirement": "La demo no publica ni conecta bancos, pagos, OTP, KYC o mensajería reales.",
+      "status": "verified",
+      "evidence_files": ["lib/onboarding-capabilities.json", "tests/onboarding-capabilities.test.mjs", "tests/onboarding-safety.test.mjs"]
+    },
+    {
+      "id": "ONB-CAN-11",
+      "requirement": "Eventos son canónicos, breves, snake_case y separan parámetros.",
+      "status": "verified",
+      "evidence_files": ["lib/onboarding-safety.ts", "tests/onboarding-safety.test.mjs", "lib/product-portfolio.ts"]
+    },
+    {
+      "id": "ONB-CAN-12",
+      "requirement": "La ficha/PRD conserva arquitectura candidata, datos, fuentes, KYC/licencias Chile, riesgos y decisiones abiertas.",
+      "status": "verified",
+      "evidence_files": ["lib/product-portfolio.ts", "PRD-ONBOARDING-KYC-PROGRESIVO.md", "tests/technical-prd-contracts.test.mjs"]
+    }
+  ]
+}

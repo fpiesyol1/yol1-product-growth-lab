@@ -67,7 +67,7 @@ No conecta bancos, no mueve dinero y no representa capacidades disponibles, road
 
 ## Iteración de feedback directo — 13 de agosto de 2026
 
-- Inicio agranda “Tu plata, más simple” y muestra cinco pendientes sintéticos: cargo dudoso, por cobrar, por pagar, beneficio y gasto para dividir. Se retiró “Desliza para ver más”.
+- Inicio prioriza “Entiende tus finanzas. Simplifica tu vida.” y muestra pendientes de demostración: cargo dudoso, por cobrar, por pagar, beneficio y gasto para dividir. Se retiró “Desliza para ver más”.
 - “Pregúntale a YOL1” crece como interfaz y responde desde reglas de demo a seis tipos de pregunta; sigue sin IA ni audio reales.
 - Finanzas recupera cartola general bajo las cuentas, métricas accionables y últimos movimientos densos; “Agregar banco/cartola” declara que no conecta ni carga nada.
 - Cobrar y pagar separa bandejas verticales por cobrar/pagar, agrega aliases, recordatorios, conciliación ficticia y previews que niegan explícitamente envío, WhatsApp y pago reales.

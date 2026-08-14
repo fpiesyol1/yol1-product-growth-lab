@@ -4,21 +4,23 @@ Prototipo exploratorio con datos ficticios para recorrer una experiencia cotidia
 
 La propuesta que explora esta versión es: **“Con YOL1 entiendes tus finanzas y simplificas tu vida financiera.”** YOL1 detecta señales, explica evidencia y recomienda; la persona decide y confirma.
 
-El producto activo se llama oficialmente **Acompañante financiero**. El selector superior organiza exactamente seis espacios del portfolio: Acompañante financiero, Onboarding y KYC progresivo, Home Banking, Tarjetas, Remesas y Construir mi propio producto. Solo el primero está publicado en el Lab; los otros cinco son estados vacíos editoriales y no representan capacidades, roadmap ni readiness.
+El producto principal se llama oficialmente **Acompañante financiero**. El selector superior organiza exactamente seis espacios: Acompañante, Onboarding, Home Banking, Tarjetas, Remesas y Construir mi propio producto. La interfaz usa **Para explorar** para prototipos de aprendizaje y **En investigación** cuando no hay una capacidad disponible. Tarjetas conserva un borrador local de discovery con datos sintéticos; no representa emisión, pago, QR/NFC ni readiness. Remesas está pausado y no se investiga ni prototipa en este ciclo.
 
 ## Qué incluye
 
-- **Inicio:** propuesta de valor ampliada, cinco pendientes de ejemplo —cargo dudoso, por cobrar, por pagar, beneficio y gasto posiblemente compartido— en un carrusel con contador/puntos, y una conversación financiera con IA opcional o fallback demo. “Ya lo vi” archiva y deja un contador recuperable durante la sesión.
+- **Inicio:** propuesta de valor ampliada, cinco pendientes de ejemplo —cargo dudoso, por cobrar, por pagar, beneficio y gasto posiblemente compartido— en un carrusel con contador/puntos, y una conversación financiera que parte en demo. **Ignorar**, **Revisar** y **Preparar reparto** aparecen según el contexto.
 - **Mis Finanzas:** resultado mensual, carrusel de cuentas, acceso a cartola general, cuatro métricas accionables y últimos movimientos compactos.
-- **Cartola:** cartola General, BCI o MACH; fecha, hora y monto en la fila principal, con banco/código disponibles en el detalle; acciones consistentes Ya lo vi, Revisar y Dividir/Cobrar. Revisar abre un asistente contextual y permite guardar una nota con estado visible durante la sesión.
-- **Cobrar y pagar:** separa por cobrar arriba y por pagar abajo en dos bandejas que dividen el alto 50/50, por persona o grupo. Cada lista tiene scroll interno independiente mientras cabecera, selector y navegación permanecen estables. Incluye aliases, recordatorios y estados “ya pagado”. Al confirmar una solicitud, sale del marco YOL1 hacia una vista previa de mensaje ajustable, con URL ficticia no navegable y retorno que conserva el borrador de sesión.
+- **Cartola:** cartola General, BCI o MACH; fecha, hora y monto en la fila principal, con banco/código disponibles en el detalle. **Marcar revisado** y **Revisar** están siempre disponibles; **Preparar reparto/cobro** aparece solo cuando la evidencia lo permite.
+- **Cobrar y pagar:** separa por cobrar arriba y por pagar abajo en dos bandejas que dividen el alto 50/50, por persona o grupo. Cada lista tiene scroll interno independiente mientras cabecera, selector y navegación permanecen estables. Distingue **Preparar cobro**, **Preparar pago** y **Marcar como resuelto**. La vista previa usa texto y URL de ejemplo no navegable, y conserva el borrador de sesión al volver.
 
 La vista de mensaje no abre WhatsApp, no copia al portapapeles, no genera links ni inicia pagos. Una implementación productiva requeriría consentimiento explícito antes de compartir, generación server-side del link y un partner de pagos autorizado.
 - **Ahorrar:** presenta potencial estimado y cuatro oportunidades: cargo dudoso, beneficio por tarjeta, cuenta/servicio y gasto posiblemente compartido. Primero muestra una conclusión cotidiana; evidencia, fuente, certeza, rango y disclosure siguen disponibles en “Ver por qué”. Ignorar es siempre visible y reversible durante la sesión.
-- **Ganar:** solo “Próximamente”.
+- **Ganar:** espacio en investigación, sin promesa operativa.
+- **Tarjetas:** borrador local de discovery para probar intención, acceso protegido ficticio, último movimiento y beneficio contextual; nunca paga ni expone datos reales.
+- **Construir mi propio producto:** guía a la persona para trabajar en su ChatGPT o Claude, copiar un prompt y traer explícitamente un resumen; no lee ni sincroniza conversaciones.
 - **Experimentos:** feedback local sobre ideas ya conversadas, sin fechas ni disponibilidad.
 - **Feedback del Lab:** recuadro siempre abierto al final del lateral desktop, después de la navegación de módulos, y acceso compacto en móvil. Detecta la pantalla activa y acepta “Me gusta”, “Mejoraría” o “Idea”; usa la bandeja compartida cuando Postgres está activo y fallback local en desarrollo.
-- **Bandeja de aprendizaje:** con Postgres conectado, `/review` reúne feedback de todos los visitantes y cada pregunta/respuesta de IA. Separa ambos tipos y permite Aprobar, marcar Equivocado con explicación o Descartar. Sin base configurada mantiene un fallback local visible.
+- **Bandeja de aprendizaje:** con Postgres conectado, `/review` organiza tres capas: feedback de personas en un Kanban editorial, conflictos de decisión compactos y hallazgos de IA por interpretar. Sin base configurada declara con claridad su fallback local.
 - **Conocimiento del Lab:** `/review/knowledge` permite buscar las preguntas aprobadas, abrir sus variantes y marcar localmente una ficha para mejorar. No edita archivos ni reentrena nada.
 
 La app inicia en modo oscuro. El selector del header cambia a modo claro y guarda la elección en el navegador. Si no existe elección, usa la preferencia del sistema.
@@ -39,14 +41,14 @@ Para recibir feedback de otros navegadores, conecta Neon Postgres desde Vercel y
 Abre `http://localhost:3000`. Recorridos sugeridos:
 
 1. Inicio → Disney+ → Revisar → asistente contextual → dejar nota.
-2. Inicio → Ya lo vi en una tarjeta → confirmar que desaparece, aumenta el contador de revisados y se puede deshacer.
-3. Inicio → elegir IA o demo → probar preguntas sobre mes, deudas, beneficios y ahorro → marcar una respuesta Útil/Mejoraría.
+2. Inicio → Ignorar una tarjeta → confirmar que desaparece, aumenta el contador y se puede deshacer.
+3. Inicio → usar la demo inmediata → probar preguntas sobre mes, deudas, beneficios y ahorro → opcionalmente elegir IA con consentimiento → marcar una respuesta Útil/Mejoraría.
 4. Finanzas → Te entró/Gastaste → detalle filtrado; Por cobrar/Por pagar → módulo social.
-5. Cobrar y pagar → abrir Josefa/Camila → simular cobro o pago → verificar el guardrail; alternar persona/grupo sin mover toda la pantalla; comprobar los CTAs diferenciados “Nuevo gasto compartido” y “Agregar deuda pendiente”.
+5. Cobrar y pagar → abrir Josefa/Camila → preparar cobro o pago → verificar el guardrail y volver sin enviar; alternar persona/grupo sin mover toda la pantalla.
 6. Ahorrar → beneficio BCI, plan móvil o Liguria → revisar evidencia → simular o ignorar.
 7. Cambiar entre oscuro y claro en Inicio, Finanzas, Cartola y Cobrar y pagar.
 8. Abrir Feedback, cambiar de módulo y comprobar que la pantalla se actualiza. “Mejoraría” e “Idea” requieren comentario; “Me gusta” permite un envío rápido.
-9. Abrir `http://localhost:3000/review`, separar Feedback/Respuestas IA y probar Aprobar, Equivocado con comentario y Descartar.
+9. Abrir `http://localhost:3000/review`, mover un feedback entre Nuevo, En revisión, Para después, Resuelto o Ignorado; luego revisar un conflicto y un hallazgo de IA.
 10. Abrir `http://localhost:3000/review/knowledge`, buscar “Disney” o “Camila”, revisar variantes y marcar una ficha para mejorar.
 
 Para verificar build y guardrails:
@@ -57,12 +59,14 @@ npm test
 
 ## Organización
 
-- `app/page.tsx`: navegación, estado de sesión, temas, datos ficticios e interacciones.
+- `app/page.tsx`: navegación, estado de sesión, temas, datos de demostración e interacciones.
 - `app/globals.css`: tokens semánticos, modos oscuro/claro, responsive y estados.
 - `app/layout.tsx`: metadatos.
 - `MVP-SPEC.md`: alcance, journeys, aceptación y límites.
 - `PRODUCT-DESIGN.md`: sistema visual, tokens y roles de acento.
 - `QA-CIERRE.md`: verificación manual y técnica.
+- `QA-CICLO-TRIPLE.md`: ciclo repetible de QA técnico/PRD, producto/GTM y consistencia/experiencia.
+- `PRD-ONBOARDING-KYC-PROGRESIVO.md`: flujo de exploración, preregistro y activación progresiva para Ingeniería, Producto y Legal.
 - `tests/product-guardrails.test.mjs`: checks livianos de seguridad y contrato UI.
 - `lib/feedback-intake.ts`: contrato y adapter local del intake.
 - `lib/ai/`: conocimiento, instrucciones y fallback de conversación.
@@ -75,7 +79,7 @@ npm test
 - `POSTGRES-GUIDE.md`: explicación práctica, conexión desde Vercel y consultas de lectura.
 - `evals/yol1-cases.json`: casos iniciales de comportamiento y seguridad.
 - `evals/knowledge-router-cases.json`: consultas que verifican variantes, reglas y fallback.
-- `FEEDBACK-INTAKE.md`: arquitectura recomendada para recepción server-side, bandeja editorial y eventual promoción a PR.
+- `FEEDBACK-INTAKE.md`: arquitectura recomendada para recepción server-side, Kanban editorial y eventual promoción a PR.
 
 ## Publicación
 
@@ -93,12 +97,10 @@ El orden de resolución es: regla de seguridad → ficha aprobada/dato sintétic
 
 La navegación permite probar comprensión y usabilidad. No demuestra demanda, product-market fit, economics ni readiness operacional o regulatoria. Los gates declarados son E2 comprensión, E3 acción voluntaria y E4 resultado/retorno.
 
-## Portfolio, ficha viva y decisiones
+## Portfolio, especificación interna y decisiones
 
-- El selector superior conserva un único producto publicado. Los estados no publicados rotan entre 12 composiciones editoriales propias —incluido un perro animado en CSS— y siempre permiten volver al Acompañante financiero.
-- Hover o foco sobre una acción muestra su **evento propuesto**. En touch existe un modo de inspección discreto; el toque continúa ejecutando la acción de la demo. Estos nombres no se envían a analytics.
-- Debajo de la experiencia, la **Ficha de producto** muestra contexto por producto/pantalla: evento en lenguaje simple con metadata separada, arquitectura candidata, qué datos guardar/consultar, KYC, licencias para Chile, preguntas abiertas, feedback relacionado y un QA interno de "todo lo que puede salir mal".
-- Los productos no publicados no muestran teléfono ni Ficha de producto: solo un estado editorial y un bloque breve de "Tengo una idea".
-- KYC y licencias usan únicamente `No aplica`, `Por validar` o `Requerido`, con razón visible. No son asesoría ni conclusión legal.
-- `/review#decisions` contiene tres conflictos sintéticos y no sensibles. Felipe puede elegir A, B o pedir contexto; la resolución se guarda en `localStorage`, se refleja en la ficha correspondiente y no modifica archivos ni GitHub.
+- El selector distingue prototipos **Para explorar** de espacios **En investigación**. Esos estados no equivalen a disponibilidad operacional.
+- La especificación técnica permanece en `lib/product-portfolio.ts`, PRD y documentos QA; no se renderiza en la experiencia pública.
+- Los eventos propuestos, arquitectura, fuentes, KYC, licencias, riesgos y preguntas abiertas son material de equipo. No se envían a analytics ni constituyen una decisión legal o técnica.
+- `/review#decisions` contiene conflictos de ejemplo, no sensibles. La resolución se guarda en `localStorage` y no modifica archivos ni GitHub.
 - Jerarquía aplicada cuando las fuentes chocan: decisión verbal de Felipe → decisión aprobada → reunión reciente → Notion/Second Brain → Jira → estrategia/contexto.

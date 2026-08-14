@@ -10,8 +10,8 @@ const TRIAGE_KEY = "yol1-lab-learning-triage-v1";
 function readTriage() {
   if (typeof window === "undefined") return {} as Record<string, LearningStatus>;
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(TRIAGE_KEY) ?? "{}") as Record<string, LearningStatus | "consider">;
-    return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, value === "consider" ? "approve" : value])) as Record<string, LearningStatus>;
+    const parsed = JSON.parse(window.localStorage.getItem(TRIAGE_KEY) ?? "{}") as Record<string, LearningStatus | "consider" | "approve" | "discard">;
+    return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, value === "consider" || value === "approve" ? "reviewing" : value === "discard" ? "ignored" : value])) as Record<string, LearningStatus>;
   } catch {
     return {} as Record<string, LearningStatus>;
   }
