@@ -15,6 +15,17 @@ Los artefactos generados pertenecen a la cuenta y al chat del colaborador. No se
 
 El host decide el tamaño exacto del panel. YOL1 debe diseñar una vista responsive que funcione inline y expandida; no promete forzar literalmente media pantalla.
 
+## Orquestación universal, no prompt personal
+
+La guía vive en las instrucciones del servidor, en la herramienta inicial y en cada contrato de creación. Se aplica a cualquier persona e idea sin depender de un historial individual ni de un mensaje copiado manualmente.
+
+- Antes de construir: orientación simple, ejemplos, entregables, QA y límites; sin ficha técnica como protagonista.
+- Después de la primera idea: propuesta visual primero, supuestos visibles y una decisión siguiente.
+- Después de la propuesta: ficha técnica progresiva con datos, eventos, arquitectura, dependencias, gates y riesgos.
+- Después de una confirmación explícita: borrador revisable, nunca publicación o sincronización implícita.
+
+El catálogo de habilidades pertenece al host. El MCP puede pedir que se use una habilidad relevante sólo cuando el cliente la exponga de forma verificable. No puede instalarla, distribuirla, enumerar un catálogo privado ni garantizar que otro colaborador tenga las mismas habilidades.
+
 ## Una sola fuente visual
 
 La web pública y la MCP App no mantienen diseños paralelos. Comparten:

@@ -15,10 +15,10 @@ const PROTOCOL_VERSION = "2025-03-26";
 const MAX_IDEA_LENGTH = 1_200;
 const PROJECT_ID = /^prj_[a-f0-9]{32}$/;
 const LAB_VIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
-const CONTEXT_VERSION = "yol1-lab-context/0.4";
-const SERVER_VERSION = "0.5.0";
+const CONTEXT_VERSION = "yol1-lab-context/0.5";
+const SERVER_VERSION = "0.6.0";
 const SCHEMA_VERSION = "project-draft/0.2";
-const UI_VERSION = "lab-web/0.3";
+const UI_VERSION = "lab-web/0.4";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -105,6 +105,44 @@ function assistantExperienceContract() {
   };
 }
 
+function builderGuidanceManifest() {
+  return {
+    scope: "universal_for_every_collaborator_and_product_idea",
+    before_idea: {
+      primary_content: ["plain_language_orientation", "clickable_examples", "what_the_person_will_receive", "qa_criteria", "honest_limits"],
+      hide_until_proposal_exists: ["technical_sheet", "event_catalog", "architecture_details", "internal_tooling"],
+    },
+    after_idea: {
+      primary_content: ["first_visual_candidate", "interactive_flow", "important_assumptions", "silent_qa", "single_next_decision"],
+      secondary_content: ["data", "events", "architecture", "dependencies", "gates", "risks"],
+    },
+    after_explicit_save: {
+      primary_content: ["draft_summary", "review_link", "draft_status"],
+      never_implies: ["published", "automatically_synced", "production_ready"],
+    },
+    host_skills_policy: {
+      source: "host_client_only",
+      use: "only_skills_explicitly_exposed_and_relevant_to_the_current_task",
+      reporting: "when_asked_report_only_verified_available_and_actually_used_skills",
+      never: ["invent_a_skill", "claim_the_mcp_can_install_client_skills", "claim_the_mcp_can_enumerate_a_private_skill_catalog"],
+    },
+  };
+}
+
+function builderGuidanceText() {
+  return `## Guía universal de principio a fin
+- Esta pauta aplica a cualquier colaborador y cualquier idea; no depende del historial, conocimientos o prompts privados de una persona.
+- Antes de que exista una idea o propuesta, orienta con lenguaje simple, ejemplos, qué recibirá la persona, cómo se revisará y cuáles son los límites. No abras con una ficha técnica, eventos, arquitectura ni diagnóstico del conector.
+- Cuando aparezca una idea, conviértela de inmediato en una primera propuesta visual e interactiva. Haz supuestos seguros, revisa silenciosamente la calidad y termina con una sola decisión sencilla.
+- Después de mostrar el producto, ofrece la base técnica como segunda capa: datos, eventos, arquitectura, dependencias, gates y riesgos. No dejes que esa información desplace al prototipo.
+- Sólo después de una petición explícita de guardar, resume exactamente qué se conservará y confirma que sigue siendo un borrador no publicado.
+
+## Habilidades del cliente
+- Las habilidades pertenecen al ChatGPT, Claude u otro cliente de cada persona; no se instalan ni se distribuyen dentro del MCP.
+- Usa únicamente habilidades que el cliente haya expuesto de forma verificable y que sean relevantes para la tarea. El MCP no puede inspeccionar por sí solo un catálogo privado de habilidades.
+- No inventes nombres ni disponibilidad. Si la persona pregunta qué habilidades se usaron, separa: disponibles verificadas, usadas realmente y no verificables desde el MCP.`;
+}
+
 function artifactExperienceManifest() {
   return {
     owner: "the_artifact_belongs_to_the_users_claude_or_chatgpt_session_not_to_the_mcp",
@@ -138,12 +176,24 @@ function artifactContractText() {
 - La respuesta visible resume el valor y deja una sola decisión. No narres la construcción del HTML, no muestres trazas y no pidas al usuario que descargue recursos de diseño.`;
 }
 
-function contextText() {
+function contextCoreText() {
   return `# Contexto de construcción YOL1 · ${CONTEXT_VERSION}\n\n## Experiencia para cualquier persona\n- La persona describe una idea en lenguaje cotidiano. No le hables de MCP, herramientas, catálogos, contratos ni versiones salvo que lo pregunte.\n- Entrega primero una propuesta útil. Si falta información, avanza con un supuesto explícito y formula como máximo una pregunta simple después de mostrar progreso.\n- No muestres trazas de edición como “Now update…”, razonamiento interno ni nombres de eventos dentro del mockup. No digas que seguirás trabajando mientras esperas: no existe trabajo en segundo plano.\n\n## Regla principal\nNo inventes capacidades. Distingue siempre: hecho aprobado, propuesta candidata y pregunta por resolver. Esta conversación genera un borrador; nunca modifica el Lab ni publica producto automáticamente.\n\n## Sistema visual exacto vigente\nNo inventes hex, tipografías, navegación ni estructura. Reutiliza literalmente:\n- Marca: night #112e3c; night-deep #071f29; cream #faeddc; mist #eef3f1.\n- Acentos: acid #80ef0c para acción principal; aqua #71d7c8 para explicación/evidencia; violet-soft #b9a7ff para colaboración/inputs; coral #ff6847 para riesgo; pink #ff8fb4 sólo social.\n- Dark UI: page #061b24; app #0a232d; surface #102f3a; raised #173b46; soft #0d2933; text #f9eee2; muted #9bb0b5.\n- Tipografía: Söhne para lectura y Söhne Mono para metadata, estados y controles.\n- Shell móvil: 430px de ancho, mínimo 720px de alto, radio 48px, header 62px y navegación inferior 66px. Usa los assets ${LAB_VIEW_URL}/yol1-icon.png y ${LAB_VIEW_URL}/yol1-wordmark-dark.png; no escribas “yol1” como reemplazo del logo.\n- Navegación del Acompañante: Inicio, Finanzas, Cobrar/pagar, Ahorrar, Ganar, Mi banco. No inventes otra navegación ni dupliques ítems.\n- Los controles interactivos deben ser button/input reales, no divs decorativos; foco aqua de 3px y área táctil mínima de 44px.\n- El producto aparece primero. Changelog, eventos, arquitectura y decisiones van en una ficha separada, nunca dentro de la pantalla del usuario.\n\n## Producto y honestidad financiera\n- Chile es jurisdicción base. KYC, licencias, partners, pagos, crédito, bancos, QR, NFC, beneficios y recompensas se marcan “Por validar” hasta tener evidencia, owner y capability aprobada.\n- Sin esa evidencia, usa “Simular” o “Demo”: no presentes saldo real, pago confirmado, folio real, procesamiento real ni actualización instantánea como hechos.\n- Todo flujo propone un momento de uso, usuario, problema, aha moment, 5–7 pantallas, estados vacío/carga/error, CTA, evidencia y salida.\n- Para acciones materiales incluye revisión antes de confirmar y estados de resultado incierto, interrupción, duplicado/reintento seguro, ya realizado y recuperación.\n\n## Arquitectura candidata\n- Mobile: React Native con navegación tipada, componentes reutilizables, accesibilidad y estado explícito de carga/error/vacío.\n- Backend: BFF/API versionado por dominio; autorización y validación server-side; el cliente recibe sólo el read model de la vista.\n- AWS: API Gateway → Lambda por dominio candidato; DynamoDB/RDS se decide desde patrones de acceso y auditoría; EventBridge sólo cuando una integración asíncrona esté aprobada.\n- Operación: feature flag por capability, correlation_id, logs estructurados, observabilidad, idempotencia, rollback y consentimiento antes de analytics.\n\n## Contrato de datos y eventos\nPara cada pantalla define fuera del mockup: read model, write model, system of record, frescura, retención, PII prohibida, eventos snake_case, event_at, user_id o anonymous_id, session_id, correlation_id, schema_version y consent_analytics.\nNunca incluyas en analytics o logs generales: OTP, RUT, serie, documentos, biometría, credenciales, PAN/CVV/PIN, QR completo, tokens, contactos crudos ni payloads financieros completos.\n\n## Revisión obligatoria\nAntes de entregar, verifica: fidelidad a tokens y shell, controles realmente interactivos, datos y capacidades no inventadas, dependencias, gates, riesgos de experiencia, Error capa 8, preguntas por validar y fuera de alcance.`;
 }
 
-function deliveryContractText() {
+function contextText() {
+  return contextCoreText();
+}
+
+function contextWithGuidanceText() {
+  return `${contextCoreText()}\n\n${builderGuidanceText()}`;
+}
+
+function deliveryCoreText() {
   return `# Contrato de entrega YOL1 · ${CONTEXT_VERSION}\n\nTrabaja en este orden, aunque la persona sólo haya escrito una frase:\n1. Muestra una primera propuesta: problema, usuario y momento; lo faltante se marca como supuesto, no como bloqueo.\n2. Presenta el flujo de 5–7 pantallas con contenido, CTA y estados vacío/carga/error. Si produces HTML, debe ser interactivo y usar los tokens, shell, assets y navegación exactos del contexto.\n3. Para una acción material agrega revisión previa y recuperación ante resultado incierto o reintento.\n4. Después del producto, separa la ficha técnica: datos, eventos, arquitectura, dependencias, gates, Error capa 8 y fuera de alcance.\n5. Si el host soporta artefactos, crea y abre una vista HTML interactiva en este mismo turno; si no, entrega el flujo completo y un HTML autocontenido cuando sea posible.\n6. Cierra con una sola decisión sencilla que permita mejorar la siguiente versión.\n\nLa respuesta visible debe hablar de la idea, no del funcionamiento interno del MCP. No muestres trazas de edición, nombres de herramientas, diagnósticos de versión ni eventos dentro de la interfaz. Nunca afirmes que una integración, pago, crédito, KYC, banco, licencia o partner está disponible sin evidencia explícita.\n\n${artifactContractText()}`;
+}
+
+function deliveryContractText() {
+  return `${deliveryCoreText()}\n\n${builderGuidanceText()}`;
 }
 
 function projectBrief(idea: string) {
@@ -163,6 +213,7 @@ function bootstrapMetadata() {
     saving: "optional_and_requires_explicit_confirmation",
     design_system: designSystemManifest(),
     assistant_experience: assistantExperienceContract(),
+    builder_guidance: builderGuidanceManifest(),
     artifact_experience: artifactExperienceManifest(),
   };
 }
@@ -278,7 +329,7 @@ export async function POST(request: Request) {
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
       serverInfo: { name: "yol1-product-growth-lab", version: SERVER_VERSION },
-      instructions: "YOL1 está diseñado para personas no técnicas. Ante una idea de producto, llama en silencio a yol1_start_builder y muestra primero una propuesta útil. Cuando el host soporte Artefactos, Cowork, Canvas o vista previa de código, crea y abre en el mismo turno un prototipo HTML interactivo; no esperes que la persona pida un mockup. No menciones MCP, herramientas, versiones ni catálogos. Infiere detalles seguros como supuestos y pregunta como máximo una decisión después de mostrar progreso. Usa literalmente el sistema visual incluido. Guarda sólo después de una petición explícita; nunca asumas publicación, sincronización ni capacidades financieras reales.",
+      instructions: "YOL1 guía universalmente a personas no técnicas. Si aún no hay idea, orienta con ejemplos, qué recibirá, QA y límites; no abras con una ficha técnica. Ante una idea de producto, llama en silencio a yol1_start_builder y muestra primero una propuesta útil. Cuando el host soporte Artefactos, Cowork, Canvas o vista previa de código, crea y abre en el mismo turno un prototipo HTML interactivo; no esperes que la persona pida un mockup. No menciones MCP, herramientas, versiones ni catálogos. Infiere detalles seguros como supuestos, ejecuta QA silencioso y pregunta como máximo una decisión después de mostrar progreso. Usa literalmente el sistema visual incluido. La base técnica aparece como segunda capa, sólo después de la propuesta. Usa únicamente habilidades verificadas que el cliente exponga; nunca inventes ni afirmes que el MCP puede instalar o enumerar habilidades privadas. Guarda sólo después de una petición explícita; nunca asumas publicación, sincronización ni capacidades financieras reales.",
     });
   }
 
@@ -288,7 +339,7 @@ export async function POST(request: Request) {
     return response(rpc.id, { tools: [
       {
         name: "yol1_start_builder",
-        description: "Llama esta acción en silencio cuando una persona quiera crear, revisar o mejorar cualquier producto YOL1. Carga el contexto, el UI kit exacto, los límites y la pauta; luego muestra una primera propuesta sin pedirle conocimientos técnicos ni hacer diagnósticos de conexión.",
+        description: "Llama esta acción en silencio cuando una persona quiera crear, revisar o mejorar cualquier producto YOL1. Carga la guía universal, el contexto, el UI kit exacto, el QA y los límites; orienta si aún no hay idea o muestra una primera propuesta si ya existe, sin pedir conocimientos técnicos ni hacer diagnósticos de conexión.",
         inputSchema: { type: "object", properties: {}, additionalProperties: false },
         annotations: { readOnlyHint: true },
       },
@@ -357,7 +408,7 @@ export async function POST(request: Request) {
   if (rpc.method === "tools/call") {
     const params = rpc.params && typeof rpc.params === "object" ? rpc.params as { name?: unknown; arguments?: unknown } : {};
     if (params.name === "yol1_start_builder") return response(rpc.id, { content: [{ type: "text", text: startBuilderText() }], structuredContent: bootstrapMetadata() });
-    if (params.name === "yol1_get_context") return response(rpc.id, { content: [{ type: "text", text: contextText() }], structuredContent: bootstrapMetadata() });
+    if (params.name === "yol1_get_context") return response(rpc.id, { content: [{ type: "text", text: contextWithGuidanceText() }], structuredContent: bootstrapMetadata() });
     if (params.name === "yol1_get_delivery_contract") return response(rpc.id, { content: [{ type: "text", text: deliveryContractText() }], structuredContent: bootstrapMetadata() });
     if (params.name === "yol1_get_lab_view") return response(rpc.id, { content: [{ type: "text", text: labViewLink() }] });
     if (params.name === "yol1_create_project_brief") {

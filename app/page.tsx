@@ -300,7 +300,9 @@ export default function Home() {
         </div>
         {productId === "builder" && <ProjectSubmitPanel open={projectSubmitOpen} onToggle={() => setProjectSubmitOpen((current) => !current)} onSubmitted={() => undefined} />}
       </section> : <ResearchStage product={activeProduct} stateIndex={emptyStateIndex} />}
-      {activeProduct.explorable && <ProductSpecPanel product={activeProduct} screen={activeTitle} inspectedAction={inspectedAction} />}
+      {activeProduct.explorable && productId !== "builder" && <ProductSpecPanel product={activeProduct} screen={activeTitle} inspectedAction={inspectedAction} />}
+      {productId === "builder" && sharedProjectState === "ready" && sharedProject && <div id="builder-technical-panel"><ProductSpecPanel product={activeProduct} screen={activeTitle} inspectedAction={inspectedAction} /></div>}
+      {productId === "builder" && !(sharedProjectState === "ready" && sharedProject) && <BuilderOrientationPanel />}
     </main>
   );
 }
@@ -589,8 +591,56 @@ function ProjectDraftPreview({ project, onHow }: { project: SharedProjectDraft; 
       {project.openQuestions.length > 0 && <article><small>PREGUNTAS ABIERTAS</small><ul>{project.openQuestions.map((item) => <li key={item}>{item}</li>)}</ul></article>}
     </div>}
     <button className="builder-how-button" onClick={onHow}>Cómo seguir mejorándola <span>→</span></button>
+    <a className="builder-technical-link" href="#builder-technical-panel">Ver decisiones y base técnica <span>↓</span></a>
     <button type="button" className="builder-project-new" onClick={() => window.location.assign("/?product=builder")}>Empezar otra idea</button>
     <small className="builder-phone-disclaimer">Este enlace muestra un borrador compartido por 90 días. No está publicado y no cambió ninguna otra pantalla del Lab.</small>
+  </section>;
+}
+
+function BuilderOrientationPanel() {
+  const examples = [
+    { title: "Explicar una compra rechazada", prompt: "Quiero mejorar cómo YOL1 explica una compra con tarjeta rechazada y guía a la persona para resolverla sin angustia." },
+    { title: "Encontrar beneficios útiles", prompt: "Quiero que una persona entienda dónde le conviene usar los beneficios de YOL1 cerca de ella, sin prometer descuentos no confirmados." },
+    { title: "Simplificar un pago recurrente", prompt: "Quiero explorar una forma simple y segura de preparar el pago de una cuenta o cuota recurrente, como propuesta y no como pago real." },
+    { title: "Ordenar el mes financiero", prompt: "Quiero ayudar a una persona a ordenar sus tareas financieras del mes y decidir cuál atender primero." },
+  ];
+  const [selectedExample, setSelectedExample] = useState(0);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const copyExample = async () => {
+    try {
+      await navigator.clipboard.writeText(examples[selectedExample].prompt);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+  };
+  const qa = [
+    { title: "¿Se siente YOL1?", good: "Usa el lenguaje, navegación y sistema visual vigentes.", improve: "Parece una plantilla genérica o cambia el look & feel." },
+    { title: "¿Es honesto?", good: "Separa hechos, propuestas y puntos por validar junto a cada afirmación.", improve: "Promete pagos, beneficios, integraciones o resultados sin evidencia." },
+    { title: "¿Funciona más allá del caso feliz?", good: "Incluye vacío, carga, error, reintento y recuperación cuando corresponde.", improve: "Sólo muestra el camino ideal y deja a la persona sin salida." },
+    { title: "¿Deja una decisión clara?", good: "Termina con una pregunta simple que mejora la próxima versión.", improve: "Entrega muchas preguntas o una ficha técnica sin prioridad." },
+  ];
+  return <section className="builder-orientation" aria-labelledby="builder-orientation-title">
+    <header className="builder-orientation-head">
+      <div><p className="eyebrow">ANTES DE CONSTRUIR</p><h2 id="builder-orientation-title">Empieza con una idea.<br /><span>YOL1 te ayuda a darle forma.</span></h2></div>
+      <p>No necesitas preparar un brief ni saber de diseño o tecnología. Describe una necesidad: recibirás una primera propuesta visual para conversar, probar y mejorar.</p>
+    </header>
+    <div className="builder-orientation-steps" aria-label="Recorrido para construir un producto">
+      <article><span>01</span><strong>Cuenta la idea</strong><p>Una frase, una foto, un dibujo o una referencia es suficiente para empezar.</p></article>
+      <article><span>02</span><strong>Recibe una propuesta</strong><p>La IA muestra el flujo y declara los supuestos sin frenarte con un formulario.</p></article>
+      <article><span>03</span><strong>Mejora conversando</strong><p>Pide cambios concretos y revisa una iteración visual en cada vuelta.</p></article>
+      <article><span>04</span><strong>Guarda si tiene forma</strong><p>Sólo una confirmación explícita crea un borrador revisable en el Lab.</p></article>
+    </div>
+    <div className="builder-orientation-grid">
+      <section className="builder-example-lab" aria-labelledby="builder-examples-title">
+        <p className="eyebrow">PRUEBA CON UN EJEMPLO</p><h3 id="builder-examples-title">No necesitas encontrar las palabras perfectas.</h3>
+        <div className="builder-example-tabs" role="list">{examples.map((example, index) => <button key={example.title} type="button" className={selectedExample === index ? "selected" : ""} onClick={() => { setSelectedExample(index); setCopyState("idle"); }} aria-pressed={selectedExample === index}>{example.title}</button>)}</div>
+        <div className="builder-example-ready"><small>MENSAJE LISTO PARA CHATGPT O CLAUDE</small><p>{examples[selectedExample].prompt}</p><button type="button" onClick={copyExample}>{copyState === "copied" ? "Mensaje copiado ✓" : "Copiar este ejemplo"}</button>{copyState === "failed" && <span role="alert">No se pudo copiar. Selecciona el texto manualmente.</span>}</div>
+      </section>
+      <aside className="builder-receive-card"><p className="eyebrow">QUÉ VAS A RECIBIR</p><h3>Una propuesta para decidir, no una caja negra.</h3><ul><li><b>Una vista interactiva</b><span>El producto aparece primero, listo para recorrer.</span></li><li><b>Supuestos y riesgos visibles</b><span>Lo no confirmado se muestra donde importa.</span></li><li><b>Alternativas y recuperación</b><span>No se diseña sólo el caso feliz.</span></li><li><b>Una próxima decisión</b><span>Una pregunta simple para mejorar la siguiente versión.</span></li></ul></aside>
+    </div>
+    <section className="builder-qa" aria-labelledby="builder-qa-title"><header><div><p className="eyebrow">QA ANTES DE MOSTRARTE UNA VERSIÓN</p><h3 id="builder-qa-title">YOL1 revisa esto contigo.</h3></div><p>La IA aplica este control silenciosamente. Puedes abrir cada criterio para entender qué debería cuidar.</p></header><div>{qa.map((item, index) => <details key={item.title} open={index === 0}><summary>{item.title}<span>+</span></summary><section><p><b>Bien resuelto</b>{item.good}</p><p><b>Necesita mejorar</b>{item.improve}</p></section></details>)}</div></section>
+    <footer className="builder-orientation-limits"><p className="eyebrow">LÍMITES HONESTOS</p><div><p><b>Tu conversación no se sincroniza automáticamente.</b> El MCP entrega contexto, pero no copia el chat ni controla tu cuenta.</p><p><b>Nada se publica solo.</b> Guardar conserva únicamente el resumen estructurado que tú confirmes como borrador.</p><p><b>Los artefactos viven en tu cliente.</b> Claude o ChatGPT pueden generarlos si esa función está disponible; no se instalan dentro del MCP.</p></div></footer>
   </section>;
 }
 

@@ -15,6 +15,18 @@ Permitir que un colaborador convierta una idea en una propuesta revisable sin da
 4. El MCP guarda la propuesta estructurada y devuelve un enlace opaco para verla dentro de “Construir mi propio producto”; no copia la conversación completa.
 5. La propuesta sigue en estado borrador. Publicar, convertirla en pantalla real o llevarla a GitHub exige una decisión posterior y separada.
 
+## Guía implícita para todas las personas
+
+La persona no debería copiar un prompt largo para obtener una buena experiencia. El MCP incluye una pauta universal, independiente de la cuenta, el historial o el nivel técnico:
+
+1. Antes de que exista una propuesta, muestra orientación, ejemplos, qué se recibirá, criterios de QA y límites. La ficha técnica permanece oculta.
+2. En cuanto aparece una idea, entrega primero una propuesta visual e interactiva y usa supuestos explícitos para no bloquear el avance.
+3. Revisa silenciosamente fidelidad YOL1, honestidad, estados alternativos y claridad de la siguiente decisión.
+4. Datos, eventos, arquitectura y gates aparecen después como una segunda capa para quien quiera profundizar.
+5. Guardar exige confirmación y conserva sólo un resumen estructurado en estado borrador.
+
+Las habilidades son una capacidad del cliente donde corre el chat, no del MCP. YOL1 usa sólo habilidades que ChatGPT, Claude u otro host exponga de forma verificable; no inventa habilidades, no las instala y no afirma que puede revisar un catálogo privado.
+
 ## Contexto que el paquete debe contener
 
 - Sistema visual exacto: tokens, tipografías, assets, shell, navegación, componentes, roles semánticos y accesibilidad; no sólo una descripción del estilo.
