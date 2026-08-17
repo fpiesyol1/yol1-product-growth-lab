@@ -434,9 +434,10 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   assert.doesNotMatch(page, /YOL1_MCP_URL = process\.env\.NEXT_PUBLIC_MCP_URL \|\|/);
   assert.match(page, /Abrir la vista del Lab ahora/);
   assert.match(page, /No agregues argumentos, environment ni working directory/i);
-  assert.match(page, /REEMPLAZA EL CORCHETE POR TU IDEA/);
-  assert.match(page, /Quiero crear o mejorar este producto en YOL1/);
-  assert.match(page, /Guíame con preguntas simples y muéstrame una primera propuesta/);
+  assert.match(page, /PEGA ESTA FRASE PARA ACTIVAR YOL1/);
+  assert.match(page, /Activa YOL1 para construir un producto, sigue los pasos del MCP/);
+  assert.match(page, /guide === "claude" \? "un chat nuevo en Cowork" : "un chat nuevo"/);
+  assert.match(page, /Después cuenta tu idea y sigue los pasos: YOL1 te irá guiando hasta una primera propuesta/);
   assert.doesNotMatch(page, /ejecuta yol1_start_builder antes de responder/i);
   assert.doesNotMatch(page, /revisar versiones, contar herramientas ni reconectar/i);
   assert.doesNotMatch(page, /Ejecuta yol1_start_builder, yol1_get_context y yol1_get_delivery_contract/);
