@@ -27,6 +27,16 @@ La persona no debería copiar un prompt largo para obtener una buena experiencia
 
 Las habilidades son una capacidad del cliente donde corre el chat, no del MCP. YOL1 usa sólo habilidades que ChatGPT, Claude u otro host exponga de forma verificable; no inventa habilidades, no las instala y no afirma que puede revisar un catálogo privado.
 
+## Instalación por cliente
+
+- **ChatGPT:** agregar YOL1 como conexión remota y abrir un chat nuevo.
+- **Claude:** agregar el custom connector, abrir un chat nuevo en Cowork y habilitar YOL1.
+- **Codex:** en `Settings → MCP servers → Add server`, elegir `Streamable HTTP`, ingresar la URL remota, guardar y pulsar `Restart`. La verificación se hace en una tarea nueva con `/mcp`: YOL1 debe figurar conectado y con transporte `streamable_http`.
+
+En Codex, la alternativa manual usa `[mcp_servers.yol1]` con `url = "…/api/mcp"`. `command` corresponde a servidores STDIO locales y nunca debe contener la URL de YOL1. La guía muestra un bloque copiable para evitar que una persona tenga que inferir esta diferencia técnica. Si una instalación anterior dejó la URL en `command`, ofrece una reparación acotada: `codex mcp remove yol1` y luego `codex mcp add yol1 --url <endpoint>`. La experiencia separa explícitamente tres verificaciones: endpoint disponible, servidor configurado como remoto y herramientas cargadas en una tarea nueva.
+
+Una instalación sólo se declara lista después de comprobar el transporte esperado, descubrir las siete herramientas y ejecutar de forma segura `yol1_start_builder`. La pantalla pública no puede inspeccionar el Codex local de la persona; por eso muestra el resultado esperado y nunca finge una validación automática.
+
 ## Contexto que el paquete debe contener
 
 - Sistema visual exacto: tokens, tipografías, assets, shell, navegación, componentes, roles semánticos y accesibilidad; no sólo una descripción del estilo.

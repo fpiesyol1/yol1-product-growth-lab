@@ -26,6 +26,8 @@ La guía vive en las instrucciones del servidor, en la herramienta inicial y en 
 
 El catálogo de habilidades pertenece al host. El MCP puede pedir que se use una habilidad relevante sólo cuando el cliente la exponga de forma verificable. No puede instalarla, distribuirla, enumerar un catálogo privado ni garantizar que otro colaborador tenga las mismas habilidades.
 
+La instalación también es específica por host. Claude y ChatGPT reciben instrucciones de conexión visuales; Codex usa `Streamable HTTP` y una `url` remota. La guía nunca presenta la URL como `command`, que corresponde a un proceso STDIO local. Para Codex exige `Restart`, comprobación en `/mcp` y una tarea nueva antes de pegar el mensaje activador. También ofrece una reparación copiable para instalaciones antiguas y distingue tres estados que no deben confundirse: endpoint sano, configuración remota correcta y catálogo de herramientas cargado en la tarea actual.
+
 ## Una sola fuente visual
 
 La web pública y la MCP App no mantienen diseños paralelos. Comparten:

@@ -14,7 +14,7 @@ import type { SharedProjectDraft } from "../lib/project-draft-types";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
 type Theme = "dark" | "light";
-type BuilderGuide = "chatgpt" | "claude" | "how" | null;
+type BuilderGuide = "chatgpt" | "claude" | "codex" | "how" | null;
 type MovementAction = "Marcar revisado" | "Revisar" | "Preparar reparto" | "Preparar cobro";
 type PendingView = "personas" | "grupos";
 type SplitMode = "equal" | "custom";
@@ -66,6 +66,11 @@ const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP
 const YOL1_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
 const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL?.trim() || `${YOL1_SITE_URL}/api/mcp`;
 const BUILDER_START_MESSAGE = "Activa YOL1 para construir un producto, sigue los pasos del MCP y guíame desde mi idea hasta una primera propuesta visual.";
+const CODEX_MCP_CONFIG = `[mcp_servers.yol1]
+enabled = true
+url = "${YOL1_MCP_URL}"`;
+const CODEX_MCP_REPAIR = `codex mcp remove yol1
+codex mcp add yol1 --url ${YOL1_MCP_URL}`;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
@@ -568,6 +573,7 @@ function ProjectBuilderScreen({ guide, onGuide, project, projectState }: { guide
     <div className="builder-connect-grid" aria-label="Elegir una guía de IA">
       <button onClick={() => onGuide("chatgpt")} data-event-id="builder_guide_viewed" data-client="chatgpt"><span>01</span><strong>Ver guía para<br />ChatGPT</strong><small>Piloto disponible</small></button>
       <button onClick={() => onGuide("claude")} data-event-id="builder_guide_viewed" data-client="claude"><span>02</span><strong>Ver guía para<br />Claude</strong><small>Piloto disponible</small></button>
+      <button onClick={() => onGuide("codex")} data-event-id="builder_guide_viewed" data-client="codex"><span>03</span><strong>Ver guía para<br />Codex</strong><small>Configuración remota segura</small></button>
     </div>
     <div className="builder-idea-examples"><small>DESPUÉS, PUEDES PARTIR ASÍ</small><p>“Diseña una tarjeta de crédito con beneficios para la gente que come siempre afuera.”</p><p>“Quiero resolver un problema de viajes con amigos. Te mando una referencia.”</p></div>
     <button className="builder-how-button" onClick={() => onGuide("how")} data-event-id="builder_how_viewed">Cómo ocupar <span>→</span></button>
@@ -645,16 +651,23 @@ function BuilderOrientationPanel() {
 }
 
 function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, null>; onBack: () => void }) {
-  const [copyStatus, setCopyStatus] = useState<"idle" | "url" | "prompt" | "failed">("idle");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "url" | "config" | "repair" | "prompt" | "failed">("idle");
   const isHow = guide === "how";
-  const provider = guide === "chatgpt" ? "ChatGPT" : "Claude";
-  const providerPath = guide === "claude" ? "Settings → Connectors → Add custom connector" : "Settings → Apps → Advanced settings → Developer mode";
-  const newChatDestination = guide === "claude" ? "un chat nuevo en Cowork" : "un chat nuevo";
+  const isCodex = guide === "codex";
+  const provider = guide === "chatgpt" ? "ChatGPT" : guide === "claude" ? "Claude" : "Codex";
+  const providerPath = guide === "claude" ? "Settings → Connectors → Add custom connector" : guide === "codex" ? "Settings → MCP servers → Add server" : "Settings → Apps → Advanced settings → Developer mode";
+  const newChatDestination = guide === "claude" ? "un chat nuevo en Cowork" : guide === "codex" ? "una tarea nueva" : "un chat nuevo";
   const copyUrl = async () => {
     try { await navigator.clipboard.writeText(YOL1_MCP_URL); setCopyStatus("url"); } catch { setCopyStatus("failed"); }
   };
   const copyPrompt = async () => {
     try { await navigator.clipboard.writeText(BUILDER_START_MESSAGE); setCopyStatus("prompt"); } catch { setCopyStatus("failed"); }
+  };
+  const copyCodexConfig = async () => {
+    try { await navigator.clipboard.writeText(CODEX_MCP_CONFIG); setCopyStatus("config"); } catch { setCopyStatus("failed"); }
+  };
+  const copyCodexRepair = async () => {
+    try { await navigator.clipboard.writeText(CODEX_MCP_REPAIR); setCopyStatus("repair"); } catch { setCopyStatus("failed"); }
   };
   if (isHow) return <section className="builder-how-screen" aria-label="Cómo ocupar YOL1 MCP">
     <button className="back-link" onClick={onBack}>← Volver</button>
@@ -673,16 +686,21 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
     <p className="kicker">CONFIGURACIÓN ÚNICA · {provider.toUpperCase()}</p><h2>Conecta.<br /><span>Habla. Construye.</span></h2>
     <p className="builder-guide-intro">Conecta YOL1 una sola vez. Después sólo necesitas contar tu idea con tus propias palabras: YOL1 carga el contexto y las reglas sin pedirte conocimientos técnicos.</p>
     <div className="builder-install-steps">
-      <article><span>01</span><div><strong>Busca Conectores / MCP</strong><small>En {provider}, abre <b>{providerPath}</b>. Si el nombre cambia, busca “connector”, “MCP” o “custom integration”.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
-      <article><span>02</span><div><strong>Pega solo estos dos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> <code>{YOL1_MCP_URL}</code><br />No agregues argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
-      <article><span>03</span><div><strong>Guarda y abre {newChatDestination}</strong><small>Habilita <b>YOL1</b> y pega el mensaje activador que aparece abajo. Después cuenta tu idea y sigue los pasos: YOL1 te irá guiando hasta una primera propuesta.</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1</i></article>
+      <article><span>01</span><div><strong>{isCodex ? "Abre MCP servers" : "Busca Conectores / MCP"}</strong><small>En {provider}, abre <b>{providerPath}</b>. {isCodex ? "Esta ruta evita editar archivos manualmente." : "Si el nombre cambia, busca “connector”, “MCP” o “custom integration”."}</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
+      <article><span>02</span><div><strong>{isCodex ? "Elige Streamable HTTP" : "Pega solo estos dos campos"}</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> <code>{YOL1_MCP_URL}</code><br />{isCodex ? <><b>No elijas STDIO ni pegues la URL en command.</b> Si comienza con https://, siempre va en URL.</> : "No agregues argumentos, environment ni working directory."}</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
+      <article><span>03</span><div><strong>Guarda y abre {newChatDestination}</strong><small>{isCodex ? <>Pulsa <b>Restart</b>. En la tarea nueva, abre <b>/mcp</b> y confirma que YOL1 esté conectado antes de pegar el mensaje.</> : <>Habilita <b>YOL1</b> y pega el mensaje activador que aparece abajo. Después cuenta tu idea y sigue los pasos: YOL1 te irá guiando hasta una primera propuesta.</>}</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1</i></article>
     </div>
+    {isCodex && <section className="codex-ready-check" aria-label="Resultado esperado de la conexión YOL1"><small>RESULTADO ESPERADO</small><strong>YOL1 · conectado · 7 herramientas</strong><p>En <b>/mcp</b> debe aparecer como <code>streamable_http</code>. Si ves <code>stdio</code> o una URL dentro de <code>command</code>, todavía no quedó bien instalado.</p></section>}
+    {isCodex && <div className="codex-help-stack">
+      <details className="codex-config-fallback"><summary>Instalar con config.toml <span>+</span></summary><div><p>Pega este bloque exacto en <code>~/.codex/config.toml</code>. Para esta URL remota la clave correcta es <b>url</b>, nunca <b>command</b>.</p><pre>{CODEX_MCP_CONFIG}</pre><button type="button" onClick={copyCodexConfig}>{copyStatus === "config" ? "Configuración copiada ✓" : "Copiar configuración Codex"}</button></div></details>
+      <details className="codex-config-fallback codex-repair"><summary>Ya lo instalé y no aparece <span>+</span></summary><div><p>Esto elimina sólo la entrada YOL1 mal configurada y la vuelve a registrar como servidor remoto con la CLI oficial.</p><pre>{CODEX_MCP_REPAIR}</pre><button type="button" onClick={copyCodexRepair}>{copyStatus === "repair" ? "Reparación copiada ✓" : "Copiar reparación segura"}</button></div></details>
+    </div>}
     <button className="builder-copy-url" onClick={copyUrl}>{copyStatus === "url" ? "URL MCP copiada ✓" : "Copiar URL de YOL1"}</button>
     <a className="builder-open-lab" href={`${YOL1_SITE_URL}/?product=builder`} target="_blank" rel="noreferrer">Abrir la vista del Lab ahora ↗</a>
     <div className="builder-paste-box"><small>04 · PEGA ESTA FRASE PARA ACTIVAR YOL1</small><p>{BUILDER_START_MESSAGE}</p></div>
     <button className="builder-copy-template" onClick={copyPrompt}>{copyStatus === "prompt" ? "Mensaje de inicio copiado ✓" : "Copiar mensaje de inicio"}</button>
     {copyStatus === "failed" && <small className="builder-copy-status" role="alert">No pudimos copiar. Selecciona el contenido correspondiente y cópialo manualmente.</small>}
-    <small className="builder-install-note">No necesitas renombrar el conector ni instalar “v0.2”. YOL1 no lee tu conversación ni recibe cambios automáticamente. El Lab muestra solo una propuesta que decidas enviar a revisión.</small>
+    <small className="builder-install-note">{isCodex ? "Codex comparte la configuración entre la app, CLI y extensión del mismo host. Una tarea ya abierta puede conservar las herramientas anteriores: después de Restart, comienza una nueva." : "No necesitas renombrar el conector ni instalar “v0.2”."} YOL1 no lee tu conversación ni recibe cambios automáticamente. El Lab muestra solo una propuesta que decidas enviar a revisión.</small>
   </section>;
 }
 

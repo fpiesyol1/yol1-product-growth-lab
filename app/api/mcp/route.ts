@@ -18,7 +18,7 @@ const LAB_VIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-g
 const CONTEXT_VERSION = "yol1-lab-context/0.5";
 const SERVER_VERSION = "0.6.0";
 const SCHEMA_VERSION = "project-draft/0.2";
-const UI_VERSION = "lab-web/0.4";
+const UI_VERSION = "lab-web/0.5";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
