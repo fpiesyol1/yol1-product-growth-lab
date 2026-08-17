@@ -64,7 +64,7 @@ test("builder elimina PII, OTP y respuesta cruda aunque se entreguen", () => {
 test("todos los data-event literales de Onboarding y Mi banco están allowlisted", async () => {
   const source = await readFile(new URL("app/page.tsx", root), "utf8");
   const section = source.split("function OnboardingFlow")[1]?.split("function ProfileMenu")[0] ?? "";
-  const events = [...section.matchAll(/data-event="([^"]+)"/g)].map((match) => match[1]);
+  const events = [...section.matchAll(/data-event-id="([^"]+)"/g)].map((match) => match[1]);
 
   assert.ok(events.length >= 12);
   for (const event of events) assert.ok(SAFE_ONBOARDING_EVENT_NAMES.includes(event), event);

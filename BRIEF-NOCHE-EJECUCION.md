@@ -196,6 +196,51 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 5. **Eventos:** resolver `event_at` versus `timestamp` como clave canónica y alinear PRD, QA, catálogo y pruebas.
 6. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
 
+## 92. Corrección de dirección — 17 de agosto de 2026
+
+**Decisión vigente de Felipe:** la ficha de producto vuelve a ser una superficie pública del Lab, debajo de la composición principal y a ancho completo. Su propósito es permitir que una persona navegue el prototipo y que diseño/ingeniería vean, para la acción inspeccionada, evento, metadata, datos, arquitectura candidata, gates y riesgos. Esta decisión reemplaza la interpretación anterior de que la ficha debía salir de la experiencia pública.
+
+### Alcance vigente
+
+- La ficha aparece sólo en los productos explorables: Acompañante financiero, Onboarding/KYC progresivo y Construir mi propio producto.
+- Los productos en investigación o pausa no muestran una ficha ni simulan una capacidad disponible.
+- La instrumentación se limita al teléfono del prototipo. El selector exterior, Feedback lateral y envío editorial no se instrumentan.
+- Los controles internos con contrato conocido mantienen evento explícito. Los controles nuevos o todavía no catalogados reciben un fallback seguro (`phone_control_interacted` o `phone_field_interacted`) con `control_key`, sin capturar contenido escrito, OTP, correo, teléfono, RUT, biometría ni respuestas crudas.
+
+### Validación
+
+- Build Next.js + TypeScript: **PASS**.
+- Suite: **75/75 PASS**.
+- `git diff --check`: **PASS**.
+
+### Registro provisional de la pasada 91 — 17 de agosto de 2026, 11:26 CLT (consolidado al final)
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, el nuevo tablero de discovery, la implementación y los guardrails. Se usó como corte efectivo el cierre 10:33:01 CLT, posterior al metadato de `Last run`. Desde ese corte cambiaron el tablero de discovery, el runtime público y dos guardrails técnicos. Se preservó el resto del worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Se confirmó y cerró el **P0 de consistencia** registrado en la pasada anterior: Acompañante, Onboarding y Builder volvían a montar `ProductSpecPanel` en la experiencia pública, pese a que `PRODUCT-DESIGN.md`, `C-02` y `D-03` reservan evento, metadata, arquitectura, datos, KYC/licencias, riesgos y preguntas para `/review` o un modo Equipo.
+- La mejora local fue deliberadamente mínima y reversible: se retiró sólo el montaje público de la ficha y se corrigió el guardrail para exigir que el contrato permanezca interno. Se conservaron `LivingSpec`, la gobernanza por producto, la captura de `data-event-id`, los parámetros seguros, `ProductSpecPanel` y su CSS como material local disponible para una futura superficie interna.
+- `PRODUCT-DISCOVERY-BOARD.md` quedó alineado con la misma frontera: la ficha se describe como interna y se declara expresamente que no se monta en la experiencia pública. El resto del tablero respeta Remesas pausado, Home Banking/Tarjetas en investigación y Builder como iteración sin capacidad externa.
+- El resto del delta posterior al corte es coherente con producto y PRD: los eventos explícitos ya no se inventan desde el copy, cada ficha viva declara owner y momento de revisión, y aumentó la legibilidad de privacidad, chat y navegación. Onboarding conserva valor antes de identidad, intención y explicación antes del OTP, y separación entre pre-registro, KYC y capacidad.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **75/75 PASS**, 0 fallidos. El guardrail corregido ahora falla si la ficha vuelve a montarse en los productos explorables.
+- QA visual/interactivo acotado: **PASS** en `1440×900` y `390×844` para Acompañante, Onboarding y Builder. En los seis recorridos hubo `0` elementos `.team-spec`, no apareció `FICHA DE PRODUCTO · PARA DESARROLLO` y no hubo overflow horizontal del documento.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer build y el primer intento de servidor local fueron bloqueados por permisos de `.next`/puerto; ambos pasaron al autorizar sólo el directorio y servidor local solicitados. No fueron fallas del producto.
+
+### Preguntas abiertas / decisiones requeridas
+
+1. **Ficha técnica interna:** elegir su destino definitivo entre `/review` y un modo Equipo autenticado. Hasta entonces, conservar `LivingSpec` y el panel como contrato interno sin montaje público.
+2. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+3. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+4. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+5. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+6. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
 ## 15. Revisión nocturna incremental — 14 de agosto de 2026, 03:42 CLT
 
 **Alcance ejecutado:** pasada de producto/PRD, consistencia y flujos sobre el brief, PRD de Onboarding/KYC, QA triple, informes QA vigentes, implementación y guardrails locales. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
@@ -2305,3 +2350,60 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
 4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
 5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 90. Revisión nocturna incremental — 17 de agosto de 2026, 10:29 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, el encargo de diseño, la implementación y los guardrails. Desde el cierre efectivo 09:27:57 CLT aparecieron un nuevo encargo de diseño, dos referencias PDF y una iteración local de runtime/tests. Se preservaron los cambios locales ajenos a esta pasada. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Se detectó un **P0 de consistencia abierto**: la iteración local volvió a renderizar una ficha técnica completa debajo de Acompañante, Onboarding y Builder. Esto contradice la dirección canónica y los cierres `C-02` / `D-03`, que reservan arquitectura, fuentes, metadata, riesgos y preguntas para `/review` o un modo Equipo.
+- Se aplicó una corrección local acotada para retirar sólo el render público y reforzar el guardrail, preservando `LivingSpec`, eventos, datos y gobernanza internos. Mientras se validaba, otro proceso activo reintrodujo una versión distinta de `ProductSpecPanel`, su CSS y un test que exige la ficha en productos explorables. Por tratarse de edición concurrente sobre los mismos archivos, no se sobrescribió una segunda vez. El P0 queda documentado para decisión, no resuelto en el estado final del worktree.
+- El resto del delta es coherente con producto/PRD: los eventos visibles migran a IDs explícitos `data-event-id` y ya no se inventan desde el copy; las fichas internas incorporan owner y momento de revisión; aumentó la legibilidad de privacidad, chat y navegación. Onboarding conserva exploración antes de identidad, explicación antes del OTP y separación entre pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa.
+- La primera suite detectó un **P1 de guardrail**: el matcher de fuentes capturaba la definición de tipo `LivingSpec` como si fuera una ficha concreta. El worktree local fue ajustado durante la pasada para limitar el matcher a objetos con `store` materializado; se preservó ese cambio y la suite final quedó verde.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite inicial: **74/75 PASS**; un fallo del matcher de fuentes, sin falla de producto.
+- Suite completa final: **75/75 PASS**, 0 fallidos. La suite actual no cierra el P0: uno de sus guardrails fue cambiado concurrentemente para aceptar la ficha pública.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el runtime Node local explícito porque `node` no está expuesto en `PATH`. No fue una falla del producto.
+- No se hizo QA visual interactivo: el conflicto es de alcance y exposición de información interna, y la edición concurrente siguió cambiando el layout durante la pasada. Se requiere estabilizar primero qué versión debe prevalecer.
+
+### Preguntas abiertas / decisiones requeridas
+
+1. **Ficha técnica interna:** elegir su destino definitivo entre `/review` y un modo Equipo autenticado. Mientras no exista esa decisión, conservar `LivingSpec` como contrato interno sin render público.
+2. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+3. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+4. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+5. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+6. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 91. Revisión nocturna incremental — 17 de agosto de 2026, 11:26 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, el nuevo tablero de discovery, la implementación y los guardrails. Se usó como corte efectivo el cierre 10:33:01 CLT, posterior al metadato de `Last run`. Desde ese corte cambiaron el tablero de discovery, el runtime público y dos guardrails técnicos. Se preservó el resto del worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Se confirmó y cerró el **P0 de consistencia** registrado en la pasada anterior: Acompañante, Onboarding y Builder volvían a montar `ProductSpecPanel` en la experiencia pública, pese a que `PRODUCT-DESIGN.md`, `C-02` y `D-03` reservan evento, metadata, arquitectura, datos, KYC/licencias, riesgos y preguntas para `/review` o un modo Equipo.
+- La mejora local fue deliberadamente mínima y reversible: se retiró sólo el montaje público de la ficha y se corrigió el guardrail para exigir que el contrato permanezca interno. Se conservaron `LivingSpec`, la gobernanza por producto, la captura de `data-event-id`, los parámetros seguros, `ProductSpecPanel` y su CSS como material local disponible para una futura superficie interna.
+- `PRODUCT-DISCOVERY-BOARD.md` quedó alineado con la misma frontera: la ficha se describe como interna y se declara expresamente que no se monta en la experiencia pública. El resto del tablero respeta Remesas pausado, Home Banking/Tarjetas en investigación y Builder como iteración sin capacidad externa.
+- El resto del delta posterior al corte es coherente con producto y PRD: los eventos explícitos ya no se inventan desde el copy, cada ficha viva declara owner y momento de revisión, y aumentó la legibilidad de privacidad, chat y navegación. Onboarding conserva valor antes de identidad, intención y explicación antes del OTP, y separación entre pre-registro, KYC y capacidad.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **75/75 PASS**, 0 fallidos. El guardrail corregido ahora falla si la ficha vuelve a montarse en los productos explorables.
+- QA visual/interactivo acotado: **PASS** en `1440×900` y `390×844` para Acompañante, Onboarding y Builder. En los seis recorridos hubo `0` elementos `.team-spec`, no apareció `FICHA DE PRODUCTO · PARA DESARROLLO` y no hubo overflow horizontal del documento.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer build y el primer intento de servidor local fueron bloqueados por permisos de `.next`/puerto; ambos pasaron al autorizar sólo el directorio y servidor local solicitados. No fueron fallas del producto.
+
+### Preguntas abiertas / decisiones requeridas
+
+1. **Ficha técnica interna:** elegir su destino definitivo entre `/review` y un modo Equipo autenticado. Hasta entonces, conservar `LivingSpec` y el panel como contrato interno sin montaje público.
+2. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+3. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+4. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+5. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+6. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.

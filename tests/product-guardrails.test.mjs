@@ -347,12 +347,24 @@ test("portfolio mantiene seis productos y tres prototipos explorables", async ()
   assert.doesNotMatch(page, /MCP conectado|banco conectado|KYC aprobado|remesa enviada/i);
 });
 
-test("los contratos de producto siguen internos y no aparecen en la experiencia pública", async () => {
+test("los contratos de producto siguen internos y no se montan en la experiencia pública", async () => {
   const page = await source("app/page.tsx");
+  const css = await source("app/globals.css");
   const portfolio = await source("lib/product-portfolio.ts");
   const feedback = await source("lib/feedback-intake.ts");
-  assert.doesNotMatch(page, /ProductSpecification|FICHA DE PRODUCTO · CHILE|Cómo se construiría|EVENTO PROPUESTO|ARQUITECTURA SUGERIDA|DATOS Y FUENTES|TODO LO QUE PUEDE SALIR MAL/);
-  assert.doesNotMatch(page, /Felipe resuelve contradicciones|Estado de revisión|onPointerOver|onFocusCapture/);
+  assert.match(page, /ProductSpecPanel/);
+  assert.match(page, /FICHA DE PRODUCTO · PARA DESARROLLO/);
+  assert.doesNotMatch(page, /activeProduct\.explorable && <ProductSpecPanel/);
+  assert.match(css, /\.team-spec \{ grid-column:1\/-1; width:100%/);
+  assert.doesNotMatch(page, /Felipe resuelve contradicciones|Estado de revisión/);
+  assert.match(page, /onFocusCapture/);
+  assert.match(page, /control\.closest\("\.phone"\)/);
+  assert.match(page, /phone_control_interacted/);
+  assert.match(page, /phone_field_interacted/);
+  assert.match(page, /data-instrumentation-ignore="true"/);
+  assert.match(page, /data-event-id="companion_navigation_selected"/);
+  assert.match(page, /data-event-id="profile_menu_opened"/);
+  assert.match(page, /data-event-id="theme_mode_toggled"/);
   assert.match(portfolio, /eventMetadata\(/);
   assert.match(portfolio, /user_id/);
   assert.match(portfolio, /event_at/);
@@ -406,15 +418,15 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   assert.match(page, /Con <b>@YOL1<\/b> seleccionado, escribe <b>“Partamos.”<\/b>/i);
   assert.match(page, /YOL1 se encarga de darte la bienvenida/i);
   assert.match(page, /Copiado manualmente · no sincronizado/i);
-  assert.match(page, /data-event="builder_guide_viewed" data-client="chatgpt"/);
-  assert.match(page, /data-event="builder_guide_viewed" data-client="claude"/);
+  assert.match(page, /data-event-id="builder_guide_viewed" data-client="chatgpt"/);
+  assert.match(page, /data-event-id="builder_guide_viewed" data-client="claude"/);
   assert.match(page, /no pegues el chat completo ni datos sensibles/i);
   assert.match(page, /Hablas[\s\S]*Lo conviertes en propuesta/);
   assert.match(page, /function ProjectSubmitPanel/);
   assert.match(page, /Enviar proyecto/);
   assert.match(page, /No publica, crea branch, sincroniza el chat ni cambia una pantalla automáticamente/i);
   assert.match(page, /Guardar borrador local/);
-  assert.match(page, /data-event="proposal_draft_saved"/);
+  assert.doesNotMatch(submitPanel, /data-event-id=/);
   assert.match(page, /Borrar este borrador local/);
   assert.match(page, /No se envió a una bandeja compartida/);
   assert.match(page, /maxLength=\{700\}/);

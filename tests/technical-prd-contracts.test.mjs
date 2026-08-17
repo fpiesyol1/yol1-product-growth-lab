@@ -27,9 +27,11 @@ test("los eventos de ficha y onboarding usan snake_case y no exponen identificad
     assert.doesNotMatch(event, piiInName, `${event} no debe contener un identificador sensible`);
   }
 
-  assert.match(portfolio, /explicit\.replaceAll\("\.", "_"\)/);
-  assert.match(page, /data-event="portfolio_product_selected" data-product-key=\{product\.id\}/);
-  assert.doesNotMatch(page, /data-event=\{`portfolio\.\$\{product\.id\}\.select`\}/);
+  assert.match(portfolio, /element\.dataset\.eventId/);
+  assert.doesNotMatch(portfolio, /element\.textContent/);
+  assert.match(page, /onClick=\{\(\) => chooseProduct\(product\.id\)\} data-product-key=\{product\.id\}/);
+  assert.doesNotMatch(page, /data-event-id="portfolio_product_selected"/);
+  assert.doesNotMatch(page, /data-event-id=\{`portfolio\.\$\{product\.id\}\.select`\}/);
   assert.match(onboardingPrd, /No guardar en analytics:\*\* OTP, RUT, número de serie, biometría, documentos/i);
 });
 
@@ -37,7 +39,7 @@ test("la metadata base está declarada junto a cada evento", async () => {
   const portfolio = await source("lib/product-portfolio.ts");
   const onboardingPrd = await source("PRD-ONBOARDING-KYC-PROGRESIVO.md");
   const discovery = await source("DISCOVERY-HOME-BANKING-TARJETAS.md");
-  const metadataBlock = portfolio.split("export function eventMetadata")[1]?.split("export function proposedEventForElement")[0] ?? "";
+  const metadataBlock = portfolio.split("export function eventMetadata")[1]?.split("export function getExplicitEventId")[0] ?? "";
 
   for (const field of ["event_name", "event_id", "event_at", "anonymous_id", "user_id", "session_id", "product_key", "screen_key", "action_key", "platform", "app_version", "schema_version", "source", "consent_analytics", "correlation_id"]) {
     assert.match(metadataBlock, new RegExp(`\\["${field}"`), `falta ${field} en la ficha`);
@@ -51,11 +53,30 @@ test("la metadata base está declarada junto a cada evento", async () => {
 
 test("cada LivingSpec declara fuentes de datos", async () => {
   const portfolio = await source("lib/product-portfolio.ts");
-  const dataBlocks = portfolio.match(/data:\s*\{[\s\S]*?\},\s*kyc:/g) ?? [];
+  const dataBlocks = portfolio.match(/data:\s*\{\s*store:\s*\[[\s\S]*?\},\s*kyc:/g) ?? [];
 
   assert.match(portfolio, /sources:\s*string\[\]/, "LivingSpec debe tipar fuentes");
   assert.ok(dataBlocks.length >= 8, "deben existir bloques de datos para las fichas");
   for (const block of dataBlocks) assert.match(block, /sources:\s*\[/, "cada ficha debe declarar sus fuentes");
+});
+
+test("cada ficha viva declara quién debe resolver los pendientes", async () => {
+  const portfolio = await source("lib/product-portfolio.ts");
+  assert.match(portfolio, /governance:\s*\{ owner: string; reviewBy: string \}/);
+  assert.match(portfolio, /GOVERNANCE_BY_PRODUCT/);
+  assert.match(portfolio, /owner: "Producto/);
+  assert.match(portfolio, /reviewBy: "/);
+});
+
+test("un evento sin id explícito no se inventa desde el copy", async () => {
+  const portfolio = await source("lib/product-portfolio.ts");
+  const page = await source("app/page.tsx");
+  assert.match(portfolio, /Acción sin data-event-id/);
+  assert.doesNotMatch(portfolio, /fallback\.replace/);
+  assert.doesNotMatch(portfolio, /getAttribute\("aria-label"\)/);
+  assert.match(page, /onPointerOverCapture/);
+  assert.match(page, /INSPECCIONANDO ACCIÓN/);
+  assert.match(page, /deuda de instrumentación/);
 });
 
 test("Onboarding declara valor antes de pedir OTP", async () => {

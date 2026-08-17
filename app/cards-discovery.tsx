@@ -34,23 +34,23 @@ export function CardsDiscovery({ view, onView, onNotice }: CardsDiscoveryProps) 
       <p className="cards-lede">Cuéntanos la compra. YOL1 prepara una elección explicable; no inicia ni confirma pagos.</p>
 
       <div className="cards-intent-shortcuts" aria-label="Intenciones disponibles">
-        <button className="selected" onClick={() => onView("intent")} data-event="payment_intent_selected"><span>↗</span><b>Elegir cómo pagar</b></button>
-        <button onClick={() => onView("details")} data-event="card_details_requested"><span>◉</span><b>Ver datos</b></button>
-        <button onClick={() => onView("movement")} data-event="card_movement_viewed"><span>≋</span><b>Último movimiento</b></button>
-        <button onClick={() => onView("benefit")} data-event="card_benefit_reviewed"><span>✦</span><b>Ver beneficio</b></button>
+        <button className="selected" onClick={() => onView("intent")} data-event-id="payment_intent_selected"><span>↗</span><b>Elegir cómo pagar</b></button>
+        <button onClick={() => onView("details")} data-event-id="card_details_requested"><span>◉</span><b>Ver datos</b></button>
+        <button onClick={() => onView("movement")} data-event-id="card_movement_viewed"><span>≋</span><b>Último movimiento</b></button>
+        <button onClick={() => onView("benefit")} data-event-id="card_benefit_reviewed"><span>✦</span><b>Ver beneficio</b></button>
       </div>
 
       <div className="cards-intent-form">
         <label>Monto aproximado <span>$<input value={amount} onChange={(event) => { setAmount(event.target.value); setRecommendationReady(false); }} inputMode="numeric" aria-label="Monto aproximado ficticio" /></span></label>
         <label>Categoría <select value={category} onChange={(event) => { setCategory(event.target.value); setRecommendationReady(false); }} aria-label="Categoría de compra"><option>Supermercado</option><option>Restaurante</option><option>Combustible</option><option>Suscripción</option></select></label>
         <label>Qué priorizas <select value={preference} onChange={(event) => { setPreference(event.target.value); setRecommendationReady(false); }} aria-label="Preferencia de pago"><option>Ahorrar ahora</option><option>Ordenar el presupuesto</option><option>Pagar en cuotas</option></select></label>
-        <button className="cards-primary" onClick={() => setRecommendationReady(true)} data-event="card_recommendation_prepared">Preparar mi elección →</button>
+        <button className="cards-primary" onClick={() => setRecommendationReady(true)} data-event-id="card_recommendation_prepared">Preparar mi elección →</button>
       </div>
 
       {recommendationReady && <article className="cards-recommendation" aria-live="polite">
         <div><small>OPCIÓN SUGERIDA · EJEMPLO</small><strong>{syntheticCards[0].name} · {syntheticCards[0].ending}</strong><p>{syntheticCards[0].reason}. Priorizamos “{preference.toLowerCase()}” para {category.toLowerCase()}.</p></div>
         <b>{syntheticCards[0].estimate}</b>
-        <button onClick={() => onView("benefit")} data-event="card_recommendation_explained">Ver por qué y condiciones</button>
+        <button onClick={() => onView("benefit")} data-event-id="card_recommendation_explained">Ver por qué y condiciones</button>
         <p className="cards-source-note">Catálogo ficticio para esta prueba. Elegibilidad, vigencia y resultado no están confirmados.</p>
       </article>}
     </section>}
@@ -67,7 +67,7 @@ export function CardsDiscovery({ view, onView, onNotice }: CardsDiscoveryProps) 
         <p>La fuente de ejemplo registró el intento, pero todavía no confirma el resultado final. El monto o estado podría cambiar.</p>
         <dl><div><dt>Actualización</dt><dd>Hace 2 min · simulada</dd></div><div><dt>Beneficio</dt><dd>$1.350 estimados</dd></div><div><dt>Fuente</dt><dd>Feed ficticio del prototipo</dd></div></dl>
       </article>
-      <div className="cards-action-grid"><button onClick={() => onNotice("Pendiente no significa pagado: falta confirmación de la fuente.")} data-event="card_movement_status_explained">Entender el estado</button><button onClick={() => onNotice("Abrimos una guía ficticia. No se creó un reclamo.")} data-event="card_alert_action_selected">No lo reconozco</button></div>
+      <div className="cards-action-grid"><button onClick={() => onNotice("Pendiente no significa pagado: falta confirmación de la fuente.")} data-event-id="card_movement_status_explained">Entender el estado</button><button onClick={() => onNotice("Abrimos una guía ficticia. No se creó un reclamo.")} data-event-id="card_alert_action_selected">No lo reconozco</button></div>
       <p className="cards-guardrail">No es una cartola oficial ni un comprobante. En producto, estados, frescura y ayuda dependen del emisor o partner por validar.</p>
     </section>}
 
@@ -86,9 +86,9 @@ export function CardsDiscovery({ view, onView, onNotice }: CardsDiscoveryProps) 
         <div><span>2</span><p><b>Activación</b>El ejemplo supone activación previa; no la ejecuta.</p></div>
         <div><span>3</span><p><b>Resultado</b>Sólo se confirma con evidencia posterior reconciliada.</p></div>
       </div>
-      <button className="cards-secondary" onClick={() => setTermsOpen((current) => !current)} data-event="card_benefit_terms_toggled">{termsOpen ? "Ocultar condiciones" : "Ver condiciones y fuente"}</button>
+      <button className="cards-secondary" onClick={() => setTermsOpen((current) => !current)} data-event-id="card_benefit_terms_toggled">{termsOpen ? "Ocultar condiciones" : "Ver condiciones y fuente"}</button>
       {termsOpen && <div className="benefit-terms"><strong>Fuente de prueba</strong><p>Catálogo sintético, sin comercio, banco o partner real. Vigencia, tope, canal, exclusiones y financiador quedan por validar.</p></div>}
-      <button className="cards-primary" onClick={() => onNotice("Guardamos tu interés sólo en esta sesión. No activamos un beneficio ni iniciamos un pago.")} data-event="card_benefit_interest_saved">Me interesa esta alternativa</button>
+      <button className="cards-primary" onClick={() => onNotice("Guardamos tu interés sólo en esta sesión. No activamos un beneficio ni iniciamos un pago.")} data-event-id="card_benefit_interest_saved">Me interesa esta alternativa</button>
     </section>}
   </section>;
 }
@@ -108,9 +108,9 @@ function CardsDetailsView({ onBack, onNotice }: { onBack: () => void; onNotice: 
       <div><span>FELIPE EJEMPLO</span><span>{detailsStep === "revealed" ? "CVV 000" : "CVV •••"}</span></div>
     </article>
 
-    {detailsStep === "masked" && <><div className="cards-security-copy"><b>Oculta por defecto</b><span>La vista completa sería temporal y exigiría una verificación adicional por validar.</span></div><button className="cards-primary" onClick={() => setDetailsStep("confirm")} data-event="card_details_requested">Ver datos ficticios →</button></>}
-    {detailsStep === "confirm" && <article className="cards-step-up"><small>PASO ADICIONAL · SIMULADO</small><h3>¿Por qué te pedimos confirmar?</h3><p>Mostrar credenciales aumenta el riesgo de exposición. En un producto real, el método y la duración dependen de la arquitectura y revisión de seguridad.</p><div><button onClick={() => setDetailsStep("masked")}>Cancelar</button><button onClick={() => setDetailsStep("revealed")} data-event="card_details_revealed">Confirmar ejemplo</button></div></article>}
-    {detailsStep === "revealed" && <><div className="cards-security-copy success"><b>Datos ficticios visibles</b><span>Se ocultarán al salir de esta pantalla. El temporizador real está por validar.</span></div><button className="cards-secondary" onClick={() => { setDetailsStep("masked"); onNotice("Los datos ficticios volvieron a quedar ocultos."); }} data-event="card_details_hidden">Ocultar ahora</button></>}
+    {detailsStep === "masked" && <><div className="cards-security-copy"><b>Oculta por defecto</b><span>La vista completa sería temporal y exigiría una verificación adicional por validar.</span></div><button className="cards-primary" onClick={() => setDetailsStep("confirm")} data-event-id="card_details_requested">Ver datos ficticios →</button></>}
+    {detailsStep === "confirm" && <article className="cards-step-up"><small>PASO ADICIONAL · SIMULADO</small><h3>¿Por qué te pedimos confirmar?</h3><p>Mostrar credenciales aumenta el riesgo de exposición. En un producto real, el método y la duración dependen de la arquitectura y revisión de seguridad.</p><div><button onClick={() => setDetailsStep("masked")}>Cancelar</button><button onClick={() => setDetailsStep("revealed")} data-event-id="card_details_revealed">Confirmar ejemplo</button></div></article>}
+    {detailsStep === "revealed" && <><div className="cards-security-copy success"><b>Datos ficticios visibles</b><span>Se ocultarán al salir de esta pantalla. El temporizador real está por validar.</span></div><button className="cards-secondary" onClick={() => { setDetailsStep("masked"); onNotice("Los datos ficticios volvieron a quedar ocultos."); }} data-event-id="card_details_hidden">Ocultar ahora</button></>}
   </section>;
 }
 

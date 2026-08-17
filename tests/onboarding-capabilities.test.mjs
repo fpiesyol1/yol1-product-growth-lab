@@ -63,8 +63,8 @@ test("KYC no habilita capacidades por inferencia", async () => {
 test("la UI explica una acción material antes del OTP", async () => {
   const source = await page();
   assert.ok(source.indexOf("¿Qué quieres preparar?") < source.indexOf("¿Cómo te mandamos el código?"));
-  assert.match(source, /data-event="material_action_selected" data-capability-key="financial_data_connect"/);
-  assert.match(source, /data-event="material_action_selected" data-capability-key="receive_value"/);
+  assert.match(source, /data-event-id="material_action_selected" data-capability-key="financial_data_connect"/);
+  assert.match(source, /data-event-id="material_action_selected" data-capability-key="receive_value"/);
   assert.doesNotMatch(source, /Quiero activar una función/);
   assert.match(source, /Confirma que controlas este canal/);
   assert.doesNotMatch(source, /Confirma que eres tú/);

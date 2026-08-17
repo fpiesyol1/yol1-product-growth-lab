@@ -8,6 +8,7 @@ export type ProductDefinition = {
   name: string;
   icon: string;
   explorable: boolean;
+  maturity: "explore" | "evidence" | "paused";
   description: string;
 };
 
@@ -17,18 +18,38 @@ export type LivingSpec = {
   data: { store: string[]; query: string[]; sources: string[]; handling: string };
   kyc: { state: CertaintyState; reason: string };
   licenses: { state: CertaintyState; reason: string };
+  governance: { owner: string; reviewBy: string };
   questions: string[];
   risks: string[];
 };
 
+type SpecWithoutGovernance = Omit<LivingSpec, "governance">;
+
+const GOVERNANCE_BY_PRODUCT: Record<ProductId, LivingSpec["governance"]> = {
+  companion: { owner: "Producto · Acompañante", reviewBy: "Antes de conectar datos o activar una acción" },
+  kyc: { owner: "Producto + Compliance · por asignar", reviewBy: "Antes de elegir una acción material real" },
+  banking: { owner: "Producto · Home Banking", reviewBy: "Antes de pasar de investigación a flujo" },
+  cards: { owner: "Producto + Riesgo · por asignar", reviewBy: "Antes de seleccionar emisor, partner o rail" },
+  remittances: { owner: "Producto · pendiente", reviewBy: "Antes de retomar discovery" },
+  builder: { owner: "Producto · Lab", reviewBy: "Antes de habilitar lectura o escritura externa" },
+};
+
+function withGovernance(productId: ProductId, spec: SpecWithoutGovernance): LivingSpec {
+  return { ...spec, governance: GOVERNANCE_BY_PRODUCT[productId] };
+}
+
 export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
-  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", explorable: true, description: "Explora primero. Cada acción explica su gate; KYC nunca habilita una capacidad por sí solo." },
-  { id: "companion", shortLabel: "Acompañante", name: "Acompañante financiero", icon: "✦", explorable: true, description: "El prototipo activo del Lab: finanzas, cobrar y pagar, ahorrar, ganar más lucas y Mi banco." },
-  { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", explorable: false, description: "Espacio reservado. No representa banca construida ni disponible." },
-  { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", explorable: false, description: "Espacio reservado. No hay emisión, procesamiento ni capacidad operativa." },
-  { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", explorable: false, description: "Pausado por decisión de producto. Remesas no se trabaja ni se investiga en este ciclo." },
-  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", explorable: true, description: "Trabaja una idea en ChatGPT o Claude, ordénala con el contexto de YOL1 y envíala a revisión cuando esté lista." },
+  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", explorable: true, maturity: "explore", description: "Explora primero. Cada acción explica su gate; KYC nunca habilita una capacidad por sí solo." },
+  { id: "companion", shortLabel: "Acompañante", name: "Acompañante financiero", icon: "✦", explorable: true, maturity: "explore", description: "El prototipo activo del Lab: finanzas, cobrar y pagar, ahorrar, ganar más lucas y Mi banco." },
+  { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", explorable: false, maturity: "evidence", description: "Espacio reservado. No representa banca construida ni disponible." },
+  { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", explorable: false, maturity: "evidence", description: "Espacio reservado. No hay emisión, procesamiento ni capacidad operativa." },
+  { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", explorable: false, maturity: "paused", description: "Pausado por decisión de producto. Remesas no se trabaja ni se investiga en este ciclo." },
+  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", explorable: true, maturity: "explore", description: "Trabaja una idea en ChatGPT o Claude, ordénala con el contexto de YOL1 y envíala a revisión cuando esté lista." },
 ];
+
+export function maturityLabel(product: ProductDefinition) {
+  return product.maturity === "explore" ? "PARA EXPLORAR" : product.maturity === "evidence" ? "INVESTIGACIÓN CON EVIDENCIA" : "PAUSADO";
+}
 
 export const EMPTY_STATE_LIBRARY = [
   { id: "paper", icon: "✎", eyebrow: "ALGO ESTÁ PASANDO ACÁ", title: "Alguien no hizo la pega…", body: "Perdón por las molestias. Ya estamos apurando al equipo para que deje de pavear.", gesture: "scribble" },
@@ -49,7 +70,7 @@ export const EMPTY_STATE_LIBRARY = [
   { id: "bench", icon: "⌑", eyebrow: "EN EL BANCO DE PRUEBAS", title: "Vuelve cuando la hagamos oficial.", body: "Esta pantalla no conecta servicios, no mueve dinero y no representa readiness.", gesture: "bench" },
 ] as const;
 
-const companionSpecs: Record<string, LivingSpec> = {
+const companionSpecs: Record<string, SpecWithoutGovernance> = {
   inicio: {
     event: "financial_home_viewed",
     architecture: ["React Native · app móvil (candidato)", "AWS Amplify + Cognito para acceso (por validar)", "API Gateway → Lambda para reglas y respuestas (por validar)"],
@@ -116,8 +137,8 @@ const companionSpecs: Record<string, LivingSpec> = {
 };
 
 export function getLivingSpec(product: ProductDefinition, screen: string): LivingSpec {
-  if (product.id === "companion") return companionSpecs[screen] ?? companionSpecs.inicio;
-  if (product.id === "kyc") return {
+  if (product.id === "companion") return withGovernance(product.id, companionSpecs[screen] ?? companionSpecs.inicio);
+  if (product.id === "kyc") return withGovernance(product.id, {
     event: "onboarding_started",
     architecture: ["React Native · app móvil candidata", "Matriz local · capabilities y gates demo", "Acceso/OTP · servicio por definir", "BFF/orquestación · por validar", "Resolución de identidad · por definir"],
     data: { store: ["ID temporal", "Canal de acceso verificado", "Estado de pre-registro", "Capability elegida", "Versiones de consentimiento/copy"], query: ["Estado de OTP", "Regla de duplicidad", "Availability y requisitos de la capability"], sources: ["Matriz local de capabilities", "Servicio de acceso/OTP · pendiente", "Mi banco/KYC · pendiente"], handling: "Explorar no requiere datos. OTP confirma un canal; la demo no guarda OTP, contacto crudo, RUT, biometría o documentos en analytics." },
@@ -125,8 +146,8 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
     licenses: { state: "Por validar", reason: "Chile es la base. La capacidad financiera depende de vehículo, partner y revisión Legal." },
     questions: ["¿Cuándo nace el ID definitivo Yol1?", "¿Cuál es el SLA y ruta de Customer Success ante revisión o pérdida de acceso?"],
     risks: ["Pedir OTP antes de una acción material", "OTP no recibido o expirado", "Pre-registros duplicados por teléfono o email", "Confundir canal verificado con identidad", "No definir Customer Success"],
-  };
-  if (product.id === "builder") return {
+  });
+  if (product.id === "builder") return withGovernance(product.id, {
     event: "builder_viewed",
     architecture: ["React Native · experiencia futura para colaboradores", "Paquete de contexto versionado · diseño, producto y límites", "MCP remoto con OAuth · etapa posterior, no conectado aún", "AWS · API de propuestas y revisión editorial (por validar)"],
     data: { store: ["Borrador local de idea", "Resumen de propuesta enviado", "Versión del paquete de contexto"], query: ["Sistema visual y patrones aprobados", "Especificaciones de producto aprobadas", "Estado de revisión de la propuesta"], sources: ["Paquete de contexto versionado", "Repositorio aprobado", "Envío explícito de la persona"], handling: "No conectar cuentas personales de IA ni leer conversaciones privadas. La persona decide qué pega y qué envía." },
@@ -134,8 +155,8 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
     licenses: { state: "No aplica", reason: "Es un espacio editorial de ideación; cualquier producto resultante se evalúa por separado en Chile." },
     questions: ["¿Qué permisos y OAuth exigirá un MCP remoto antes de habilitarlo?", "¿Qué parte del contexto puede ser pública para colaboradores externos?"],
     risks: ["Hacer creer que YOL1 ve el chat privado de una persona", "Enviar una idea sin caso de uso ni criterio de éxito", "Convertir un borrador en promesa de producto sin revisión editorial"],
-  };
-  if (product.id === "cards") return {
+  });
+  if (product.id === "cards") return withGovernance(product.id, {
     event: "cards_home_viewed",
     architecture: ["React Native · experiencia móvil sugerida", "BFF/API Gateway · orquestación por dominio (por validar)", "AWS · instrumentos, movimientos, beneficios, alertas y consentimientos separados", "Emisor/processor/rail · sin selección ni conexión"],
     data: { store: ["Intención y preferencia explícitas", "Referencia opaca del instrumento", "Estado/fuente/frescura del movimiento", "Regla versionada de recomendación o alerta"], query: ["Instrumentos autorizados", "Movimientos normalizados", "Catálogo, elegibilidad y condiciones", "Consentimiento y alcance vigente"], sources: ["Persona · declaración explícita", "Emisor/agregador · por validar", "Catálogo de beneficios · por validar"], handling: "Nunca PAN, CVV, PIN, OTP, token, biometría, QR completo ni credenciales wallet en analytics o logs generales." },
@@ -143,8 +164,8 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
     licenses: { state: "Por validar", reason: "Emisión, pagos, QR, NFC/wallet y operación dependen del rol jurídico de YOL1, partner/contrato, rail, controles y normativa chilena aplicable." },
     questions: ["¿Qué intención domina: elegir, datos, movimiento/alerta o beneficio?", "¿Qué puede resolver YOL1 sin ser emisor u operador?", "¿Quién provee y reconcilia beneficios vigentes?"],
     risks: ["Confundir recomendación o handoff con pago", "Interpretar pendiente como confirmado", "Revelar o registrar credenciales", "Prometer un beneficio no elegible", "Diseñar QR/NFC/wallet antes de partner y gates"],
-  };
-  return {
+  });
+  return withGovernance(product.id, {
     event: `${product.id}_portfolio_viewed`,
     architecture: ["Sin arquitectura aprobada", "React Native + AWS son candidatos, no decisiones"],
     data: { store: ["Sin datos aprobados"], query: ["No aplica"], sources: ["No aplica"], handling: "Solo contexto editorial del Lab." },
@@ -152,7 +173,7 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
     licenses: { state: "Por validar", reason: "No se afirma requisito ni exención sin revisar la documentación vigente." },
     questions: ["¿Qué necesidad de usuario autoriza Felipe?", "¿Qué evidencia y fuente faltan antes de construir?"],
     risks: ["Construir una solución antes de entender el problema", "Confundir un espacio reservado con un producto disponible"],
-  };
+  });
 }
 
 export function simpleEventName(event: string, product: ProductDefinition, screen: string) {
@@ -183,10 +204,11 @@ export function eventMetadata(event: string, product: ProductDefinition, screen:
   ];
 }
 
-export function proposedEventForElement(element: HTMLElement, fallback: string) {
-  const explicit = element.dataset.event;
-  if (explicit) return explicit.replaceAll(".", "_").replace(/_click$/, "_selected");
-  const raw = element.getAttribute("aria-label") || element.textContent || "action";
-  const slug = raw.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "").slice(0, 42) || "action";
-  return `${fallback.replace(/_viewed$/, "")}_${slug}_selected`;
+export function getExplicitEventId(element: HTMLElement) {
+  const eventId = element.dataset.eventId;
+  if (!eventId) {
+    console.warn("[YOL1 Lab] Acción sin data-event-id; no se registra ningún evento.");
+    return null;
+  }
+  return eventId;
 }
