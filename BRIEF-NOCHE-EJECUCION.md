@@ -196,7 +196,7 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 5. **Eventos:** resolver `event_at` versus `timestamp` como clave canónica y alinear PRD, QA, catálogo y pruebas.
 6. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
 
-## 92. Corrección de dirección — 17 de agosto de 2026
+### Corrección de dirección — 17 de agosto de 2026
 
 **Decisión vigente de Felipe:** la ficha de producto vuelve a ser una superficie pública del Lab, debajo de la composición principal y a ancho completo. Su propósito es permitir que una persona navegue el prototipo y que diseño/ingeniería vean, para la acción inspeccionada, evento, metadata, datos, arquitectura candidata, gates y riesgos. Esta decisión reemplaza la interpretación anterior de que la ficha debía salir de la experiencia pública.
 

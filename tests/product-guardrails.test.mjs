@@ -138,10 +138,9 @@ test("brief y ciclo QA conservan estados editoriales y alcance canónicos", asyn
   assert.match(technicalStandard, /no la renderiza en la experiencia pública/);
   assert.doesNotMatch(technicalStandard, /Aplica a los productos publicados|El Lab ya expone una Ficha por pantalla/);
   assert.match(productDesign, /no se agregan diagonales ni triángulos decorativos al pie/);
-  assert.match(productDesign, /Las fichas de producto[\s\S]*son material interno y no se renderizan en la experiencia pública/);
+  assert.match(productDesign, /Las fichas de producto se muestran debajo de la composición principal, a ancho completo, solo en los productos explorables/);
   assert.match(productDesign, /Feedback permanece disponible en todos los espacios/);
   assert.match(onboardingPrd, /La especificación interna resume la regla crítica/);
-  assert.doesNotMatch(onboardingPrd, /La ficha pública resume la regla crítica/);
   assert.doesNotMatch(productDesign, /Acid identifica el único producto publicado/);
   assert.doesNotMatch(productDesign, /La Ficha de producto vive debajo del teléfono/);
   assert.match(nightBoard, /borrador local en investigación/);
@@ -347,14 +346,14 @@ test("portfolio mantiene seis productos y tres prototipos explorables", async ()
   assert.doesNotMatch(page, /MCP conectado|banco conectado|KYC aprobado|remesa enviada/i);
 });
 
-test("los contratos de producto siguen internos y no se montan en la experiencia pública", async () => {
+test("los contratos de producto se montan solo en productos explorables", async () => {
   const page = await source("app/page.tsx");
   const css = await source("app/globals.css");
   const portfolio = await source("lib/product-portfolio.ts");
   const feedback = await source("lib/feedback-intake.ts");
   assert.match(page, /ProductSpecPanel/);
   assert.match(page, /FICHA DE PRODUCTO · PARA DESARROLLO/);
-  assert.doesNotMatch(page, /activeProduct\.explorable && <ProductSpecPanel/);
+  assert.match(page, /activeProduct\.explorable && <ProductSpecPanel/);
   assert.match(css, /\.team-spec \{ grid-column:1\/-1; width:100%/);
   assert.doesNotMatch(page, /Felipe resuelve contradicciones|Estado de revisión/);
   assert.match(page, /onFocusCapture/);

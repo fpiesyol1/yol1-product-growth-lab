@@ -52,4 +52,4 @@ La instrumentación aplica sólo a controles dentro del teléfono de la app simu
 - Los eventos de producto usan `snake_case` y un nombre explícito cuando ya existe una decisión.
 - Todo control nuevo dentro del teléfono recibe, mientras se define su contrato final, `phone_control_interacted` o `phone_field_interacted` con `control_key` seguro.
 - Nunca se agrega texto de campos, OTP, RUT, correo, teléfono, biometría, documentos ni respuestas crudas como metadata.
-- La ficha técnica interna muestra el evento, metadata base y parámetros seguros de la interacción inspeccionada; no se monta en la experiencia pública.
+- En los productos explorables, la ficha técnica aparece debajo de la composición y a ancho completo: muestra el evento, metadata base y parámetros seguros de la interacción inspeccionada. Los productos en investigación o pausa no la muestran.

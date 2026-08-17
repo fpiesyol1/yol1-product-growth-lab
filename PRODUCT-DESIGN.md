@@ -62,7 +62,7 @@ Los tokens de marca (`--acid`, `--aqua`, `--yellow`, `--coral`, `--neon-pink`, `
 
 El selector superior se trata como una repisa editorial, no como navegación de una suite disponible. La experiencia usa `Para explorar` para prototipos de aprendizaje y `En investigación` cuando no hay un flujo disponible; ninguno equivale a publicación operativa. Los estados vacíos usan tipografía, halos, cinta, bloques y un sticker animado propio en CSS. Nunca usan logos de terceros ni ilustraciones que sugieran una capacidad real.
 
-Las fichas de producto, eventos, arquitectura, fuentes, KYC, licencias, riesgos y preguntas son material interno y no se renderizan en la experiencia pública. Feedback permanece disponible en todos los espacios para atribuir cada comentario a su producto y pantalla, incluso cuando el producto está en investigación. Los estados de certeza de la especificación interna son semánticos:
+Las fichas de producto se muestran debajo de la composición principal, a ancho completo, solo en los productos explorables. Conectan la vista simulada con evento, metadata, arquitectura candidata, fuentes, KYC, licencias, riesgos y preguntas para que diseño e ingeniería puedan conversar sobre lo que se ve. Los productos en investigación o pausa no muestran ficha técnica ni simulan una capacidad disponible. Feedback permanece disponible en todos los espacios para atribuir cada comentario a su producto y pantalla. Los estados de certeza de la especificación son semánticos:
 
 - `No aplica`: aqua/control; la razón explica por qué no corresponde al contexto actual.
 - `Por validar`: amarillo/decisión abierta; nunca se presenta como exención ni requisito.

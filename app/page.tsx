@@ -268,6 +268,7 @@ export default function Home() {
         </div>
         {productId === "builder" && <ProjectSubmitPanel open={projectSubmitOpen} onToggle={() => setProjectSubmitOpen((current) => !current)} onSubmitted={() => undefined} />}
       </section> : <ResearchStage product={activeProduct} stateIndex={emptyStateIndex} />}
+      {activeProduct.explorable && <ProductSpecPanel product={activeProduct} screen={activeTitle} inspectedAction={inspectedAction} />}
     </main>
   );
 }
