@@ -10,6 +10,7 @@ Permitir que un colaborador convierta una idea en una propuesta revisable sin da
 
 1. La persona conecta YOL1 una sola vez en su propio ChatGPT o Claude.
 2. Escribe una idea en lenguaje cotidiano. La IA carga el contexto en silencio, muestra una primera propuesta y usa supuestos explícitos antes de pedir información adicional.
+   Cuando el cliente soporta Artefactos, Cowork, Canvas o vista previa de código, crea y abre una vista HTML interactiva en ese mismo turno, sin exigir que la persona sepa pedir un mockup.
 3. Cuando la propuesta tiene forma, la IA pregunta si la persona quiere guardarla. Sólo una confirmación explícita permite ejecutar `yol1_save_project_draft`.
 4. El MCP guarda la propuesta estructurada y devuelve un enlace opaco para verla dentro de “Construir mi propio producto”; no copia la conversación completa.
 5. La propuesta sigue en estado borrador. Publicar, convertirla en pantalla real o llevarla a GitHub exige una decisión posterior y separada.
@@ -26,6 +27,7 @@ Permitir que un colaborador convierta una idea en una propuesta revisable sin da
 
 - YOL1 no entra, lee ni controla la cuenta de ChatGPT o Claude de una persona.
 - ChatGPT y Claude tienen menús y confirmaciones distintos; la guía mantiene pasos específicos por cliente y la acción de guardar se declara como escritura.
+- Los artefactos pertenecen a la cuenta y al chat donde se generan. No viajan dentro del MCP ni aparecen automáticamente en la cuenta de otro colaborador; el contexto compartido permite regenerarlos con el mismo estándar.
 - No se comparten credenciales, API keys, conversaciones privadas ni repositorios privados.
 - Enviar un proyecto no crea una rama, no publica una pantalla y no activa un producto.
 - GitHub versiona el código, el contexto público y las decisiones aprobadas; no convierte por sí solo el MCP en una integración utilizable.

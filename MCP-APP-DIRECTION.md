@@ -11,6 +11,8 @@
 4. Chat y canvas trabajan juntos: las preguntas refinan el producto y la vista refleja sólo los cambios que la persona decide incorporar.
 5. Guardar crea un borrador revisable. Publicar, editar el core o crear una rama siguen siendo acciones separadas.
 
+Los artefactos generados pertenecen a la cuenta y al chat del colaborador. No se distribuyen dentro del MCP. La conexión distribuye el contexto, el contrato visual y la pauta para que cada persona obtenga una vista equivalente en su propio cliente compatible.
+
 El host decide el tamaño exacto del panel. YOL1 debe diseñar una vista responsive que funcione inline y expandida; no promete forzar literalmente media pantalla.
 
 ## Una sola fuente visual

@@ -15,8 +15,8 @@ const PROTOCOL_VERSION = "2025-03-26";
 const MAX_IDEA_LENGTH = 1_200;
 const PROJECT_ID = /^prj_[a-f0-9]{32}$/;
 const LAB_VIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
-const CONTEXT_VERSION = "yol1-lab-context/0.3";
-const SERVER_VERSION = "0.4.0";
+const CONTEXT_VERSION = "yol1-lab-context/0.4";
+const SERVER_VERSION = "0.5.0";
 const SCHEMA_VERSION = "project-draft/0.2";
 const UI_VERSION = "lab-web/0.3";
 
@@ -98,9 +98,44 @@ function assistantExperienceContract() {
     first_turn: "understand_plain_language_and_show_a_first_candidate",
     question_policy: "infer_safe_assumptions; ask at most one question only after showing useful progress",
     visible_answer: ["outcome", "prototype_or_screen_flow", "important_assumptions", "single_next_decision"],
+    default_deliverable: "create_and_open_one_interactive_product_artifact_when_the_host_supports_it",
+    artifact_fallback: "deliver_the_same_proposal_in_chat_and_offer_one_self_contained_html_file",
     never_show: ["tool_catalog_diagnostics", "version_checks", "internal_editing_trace", "chain_of_thought", "event_ids_inside_product_ui"],
     never_claim: ["background_work", "automatic_sync", "publication_without_confirmation", "unverified_financial_capability"],
   };
+}
+
+function artifactExperienceManifest() {
+  return {
+    owner: "the_artifact_belongs_to_the_users_claude_or_chatgpt_session_not_to_the_mcp",
+    availability: "host_capability_dependent",
+    default_when_supported: "create_and_open_in_the_same_turn",
+    ask_before_creating: false,
+    one_artifact_per_iteration: true,
+    preferred_format: "self_contained_interactive_html",
+    responsive_modes: ["inline_half_panel", "expanded_panel", "downloaded_browser_view"],
+    fallback: "complete_screen_flow_in_chat_plus_self_contained_html_when_file_creation_is_available",
+    required_sections: ["product_view", "five_to_seven_states", "assumptions", "single_next_decision"],
+    quality_gate: [
+      "exact_yol1_tokens_assets_shell_and_navigation",
+      "real_interactive_controls",
+      "no_third_party_brand_inside_yol1_ui_without_user_reference",
+      "no_unverified_financial_outcome_or_benefit_presented_as_real",
+      "uncertainty_visible_at_the_claim_or_action_not_only_in_a_footer",
+    ],
+  };
+}
+
+function artifactContractText() {
+  return `## Entrega visual por defecto
+- Si el cliente ofrece Artefactos, Cowork, Canvas o vista previa de código, crea y abre en este mismo turno un único artefacto HTML interactivo. No esperes a que la persona diga “haz un mockup” y no preguntes si quiere verlo antes de mostrar una primera versión.
+- El artefacto vive en la cuenta y el chat de esa persona. El MCP no instala ni comparte automáticamente artefactos anteriores. Cada colaborador genera su propia vista con el mismo contexto YOL1; sólo un guardado explícito crea un borrador compartido en el Lab.
+- Si el cliente no permite artefactos, entrega el mismo flujo completo en el chat y, cuando pueda crear archivos, ofrece un HTML autocontenido descargable. No presentes la falta de canvas como un error ni pidas configuración técnica.
+- Diseña para panel lateral de media pantalla y para vista expandida: tablero responsive, lectura clara y mockups móviles de 430px que puedan desplazarse sin cortarse.
+- Usa el wordmark e ícono YOL1 alojados por el Lab. No reemplaces el logo por texto y no introduzcas marcas de terceros dentro de la interfaz YOL1 salvo que la persona las haya entregado como referencia explícita.
+- Antes de mostrar el artefacto haz una revisión silenciosa. Debe fallar y corregirse si cambia la navegación canónica, usa colores aproximados, incluye controles decorativos, o presenta como real un pago, saldo, ahorro, descuento, comercio, mapa, automatización o beneficio no confirmado.
+- Un disclaimer general al pie no corrige una afirmación engañosa dentro de una pantalla. La etiqueta “Ejemplo” o “Por validar” debe aparecer junto al dato, beneficio o acción correspondiente; usa “Simular” en lugar de “Pagar”, “Activar” o “Confirmar” cuando la capability no esté aprobada.
+- La respuesta visible resume el valor y deja una sola decisión. No narres la construcción del HTML, no muestres trazas y no pidas al usuario que descargue recursos de diseño.`;
 }
 
 function contextText() {
@@ -108,7 +143,7 @@ function contextText() {
 }
 
 function deliveryContractText() {
-  return `# Contrato de entrega YOL1 · ${CONTEXT_VERSION}\n\nTrabaja en este orden, aunque la persona sólo haya escrito una frase:\n1. Muestra una primera propuesta: problema, usuario y momento; lo faltante se marca como supuesto, no como bloqueo.\n2. Presenta el flujo de 5–7 pantallas con contenido, CTA y estados vacío/carga/error. Si produces HTML, debe ser interactivo y usar los tokens, shell, assets y navegación exactos del contexto.\n3. Para una acción material agrega revisión previa y recuperación ante resultado incierto o reintento.\n4. Después del producto, separa la ficha técnica: datos, eventos, arquitectura, dependencias, gates, Error capa 8 y fuera de alcance.\n5. Cierra con una sola decisión sencilla que permita mejorar la siguiente versión.\n\nLa respuesta visible debe hablar de la idea, no del funcionamiento interno del MCP. No muestres trazas de edición, nombres de herramientas, diagnósticos de versión ni eventos dentro de la interfaz. Nunca afirmes que una integración, pago, crédito, KYC, banco, licencia o partner está disponible sin evidencia explícita.`;
+  return `# Contrato de entrega YOL1 · ${CONTEXT_VERSION}\n\nTrabaja en este orden, aunque la persona sólo haya escrito una frase:\n1. Muestra una primera propuesta: problema, usuario y momento; lo faltante se marca como supuesto, no como bloqueo.\n2. Presenta el flujo de 5–7 pantallas con contenido, CTA y estados vacío/carga/error. Si produces HTML, debe ser interactivo y usar los tokens, shell, assets y navegación exactos del contexto.\n3. Para una acción material agrega revisión previa y recuperación ante resultado incierto o reintento.\n4. Después del producto, separa la ficha técnica: datos, eventos, arquitectura, dependencias, gates, Error capa 8 y fuera de alcance.\n5. Si el host soporta artefactos, crea y abre una vista HTML interactiva en este mismo turno; si no, entrega el flujo completo y un HTML autocontenido cuando sea posible.\n6. Cierra con una sola decisión sencilla que permita mejorar la siguiente versión.\n\nLa respuesta visible debe hablar de la idea, no del funcionamiento interno del MCP. No muestres trazas de edición, nombres de herramientas, diagnósticos de versión ni eventos dentro de la interfaz. Nunca afirmes que una integración, pago, crédito, KYC, banco, licencia o partner está disponible sin evidencia explícita.\n\n${artifactContractText()}`;
 }
 
 function projectBrief(idea: string) {
@@ -128,6 +163,7 @@ function bootstrapMetadata() {
     saving: "optional_and_requires_explicit_confirmation",
     design_system: designSystemManifest(),
     assistant_experience: assistantExperienceContract(),
+    artifact_experience: artifactExperienceManifest(),
   };
 }
 
@@ -204,7 +240,7 @@ function labViewLink() {
 }
 
 function startBuilderText() {
-  return `# YOL1 está listo\n\n[Abre la vista del Lab cuando quieras](${LAB_VIEW_URL}/?product=builder)\n\nCuéntame qué quieres crear o mejorar con tus propias palabras. No necesitas preparar un brief ni conocer herramientas: te mostraré una primera propuesta y te haré preguntas simples sólo cuando ayuden a decidir.\n\n## Instrucciones vigentes para el asistente\n- Ejecuta este recorrido en silencio: no expliques herramientas, versiones, catálogos ni contratos a la persona.\n- Continúa aunque el cliente sólo muestre las herramientas originales de YOL1. No pidas reconectar, renombrar el conector ni hacer un diagnóstico técnico.\n- Si la persona ya entregó una idea, muestra una primera propuesta antes de preguntar. Infiere lo seguro como supuesto y formula como máximo una pregunta al final.\n- No muestres trazas como “Now update…”, razonamiento interno, pasos de edición ni promesas de trabajo en segundo plano.\n- Si guardar está disponible, úsalo sólo después de confirmación explícita. Si no está disponible, entrega el brief en el chat sin afirmar que fue guardado.\n- Nunca prometas publicación, sincronización automática ni capacidades financieras sin evidencia.\n\n${contextText()}\n\n${deliveryContractText()}`;
+  return `# YOL1 está listo\n\n[Abre la vista del Lab cuando quieras](${LAB_VIEW_URL}/?product=builder)\n\nCuéntame qué quieres crear o mejorar con tus propias palabras. No necesitas preparar un brief ni conocer herramientas: te mostraré una primera propuesta y te haré preguntas simples sólo cuando ayuden a decidir.\n\n## Instrucciones vigentes para el asistente\n- Ejecuta este recorrido en silencio: no expliques herramientas, versiones, catálogos ni contratos a la persona.\n- Continúa aunque el cliente sólo muestre las herramientas originales de YOL1. No pidas reconectar, renombrar el conector ni hacer un diagnóstico técnico.\n- Si la persona ya entregó una idea, muestra una primera propuesta antes de preguntar. Infiere lo seguro como supuesto y formula como máximo una pregunta al final.\n- Si el cliente soporta Artefactos, Cowork, Canvas o vista previa de código, crea y abre el prototipo interactivo en el mismo turno. No obligues a la persona a pedir HTML, mockup o artefacto.\n- No muestres trazas como “Now update…”, razonamiento interno, pasos de edición ni promesas de trabajo en segundo plano.\n- Si guardar está disponible, úsalo sólo después de confirmación explícita. Si no está disponible, entrega el brief en el chat sin afirmar que fue guardado.\n- Nunca prometas publicación, sincronización automática ni capacidades financieras sin evidencia.\n\n${contextText()}\n\n${deliveryContractText()}`;
 }
 
 export async function OPTIONS() {
@@ -242,7 +278,7 @@ export async function POST(request: Request) {
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
       serverInfo: { name: "yol1-product-growth-lab", version: SERVER_VERSION },
-      instructions: "YOL1 está diseñado para personas no técnicas. Ante una idea de producto, llama en silencio a yol1_start_builder y muestra primero una propuesta útil; no menciones MCP, herramientas, versiones ni catálogos. Infiere detalles seguros como supuestos y pregunta como máximo una decisión después de mostrar progreso. Usa literalmente el sistema visual incluido. Guarda sólo después de una petición explícita; nunca asumas publicación, sincronización ni capacidades financieras reales.",
+      instructions: "YOL1 está diseñado para personas no técnicas. Ante una idea de producto, llama en silencio a yol1_start_builder y muestra primero una propuesta útil. Cuando el host soporte Artefactos, Cowork, Canvas o vista previa de código, crea y abre en el mismo turno un prototipo HTML interactivo; no esperes que la persona pida un mockup. No menciones MCP, herramientas, versiones ni catálogos. Infiere detalles seguros como supuestos y pregunta como máximo una decisión después de mostrar progreso. Usa literalmente el sistema visual incluido. Guarda sólo después de una petición explícita; nunca asumas publicación, sincronización ni capacidades financieras reales.",
     });
   }
 

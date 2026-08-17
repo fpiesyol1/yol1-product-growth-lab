@@ -65,7 +65,7 @@ const initialDraft: CollectDraft = {
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const YOL1_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
 const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL?.trim() || `${YOL1_SITE_URL}/api/mcp`;
-const BUILDER_START_MESSAGE = `Quiero crear o mejorar este producto en YOL1: [escribe aquí tu idea]. Guíame con preguntas simples y muéstrame una primera propuesta con el look & feel vigente. Puedo enviarte fotos, links o dibujos como referencia.`;
+const BUILDER_START_MESSAGE = `Quiero crear o mejorar este producto en YOL1: [escribe aquí tu idea]. Guíame con preguntas simples y muéstrame una primera propuesta visual interactiva ahora, con el look & feel vigente. Usa supuestos explícitos y hazme sólo una pregunta simple al final.`;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
