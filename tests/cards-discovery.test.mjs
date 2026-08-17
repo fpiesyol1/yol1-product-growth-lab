@@ -5,13 +5,13 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 const source = (path) => readFile(new URL(path, root), "utf8");
 
-test("Tarjetas conserva estado en investigación y no muestra un flujo no publicado", async () => {
+test("Tarjetas conserva estado en investigación y no muestra un flujo explorable", async () => {
   const page = await source("app/page.tsx");
   const portfolio = await source("lib/product-portfolio.ts");
-  assert.match(portfolio, /id: "cards"[\s\S]*published: false/);
+  assert.match(portfolio, /id: "cards"[\s\S]*explorable: false/);
   assert.doesNotMatch(page, /productId === "cards" && <CardsDiscovery/);
-  assert.match(page, /<UnpublishedStage product=\{activeProduct\}/);
-  assert.match(page, /activeProduct\.published && <ProductSpecification/);
+  assert.match(page, /<ResearchStage product=\{activeProduct\}/);
+  assert.doesNotMatch(page, /ProductSpecification|living-spec/);
 });
 
 test("ficha y trazabilidad mantienen QR NFC wallet y partners como gates", async () => {
@@ -19,6 +19,7 @@ test("ficha y trazabilidad mantienen QR NFC wallet y partners como gates", async
   const direction = await source("DIRECCION-PRODUCTOS-FELIPE.md");
   const research = await source("RESEARCH-TARJETAS-YOL1-2026-08-14.md");
   const prd = await source("PRD-TARJETAS-YOL1.md");
+  const checkpoint = await source("CHECKPOINT-TARJETAS-PASADA-1.md");
   assert.match(portfolio, /cards_home_viewed/);
   assert.match(portfolio, /Nunca PAN, CVV, PIN, OTP/);
   assert.match(portfolio, /Emisor\/processor\/rail · sin selección ni conexión/);
@@ -28,8 +29,13 @@ test("ficha y trazabilidad mantienen QR NFC wallet y partners como gates", async
   assert.match(research, /NFC propio/);
   assert.match(research, /Tarjeta compartida/);
   assert.match(research, /Tarjeta corporativa/);
-  assert.match(research, /`published: false`/);
+  assert.match(research, /`explorable: false`/);
+  assert.doesNotMatch(research, /`published: false`|ficha interna/);
   assert.match(research, /En investigación · Borrador local/);
   assert.doesNotMatch(research, /\*\*NO PUBLICADO\*\*/);
+  assert.match(prd, /\*\*Estado:\*\* discovery\/prototipo interno, en investigación/);
+  assert.doesNotMatch(prd, /\*\*Estado:\*\*[^\n]*no publicado/);
   assert.match(prd, /QR\/NFC\/wallet\/compartida\/corporativa se mantienen fuera/);
+  assert.match(checkpoint, /`explorable: false` y `En investigación`/);
+  assert.doesNotMatch(checkpoint, /`published: false`|no publicado/i);
 });

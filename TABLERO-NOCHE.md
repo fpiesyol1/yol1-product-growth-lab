@@ -17,9 +17,9 @@ En cada pasada se debe registrar:
 | Producto | Esta noche | Entregable local | Estado |
 |---|---|---|---|
 | Onboarding + KYC | Convertir valor antes de datos en un flujo guiado y validar errores/gates. | `PRD-ONBOARDING-KYC-PROGRESIVO.md` + pantallas locales | En construcción |
-| Acompañante financiero | Mejorar hábito: cartola + cobrar/pagar + señales explicables. | QA de recorridos y Ficha de producto | Iteración continua |
+| Acompañante financiero | Mejorar hábito: cartola + cobrar/pagar + señales explicables. | QA de recorridos y especificación interna | Iteración continua |
 | Home Banking | Discovery de una home contextual/agéntica, no góndola de productos. | Hipótesis, métricas y contrato de datos antes de prototipo | Discovery |
-| Tarjetas | Ecosistema de intención: elegir, ver datos, movimiento/alerta y beneficio; QR/NFC/wallet/compartida/corporativa sólo como hipótesis. | Research + PRD + borrador local no publicado + QA/handoff | Pasada 1 lista para checkpoint · build y 39/39 tests PASS |
+| Tarjetas | Ecosistema de intención: elegir, ver datos, movimiento/alerta y beneficio; QR/NFC/wallet/compartida/corporativa sólo como hipótesis. | Research + PRD + borrador local en investigación + QA/handoff | Pasada 1 lista para checkpoint · build y 39/39 tests PASS |
 | Remesas | No prototipar ni investigar en este ciclo. | Sin cambios | Pausado |
 | Construir mi propio producto | Journey ChatGPT/Claude propio; MCP sólo con compatibilidad/URL validadas; incorporación manual y envío editorial local reversible. | `BUILDER-FLOW-MAP.md` + `BUILDER-OUTPUT-CONTRACT.md` + QA 01/02/03 + prompt v0.2 | Pasada canónica 03 · PASS local |
 | Reviews | Separar feedback, decisiones y hallazgos IA; Kanban editorial. | QA de persistencia, estados y trazabilidad | En construcción |

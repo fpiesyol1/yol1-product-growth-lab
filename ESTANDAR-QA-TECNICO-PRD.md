@@ -1,6 +1,6 @@
 # Estándar QA técnico / PRD — YOL1
 
-**Propósito.** Convertir la Ficha de producto del Lab en un insumo útil para ingeniería, datos, producto y Legal, sin confundir hipótesis con decisiones. Aplica a los productos publicados y a cualquier propuesta que pase a revisión.
+**Propósito.** Convertir la especificación interna de producto del Lab en un insumo útil para ingeniería, datos, producto y Legal, sin confundir hipótesis con decisiones. Aplica a las experiencias implementadas y a cualquier propuesta que pase a revisión; no implica publicación operativa ni exposición de la especificación al público.
 
 **Fuente prioritaria.** Decisión verbal de Felipe → decisiones aprobadas → material de proyecto/Notion → referencias externas. Este documento no reemplaza una definición legal, de seguridad ni de proveedor.
 
@@ -8,10 +8,10 @@
 
 ### Hecho en el repositorio
 
-- El Lab ya expone una Ficha por pantalla con evento, metadatos, arquitectura, datos, KYC, licencias, preguntas y riesgos (`lib/product-portfolio.ts`).
+- El Lab conserva una especificación interna por pantalla con evento, metadatos, arquitectura, datos, KYC, licencias, preguntas y riesgos (`lib/product-portfolio.ts`); no la renderiza en la experiencia pública.
 - La base declarada por el equipo es **React Native + AWS**; Onboarding nombra Cognito, API Gateway, Lambda, DynamoDB y una capa CDP aún por definir.
 - El prototipo no instrumenta analytics productivo ni conecta bancos, pagos ni KYC real.
-- La ficha actual mezcla tres niveles: decisión tomada, candidato técnico y pendiente regulatorio. Hay que separarlos para que un ingeniero no interprete una hipótesis como un requerimiento cerrado.
+- La especificación interna actual mezcla tres niveles: decisión tomada, candidato técnico y pendiente regulatorio. Hay que separarlos para que un ingeniero no interprete una hipótesis como un requerimiento cerrado.
 
 ### Riesgo principal
 
@@ -192,7 +192,7 @@ La CMF y el marco aplicable deben revisarse con fuentes primarias y asesoría co
 ### P0 — antes de pantalla funcional con datos reales
 
 - Definir `analytics/track-plan.md` con 5–10 eventos de valor, propiedades comunes, dueño y versionado.
-- Separar en la Ficha actual: **Decidido**, **Candidato**, **Por validar** y **Fuera de alcance**.
+- Separar en la especificación interna actual: **Decidido**, **Candidato**, **Por validar** y **Fuera de alcance**.
 - Agregar por pantalla: fuente de verdad, dato derivado, clasificación de sensibilidad y contrato de error.
 - Bloquear cualquier analytics de RUT, OTP, biometría, datos de tarjeta, cartola cruda o chat sin revisión explícita.
 

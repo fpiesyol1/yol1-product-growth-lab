@@ -4,7 +4,7 @@ Este ciclo evita revisar solo si “se ve bien”. Cada iteración se evalúa de
 
 ## 1. Ingeniería / PRD
 
-Por cada pantalla publicada, verificar:
+Por cada pantalla implementada o propuesta que pase a revisión, verificar:
 
 - Evento corto y estable (`objeto_accion`), con metadata separada: `event_id`, `event_at`, `anonymous_id` o `user_id` interno, `session_id`, `product_key`, `screen_key`, `action_key`, `platform`, `app_version`, `schema_version`, `source`, `consent_analytics` y `correlation_id` cuando aplique.
 - Qué se guarda, qué se consulta y de qué fuente proviene cada dato.
@@ -12,7 +12,7 @@ Por cada pantalla publicada, verificar:
 - Estados de error, reintento, consentimiento, privacidad y ruta humana cuando corresponda.
 - KYC y licencias como `No aplica`, `Por validar` o `Requerido`; nunca como conclusión legal automática.
 
-Salida: actualización de Ficha de producto, PRD o una pregunta abierta concreta para Ingeniería/Legal.
+Salida: actualización de la especificación interna, PRD o una pregunta abierta concreta para Ingeniería/Legal.
 
 ## 2. Producto / GTM
 
@@ -51,4 +51,4 @@ Salida: hallazgo P0/P1/P2 con pantalla, recorrido y corrección propuesta.
 
 - **P0:** Onboarding entrega exploración antes de pedir identidad; Review nunca dice “compartido” si la base no está conectada; Builder no promete sincronizar chats externos ni crear pantallas automáticamente.
 - **P1:** profundizar Home Banking y Tarjetas con investigación y propuesta antes de prototipar; completar contratos de datos y errores por pantalla.
-- **P2:** Remesas queda en investigación; ampliar conocimiento conversacional solo con preguntas y respuestas aprobadas.
+- **P2:** Remesas queda fuera de alcance hasta nueva instrucción; ampliar conocimiento conversacional solo con preguntas y respuestas aprobadas.

@@ -7,7 +7,7 @@ export type ProductDefinition = {
   shortLabel: string;
   name: string;
   icon: string;
-  published: boolean;
+  explorable: boolean;
   description: string;
 };
 
@@ -22,12 +22,12 @@ export type LivingSpec = {
 };
 
 export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
-  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", published: true, description: "Explora primero. Cada acción explica su gate; KYC nunca habilita una capacidad por sí solo." },
-  { id: "companion", shortLabel: "Acompañante", name: "Acompañante financiero", icon: "✦", published: true, description: "El prototipo activo del Lab: finanzas, cobrar y pagar, ahorrar, ganar más lucas y Mi banco." },
-  { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", published: false, description: "Espacio reservado. No representa banca construida ni disponible." },
-  { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", published: false, description: "Espacio reservado. No hay emisión, procesamiento ni producto publicado." },
-  { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", published: false, description: "Pausado por decisión de producto. Remesas no se trabaja ni se investiga en este ciclo." },
-  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", published: true, description: "Trabaja una idea en ChatGPT o Claude, ordénala con el contexto de YOL1 y envíala a revisión cuando esté lista." },
+  { id: "kyc", shortLabel: "Onboarding + KYC", name: "Onboarding y KYC progresivo", icon: "◎", explorable: true, description: "Explora primero. Cada acción explica su gate; KYC nunca habilita una capacidad por sí solo." },
+  { id: "companion", shortLabel: "Acompañante", name: "Acompañante financiero", icon: "✦", explorable: true, description: "El prototipo activo del Lab: finanzas, cobrar y pagar, ahorrar, ganar más lucas y Mi banco." },
+  { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", explorable: false, description: "Espacio reservado. No representa banca construida ni disponible." },
+  { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", explorable: false, description: "Espacio reservado. No hay emisión, procesamiento ni capacidad operativa." },
+  { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", explorable: false, description: "Pausado por decisión de producto. Remesas no se trabaja ni se investiga en este ciclo." },
+  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", explorable: true, description: "Trabaja una idea en ChatGPT o Claude, ordénala con el contexto de YOL1 y envíala a revisión cuando esté lista." },
 ];
 
 export const EMPTY_STATE_LIBRARY = [
@@ -98,7 +98,7 @@ const companionSpecs: Record<string, LivingSpec> = {
   ganar: {
     event: "earn_viewed",
     architecture: ["Placeholder editorial local"],
-    data: { store: ["Sin datos funcionales"], query: ["No aplica"], sources: ["No aplica"], handling: "No hay flujo publicado." },
+    data: { store: ["Sin datos funcionales"], query: ["No aplica"], sources: ["No aplica"], handling: "No hay flujo disponible." },
     kyc: { state: "Por validar", reason: "No hay flujo diseñado; no corresponde inferir requisitos." },
     licenses: { state: "Por validar", reason: "Pendiente definición del producto y revisión documental." },
     questions: ["¿Qué problema cotidiano debería resolver antes de diseñar un flujo?"],
@@ -129,7 +129,7 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
   if (product.id === "builder") return {
     event: "builder_viewed",
     architecture: ["React Native · experiencia futura para colaboradores", "Paquete de contexto versionado · diseño, producto y límites", "MCP remoto con OAuth · etapa posterior, no conectado aún", "AWS · API de propuestas y revisión editorial (por validar)"],
-    data: { store: ["Borrador local de idea", "Resumen de propuesta enviado", "Versión del paquete de contexto"], query: ["Sistema visual y patrones aprobados", "Especificaciones de producto publicadas", "Estado de revisión de la propuesta"], sources: ["Paquete de contexto versionado", "Repositorio aprobado", "Envío explícito de la persona"], handling: "No conectar cuentas personales de IA ni leer conversaciones privadas. La persona decide qué pega y qué envía." },
+    data: { store: ["Borrador local de idea", "Resumen de propuesta enviado", "Versión del paquete de contexto"], query: ["Sistema visual y patrones aprobados", "Especificaciones de producto aprobadas", "Estado de revisión de la propuesta"], sources: ["Paquete de contexto versionado", "Repositorio aprobado", "Envío explícito de la persona"], handling: "No conectar cuentas personales de IA ni leer conversaciones privadas. La persona decide qué pega y qué envía." },
     kyc: { state: "No aplica", reason: "Crear una propuesta no identifica ni activa productos financieros." },
     licenses: { state: "No aplica", reason: "Es un espacio editorial de ideación; cualquier producto resultante se evalúa por separado en Chile." },
     questions: ["¿Qué permisos y OAuth exigirá un MCP remoto antes de habilitarlo?", "¿Qué parte del contexto puede ser pública para colaboradores externos?"],
@@ -148,7 +148,7 @@ export function getLivingSpec(product: ProductDefinition, screen: string): Livin
     event: `${product.id}_portfolio_viewed`,
     architecture: ["Sin arquitectura aprobada", "React Native + AWS son candidatos, no decisiones"],
     data: { store: ["Sin datos aprobados"], query: ["No aplica"], sources: ["No aplica"], handling: "Solo contexto editorial del Lab." },
-    kyc: { state: "Por validar", reason: "No existe flujo publicado; Chile es la jurisdicción base." },
+    kyc: { state: "Por validar", reason: "No existe flujo disponible; Chile es la jurisdicción base." },
     licenses: { state: "Por validar", reason: "No se afirma requisito ni exención sin revisar la documentación vigente." },
     questions: ["¿Qué necesidad de usuario autoriza Felipe?", "¿Qué evidencia y fuente faltan antes de construir?"],
     risks: ["Construir una solución antes de entender el problema", "Confundir un espacio reservado con un producto disponible"],

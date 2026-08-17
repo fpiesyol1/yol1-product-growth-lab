@@ -7,7 +7,7 @@
 
 ### 1. Cerrar feedback de lo que ya existe
 
-- Recibir y ordenar los comentarios de las pantallas actuales, tanto local como la versión publicada.
+- Recibir y ordenar los comentarios de las pantallas actuales, tanto locales como de una versión de prueba por link aprobada por Felipe.
 - Separar cada comentario en: cambio visual, UX/flujo, copy, dato/arquitectura, o decisión abierta.
 - Aplicar solamente los cambios que Felipe autorice con “corre”.
 - Validar recorridos relevantes en escritorio y móvil antes de pasar al siguiente bloque.
@@ -68,10 +68,7 @@ El QA reporta hallazgos priorizados. No cambia código ni publica por su cuenta.
 
 ### Remesas
 
-1. ¿Quién envía, a qué destinos y en qué situación partimos?
-2. ¿Qué dolor atacamos primero: costo, rapidez, claridad o confianza?
-3. ¿Qué debe poder entender la persona antes de cotizar o enviar?
-4. ¿Qué partner, licencia o validación es imprescindible antes de construir un flujo real?
+Fuera de alcance: no abrir preguntas, research, diseño ni prototipos hasta una nueva instrucción explícita de Felipe.
 
 ### Construir mi propio producto
 

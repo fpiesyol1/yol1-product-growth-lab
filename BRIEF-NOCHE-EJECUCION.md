@@ -26,7 +26,7 @@
 
 - Hacer investigación profunda de onboarding en Revolut, Monzo y referentes actuales.
 - Cruzar con material local de Notion/proyectos, KYC progresivo y contexto Chile.
-- Diseñar flujo simple, guiado, con acceso gradual y desbloqueo incremental según KYC, licencias y producto.
+- Diseñar un flujo simple y guiado, con acceso gradual gobernado por una capacidad aprobada. KYC y licencias pueden ser requisitos, pero no desbloquean nada por sí solos: también se necesitan vehículo, contrato, controles y operación aprobados.
 - No asumir regulación: marcar como “por validar” lo que no esté respaldado.
 
 ## 4. Home Banking
@@ -45,8 +45,8 @@
 
 ## 6. Remesas
 
-- Solo investigación y definición por ahora.
-- No crear prototipo ni pantallas en este ciclo.
+- Fuera de alcance hasta nueva instrucción de Felipe.
+- No investigar, definir, diseñar ni prototipar en este ciclo.
 
 ## 7. Construir mi propio producto
 
@@ -78,7 +78,7 @@
 
 ### Onboarding y KYC progresivo
 
-La persona recibe valor antes de identificarse: puede explorar, conversar con el asistente y entender cómo conectaría banco o cartola. Se solicita teléfono/email con OTP y se completa información solo cuando quiere **activar una acción material**, por ejemplo transferir o recibir dinero. KYC es una progresión que desbloquea capacidades; no una barrera de entrada.
+La persona recibe valor antes de identificarse: puede explorar, conversar con el asistente y entender cómo conectaría banco o cartola. Se solicita teléfono/email con OTP y se completa información solo cuando quiere **preparar una acción material**, por ejemplo transferir o recibir dinero. KYC puede ser un requisito progresivo de una capacidad aprobada, pero nunca la habilita por sí solo: también requiere vehículo, contrato, controles y operación aprobados.
 
 ### Acompañante financiero
 
@@ -105,7 +105,7 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 ### P0 — ya incorporado o en ejecución local
 
 - **Onboarding:** valor exploratorio antes de teléfono/email y OTP; el pre-registro aparece al intentar activar una capacidad. Falta aún diseñar los estados de error, timeout, revisión y salida a Customer Success para una versión operativa.
-- **Reviews:** se separan feedback de personas, decisiones de fuentes y hallazgos IA; los estados editoriales pasan a Nuevo, En revisión, Guardar para después, Convertido e Ignorado. La bandeja debe decir siempre si está compartida o solo local.
+- **Reviews:** se separan feedback de personas, decisiones de fuentes y hallazgos IA; los estados editoriales pasan a Nuevo, En revisión, Guardar para después, Resuelto e Ignorado. El destino `mejora / guía Markdown / proyecto` sigue siendo una decisión aparte. La bandeja debe decir siempre si está compartida o solo local.
 - **Builder:** el MCP actual entrega contexto y briefs; no sincroniza pantallas ni lee conversaciones. El copy debe prometer guía y envío a revisión, nunca materialización automática.
 - **Datos sensibles:** OTP, RUT, serie, biometría, PAN/CVV, credenciales y texto financiero o conversacional crudo no entran a analytics.
 
@@ -224,6 +224,37 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 ### Preguntas abiertas / decisiones requeridas, actualizadas
 
 1. **Tarjetas:** decidir si el borrador navegable en investigación sigue accesible desde el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+### Registro posterior de revisión — 15 de agosto de 2026, 01:42 CLT
+
+**Alcance ejecutado:** pasada incremental de QA de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 00:18; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva valor antes de identidad, acción material y explicación antes del OTP, y separación entre pre-registro, KYC y capacidad. Tarjetas y Home Banking siguen sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental acotado: `TABLERO-NOCHE.md`, una fuente activa de coordinación, todavía describía el entregable de Tarjetas como `borrador local no publicado`, aunque la taxonomía vigente y el runtime ya usan `En investigación` y `explorable/research`.
+- El texto no se renderizaba en la experiencia pública ni modificaba disponibilidad, journeys o capacidades. Los informes QA históricos y sus referencias de época se conservaron intactos.
+
+### Mejoras locales reversibles aplicadas
+
+- El tablero nocturno describe ahora Tarjetas como `borrador local en investigación`, sin inferir publicación operativa.
+- El guardrail documental comprueba esa taxonomía y bloquea el regreso de `borrador local no publicado` en el tablero activo.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build quedó bloqueado por escritura de `.next`; pasó al repetir con permiso de escritura sobre el directorio solicitado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque la corrección sólo cambia coordinación documental y un guardrail; no modifica DOM renderizado, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
 2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
 3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
 4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
@@ -448,6 +479,1828 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 ### Preguntas abiertas / decisiones requeridas, sin cambio
 
 1. **Tarjetas:** decidir si el borrador navegable en investigación sigue accesible desde el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 23. Revisión nocturna incremental — 14 de agosto de 2026, 11:50 CLT
+
+**Alcance ejecutado:** pasada incremental sobre el estado consolidado posterior al cierre 10:50, cruzando brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Onboarding mantiene exploración antes de identidad, intención material y explicación antes del OTP, pre-registro separado de KYC/capacidad y fallbacks seguros. Tarjetas continúa como investigación y Builder no afirma sincronización externa.
+- Se detectó una regresión P0 de audiencia/confianza: la experiencia pública había vuelto a renderizar la ficha interna con eventos, arquitectura, fuentes, KYC, licencias, riesgos y preguntas, pese a la instrucción confirmada de conservar ese material fuera del recorrido público.
+- Los contratos técnicos siguen disponibles en `lib/product-portfolio.ts`, PRD e informes internos; la corrección no cambia capacidades, datos, decisiones de producto ni la taxonomía de estados.
+
+### Mejora local reversible aplicada
+
+- Se retiró `ProductSpecification` del runtime público junto con sus imports y estilos ya inalcanzables. Acompañante, Onboarding y Builder vuelven a mostrar sólo la experiencia, sus límites contextuales y Feedback.
+- Los guardrails de producto y Tarjetas ahora exigen que `ProductSpecification`, `living-spec` y los rótulos técnicos no reaparezcan en `app/page.tsx`, mientras mantienen la trazabilidad interna de eventos, fuentes, riesgos, KYC y licencias.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; rutas `/`, `/review`, `/review/knowledge`, `/api/chat`, `/api/feedback` y `/api/mcp` generadas.
+- Guardrails focalizados de producto/Tarjetas: **21/21 PASS**.
+- Suite completa: **71/71 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento focalizado no encontró `node` en el `PATH`; build y pruebas se ejecutaron correctamente con el runtime local explícito. No fue una falla del producto.
+- No se repitió QA visual de navegador: la corrección elimina una sección completa sin alterar los journeys internos del teléfono; la validación visual compartida sigue abierta junto con Postgres + token largo.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si el borrador navegable en investigación sigue accesible desde el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 24. Revisión nocturna incremental — 14 de agosto de 2026, 12:50 CLT
+
+**Alcance ejecutado:** pasada de regresión de producto/PRD, consistencia y flujos sobre el brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 11:50; se preservaron la corrección P0 y el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding mantiene valor antes de identidad, intención y explicación antes del OTP, pre-registro separado de KYC/capacidad y fallbacks seguros. Tarjetas continúa como investigación, Builder no afirma sincronización externa y la ficha técnica permanece fuera del runtime público.
+- Se encontraron dos P2 en fuentes activas: la síntesis del brief todavía llamaba `Convertido` al estado humano ya reemplazado por `Resuelto`, y `QA-CICLO-TRIPLE.md` mantenía Remesas “en investigación” pese a la decisión canónica de dejarla fuera de alcance sin investigarla ni prototiparla.
+- Los informes QA históricos se conservaron intactos: representan el estado observado en cada pasada y no se reescribieron para aparentar que las contradicciones nunca existieron.
+
+### Mejoras locales reversibles aplicadas
+
+- La síntesis del brief usa `Nuevo`, `En revisión`, `Guardar para después`, `Resuelto` e `Ignorado`, y declara el destino `mejora / guía Markdown / proyecto` como una decisión separada del estado.
+- La prioridad vigente del ciclo QA deja Remesas fuera de alcance hasta nueva instrucción de Felipe.
+- Se agregó un guardrail documental focalizado para bloquear el regreso de ambas contradicciones.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; rutas `/`, `/review`, `/review/knowledge`, `/api/chat`, `/api/feedback` y `/api/mcp` generadas.
+- Guardrails focalizados de producto/Tarjetas: **22/22 PASS**.
+- Suite completa: **72/72 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- No se repitió QA visual de navegador porque esta pasada sólo corrigió fuentes documentales y pruebas; no cambió runtime, layout ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si el borrador navegable en investigación sigue accesible desde el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 25. Revisión nocturna incremental — 14 de agosto de 2026, 13:56 CLT
+
+**Alcance ejecutado:** pasada de producto/PRD, consistencia y flujos sobre el brief, PRD de Onboarding/KYC, QA triple, informes QA, dirección canónica, implementación y guardrails. No hubo archivos de producto nuevos posteriores al cierre 12:50; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 de runtime. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, pre-registro separado de KYC/capacidad y fallbacks seguros. Tarjetas sigue como investigación, Remesas permanece fuera de alcance, Builder no afirma sincronización externa y la ficha técnica continúa fuera del recorrido público.
+- Se encontró un P2 documental en una fuente activa: la sección `Dirección de producto confirmada por Felipe` aún decía que KYC “desbloquea capacidades”, pese a que la regla canónica, el PRD y el runtime exigen además capacidad aprobada, vehículo, contrato, controles y operación.
+- Los informes QA históricos se conservaron intactos: documentan el estado de cada pasada y no se reescribieron para ocultar contradicciones anteriores.
+
+### Mejora local reversible aplicada
+
+- La síntesis confirmada de Onboarding ahora dice que el contacto/OTP prepara una acción material y que KYC puede ser un requisito progresivo, pero nunca habilita una capacidad por sí solo.
+- El guardrail documental exige esa causalidad y bloquea el regreso de la frase `KYC es una progresión que desbloquea capacidades` en la sección confirmada.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Guardrails focalizados de producto/Tarjetas: **22/22 PASS**.
+- Suite completa: **72/72 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer lanzamiento del build no encontró `node` en el `PATH` y el siguiente intento quedó limitado por escritura de `.next`; el build pasó con el runtime local explícito y permiso de escritura en el directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual de navegador porque esta pasada sólo cambió documentación y una prueba; no cambió runtime, layout ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si el borrador navegable en investigación sigue accesible desde el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 26. Revisión nocturna incremental — 14 de agosto de 2026, 14:57 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, dirección canónica, implementación y guardrails. No hubo archivos de producto posteriores al cierre 13:56; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, pre-registro separado de KYC/capacidad y fallbacks seguros. Tarjetas muestra sólo un estado de investigación sin flujo, Remesas permanece fuera de alcance, Builder no afirma sincronización externa y las fichas técnicas continúan fuera del recorrido público.
+- Se encontraron tres P2 en fuentes activas: el alcance inicial de Onboarding aún describía desbloqueo “según KYC, licencias y producto”; el alcance inicial de Remesas todavía permitía investigación y definición; y `PRODUCT-DESIGN.md` conservaba la diagonal decorativa, el “único producto publicado”, la ficha técnica pública y Feedback limitado a productos publicados.
+- Los informes QA históricos se conservaron intactos: documentan el estado observado en cada pasada y no se reescribieron para ocultar contradicciones anteriores.
+
+### Mejoras locales reversibles aplicadas
+
+- El alcance inicial de Onboarding usa ahora la misma causalidad que la dirección confirmada: una capacidad aprobada gobierna el acceso y KYC/licencias no habilitan nada por sí solos sin vehículo, contrato, controles y operación aprobados.
+- Remesas queda también fuera de investigación, definición, diseño y prototipo en la sección inicial del brief, hasta una nueva instrucción de Felipe.
+- El criterio de diseño elimina diagonales/triángulos al pie, usa la taxonomía pública `Para explorar` / `En investigación`, conserva las fichas y trazabilidad como material interno y mantiene Feedback disponible en todos los espacios.
+- El guardrail documental cubre estas reglas para bloquear su regresión.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Guardrails focalizados de producto/Tarjetas: **22/22 PASS**.
+- Suite completa: **72/72 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La shell inicial no exponía `node` en `PATH` y el sandbox bloqueó la escritura de `.next`; la misma suite pasó con el runtime local explícito y permiso de escritura sobre el directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual de navegador porque esta pasada sólo corrigió documentación y una prueba; no cambió runtime, layout ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, actualizadas
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo; el prototipo navegable no se renderiza hoy.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 27. Revisión nocturna incremental — 14 de agosto de 2026, 15:58 CLT
+
+**Alcance ejecutado:** revisión incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, dirección canónica, implementación y guardrails. No hubo archivos de producto posteriores al cierre 14:57; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva valor previo a identidad y separa OTP, pre-registro, KYC y capacidad; Tarjetas sigue como investigación sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews mantiene `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental en el registro vivo: la sección 26 había quedado insertada entre las secciones 15 y 16, rompiendo el orden cronológico y dificultando identificar el último cierre.
+- Los informes QA históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+
+### Mejora local reversible aplicada
+
+- La sección 26 se movió a su posición cronológica después de la 25, sin alterar su contenido.
+- Un guardrail comprueba que las secciones numeradas del brief permanezcan ordenadas y sin saltos.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build no encontró `node` en el `PATH`; pasó al repetir con el runtime local explícito. No fue una falla del producto.
+- No se repitió QA visual porque no cambió runtime, layout ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 28. Revisión nocturna incremental — 14 de agosto de 2026, 16:56 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 15:58; se preservaron los siete cambios locales existentes. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva valor previo a identidad y separa acción material, OTP, pre-registro, KYC y capacidad; Tarjetas continúa como investigación sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews mantiene `Resuelto` separado del destino editorial.
+- El cruce con los informes QA no mostró una regresión nueva en los recorridos cubiertos por guardrails. Los informes históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+
+### Mejora local reversible aplicada
+
+- No se modificó runtime, PRD ni contratos: no había un hallazgo nuevo que justificara cambiar producto. Se agregó únicamente este cierre trazable al brief.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El runtime Node no estaba expuesto en el `PATH`; la validación se ejecutó con el runtime local explícito. Next no pudo cargar SWC nativo por una incompatibilidad de firma del binario y usó correctamente su fallback WASM. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, layout ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 29. Revisión nocturna incremental — 14 de agosto de 2026, 17:57 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 16:56; se preservaron los siete cambios locales existentes. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva valor previo a identidad y separa acción material, OTP, pre-registro, KYC y capacidad; Tarjetas continúa como investigación sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews mantiene `Resuelto` separado del destino editorial.
+- El cruce con los informes QA y los guardrails no mostró una regresión nueva. Los informes históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+
+### Mejora local reversible aplicada
+
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto. Se agregó únicamente este cierre trazable al brief.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El runtime Node no estaba expuesto en el `PATH`; la validación se ejecutó con el runtime local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, layout ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 30. Revisión nocturna incremental — 14 de agosto de 2026, 18:58 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 17:57; se preservó el trabajo local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva valor previo a identidad y separa acción material, OTP, pre-registro, KYC y capacidad; Tarjetas continúa como investigación sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews mantiene `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental: el PRD aún llamaba “ficha pública” a una especificación que la dirección vigente mantiene interna, y un comentario CSS conservaba la taxonomía superada “un producto publicado / cinco no publicados”. El runtime ya respetaba la frontera de audiencia; el problema era de consistencia y mantenibilidad.
+- Los informes QA históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+
+### Mejoras locales reversibles aplicadas
+
+- El PRD ahora atribuye la regla crítica de KYC a la `especificación interna`, coherente con `PRODUCT-DESIGN.md` y con la ausencia del inspector técnico en la experiencia pública.
+- El comentario del selector describe una repisa editorial de prototipos `Para explorar` y espacios `En investigación`, sin inferir publicación operativa.
+- El guardrail documental comprueba que el PRD no vuelva a presentar esa especificación como una ficha pública; el nombre de la prueba canónica se alineó con la misma frontera.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La validación usó el runtime local explícito porque `node` no está expuesto en el `PATH`; no fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, layout, copy visible ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 31. Revisión nocturna incremental — 14 de agosto de 2026, 20:08 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, estándar técnico, tablero e implementación local. No hubo archivos de producto posteriores al cierre 18:58; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva valor previo a identidad y separa acción material, OTP, pre-registro, KYC y capacidad; Tarjetas continúa como investigación sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews mantiene `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental en fuentes activas de QA: `QA-CICLO-TRIPLE.md` seguía aplicando el control a “pantallas publicadas” y proponía actualizar una “Ficha de producto”, mientras `ESTANDAR-QA-TECNICO-PRD.md` afirmaba que el Lab exponía esa ficha y que el estándar aplicaba a productos publicados. Ese lenguaje contradecía la frontera vigente entre experiencia pública y especificación interna, aunque el runtime ya la respetaba.
+- Los informes QA históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+
+### Mejoras locales reversibles aplicadas
+
+- El ciclo QA ahora cubre cada pantalla implementada o propuesta en revisión y entrega una actualización de la especificación interna, PRD o pregunta concreta; ya no infiere publicación.
+- El estándar técnico declara que la especificación es interna, aplica a experiencias implementadas y no se renderiza en la experiencia pública. El tablero nocturno usa la misma denominación.
+- El guardrail documental bloquea el regreso de `pantalla publicada`, `productos publicados` o una ficha supuestamente expuesta en esas fuentes activas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Guardrails focalizados de producto: **21/21 PASS**.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build quedó bloqueado por escritura de `.next`; pasó al repetir con permiso de escritura sobre el directorio solicitado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque esta pasada sólo cambió documentación y una prueba; no cambió runtime, layout, copy visible ni navegación.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 32. Revisión nocturna incremental — 14 de agosto de 2026, 22:36 CLT
+
+**Alcance ejecutado:** pasada incremental de QA de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 20:08; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva exploración antes de identidad, intención y explicación antes del OTP, pre-registro separado de KYC/capacidad y fallbacks seguros. Tarjetas continúa sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews mantiene `Resuelto` separado del destino editorial.
+- Se confirmó un P2 de consistencia interna: la experiencia ya usaba `Para explorar / En investigación`, pero el modelo `ProductDefinition`, componentes, clases CSS y pruebas todavía usaban `published/unpublished`. El endpoint de feedback también decía validar un “producto publicado” aunque en realidad acepta cualquier producto conocido.
+- El hallazgo no cambia disponibilidad, audiencia, journeys ni capacidades; corrige lenguaje técnico que podía reintroducir la antigua equivalencia entre prototipo explorable y publicación operativa.
+
+### Mejoras locales reversibles aplicadas
+
+- `ProductDefinition.published` pasó a `explorable`; los mismos tres prototipos siguen explorables y los mismos tres espacios continúan en investigación.
+- `UnpublishedStage`, `UnpublishedProduct` y las clases `unpublished-*` pasaron a `ResearchStage`, `ResearchProduct` y `research-*`; el PRD usa también `app-research` para describir esa frontera de layout.
+- El copy interno de Tarjetas ya no habla de “producto publicado”, y el comentario del intake de feedback declara correctamente que valida un producto conocido. Los guardrails bloquean el regreso de la taxonomía booleana en runtime.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Guardrails focalizados de producto, Tarjetas y Onboarding: **26/26 PASS**.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La shell no exponía `node` en el `PATH` y el sandbox bloqueó inicialmente la escritura de `.next`; la validación pasó con el runtime local explícito y permiso de escritura sobre el directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque el cambio es semántico interno: no modifica DOM renderizado, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 33. Revisión nocturna incremental — 14 de agosto de 2026, 23:05 CLT
+
+**Alcance ejecutado:** revisión incremental de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. Se revisaron como trabajo local existente los cambios posteriores al cierre 20:08 y el cierre concurrente 22:36; no hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva valor antes de identidad, intención y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Tarjetas y Home Banking siguen sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- Se confirmó que la migración interna `published/unpublished` → `explorable/research`, documentada en la sección 32, quedó completa en modelo, UI, CSS, endpoint de feedback y guardrails. Los rastros restantes viven sólo en un informe histórico de Tarjetas y su prueba documental; no gobiernan el runtime.
+- No se agregó otra corrección de producto: el cambio existente es reversible, mantiene los mismos journeys y respeta la frontera entre prototipo explorable y disponibilidad operativa.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`. Next usó su fallback WASM por la firma del binario SWC nativo; no fue una falla del producto.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- No se repitió QA visual interactivo porque la migración no modifica DOM renderizado, copy visible, layout, navegación ni estado; los guardrails cubren selector, superficies de investigación y ausencia de ficha técnica pública.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 34. Revisión nocturna incremental — 15 de agosto de 2026, 00:18 CLT
+
+**Alcance ejecutado:** pasada incremental de QA de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 23:07; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva valor antes de identidad, acción material y explicación antes del OTP, y separación entre pre-registro, KYC y capacidad. Tarjetas y Home Banking siguen sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- Se detectó un P2 de consistencia interna posterior a la migración `published/unpublished` → `explorable/research`: dos comentarios CSS todavía comparaban estados de investigación con productos o experiencias “publicadas”; tres textos del contrato `LivingSpec` usaban `flujo publicado` o `especificaciones publicadas`; y un mensaje de prueba hablaba de fichas publicadas.
+- Los términos no se renderizan en la experiencia pública y no cambiaban journeys ni capacidades, pero podían reintroducir la equivalencia incorrecta entre prototipo explorable, especificación aprobada y publicación operativa. Los informes QA históricos se conservaron intactos.
+
+### Mejoras locales reversibles aplicadas
+
+- Los comentarios CSS ahora comparan estados de investigación con `prototipos explorables`.
+- Los contratos internos usan `flujo disponible` y `especificaciones de producto aprobadas`; el mensaje técnico usa `especificaciones internas`.
+- Los guardrails bloquean el regreso de `flujo publicado`, `especificaciones de producto publicadas`, `productos publicados` o `experiencias publicadas` en las fuentes activas afectadas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build quedó bloqueado por escritura de `.next`; pasó al repetir con permiso de escritura sobre el directorio solicitado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque la corrección sólo cambia terminología interna, comentarios y guardrails; no modifica DOM renderizado, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 35. Revisión nocturna incremental — 15 de agosto de 2026, 01:42 CLT
+
+**Cierre consolidado:** no hubo archivos de producto posteriores al cierre 00:18 ni apareció un P0/P1 nuevo. Se corrigió únicamente el P2 documental del tablero activo: Tarjetas pasó de `borrador local no publicado` a `borrador local en investigación`, con guardrail contra la regresión. El registro detallado de alcance, validación y preguntas abiertas quedó preservado más arriba en este brief.
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- Preguntas abiertas: Tarjetas en selector público o modo Equipo; primera capacidad operativa; owner/canal/SLA de Customer Success; Reviews Por tema y destino editorial; QA compartido con Postgres + token largo.
+
+## 36. Revisión nocturna incremental — 15 de agosto de 2026, 03:22 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 02:18 ni apareció un P0 o P1 nuevo. Se preservó el worktree local existente; no hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Onboarding mantiene valor antes de identidad, acción material y explicación antes del OTP, y separa pre-registro, KYC y capacidad. Tarjetas y Home Banking siguen sin flujo público; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental acotado posterior a la migración `published/unpublished` → `explorable/research`: el research activo de Tarjetas todavía exigía `published: false`, su PRD se declaraba `no publicado` y la prueba de trazabilidad fijaba la taxonomía anterior.
+- No cambió el runtime, la UI, las capacidades, los datos ni las decisiones de producto. El hallazgo podía reintroducir la equivalencia incorrecta entre estado de investigación y publicación operativa.
+
+### Mejoras locales reversibles aplicadas
+
+- `RESEARCH-TARJETAS-YOL1-2026-08-14.md` exige ahora `explorable: false` en la especificación interna y conserva el rótulo visible `En investigación · Borrador local`.
+- `PRD-TARJETAS-YOL1.md` declara su estado como `discovery/prototipo interno, en investigación`.
+- `tests/cards-discovery.test.mjs` cubre la taxonomía vigente y bloquea el regreso de `published: false`, `ficha interna` y `no publicado` en esas fuentes activas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- No se repitió QA visual interactivo porque la corrección sólo modifica documentación y guardrails; no cambia DOM, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 37. Revisión nocturna incremental — 15 de agosto de 2026, 04:38 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 03:23; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental acotado: `CHECKPOINT-TARJETAS-PASADA-1.md` todavía exigía `published: false`, aunque el modelo, el research, el PRD y la UI ya usan `explorable: false` y `En investigación`. El rastro podía reintroducir la equivalencia incorrecta entre estado de investigación y publicación operativa.
+- Las cinco decisiones abiertas se mantienen sin cambio.
+
+### Mejoras locales reversibles aplicadas
+
+- El checkpoint de Tarjetas ahora exige `explorable: false` y `En investigación`, sin cambiar capacidad, audiencia ni runtime.
+- El guardrail de Tarjetas incorpora el checkpoint y bloquea el regreso de `published: false` o `no publicado` en esa fuente activa.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Guardrails focalizados de producto y Tarjetas: **23/23 PASS**.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build quedó bloqueado por escritura de `.next`; pasó al repetir con permiso de escritura sobre el directorio solicitado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque la corrección sólo modifica documentación y guardrails; no cambia DOM, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 38. Revisión nocturna incremental — 15 de agosto de 2026, 05:24 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 04:41 antes de iniciar esta revisión; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 ni un P1 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental en una fuente activa: `PLAN-NOCHE-YOL1.md` todavía abría cuatro preguntas de investigación para Remesas, aunque `DIRECCION-PRODUCTOS-FELIPE.md`, este brief y `QA-CICLO-TRIPLE.md` ordenan no investigar, definir, diseñar ni prototipar ese producto hasta nueva instrucción.
+- El mismo plan llamaba `versión publicada` al entorno compartido del Lab. El texto podía reintroducir la equivalencia incorrecta entre un link de prueba y una publicación operativa.
+- Las cinco decisiones abiertas se mantienen sin cambio.
+
+### Mejoras locales reversibles aplicadas
+
+- El plan nocturno reemplaza las preguntas de Remesas por una única frontera explícita: no abrir preguntas, research, diseño ni prototipos hasta una nueva instrucción de Felipe.
+- La recepción de feedback distingue ahora pantallas locales de una `versión de prueba por link` aprobada por Felipe; no asume publicación operativa.
+- El guardrail de producto incorpora el plan activo y bloquea el regreso de las cuatro preguntas de Remesas y del rótulo ambiguo anterior.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Guardrails focalizados de producto y Tarjetas: **23/23 PASS**.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build no encontró `node` en el `PATH`; pasó al repetir con el runtime local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque la corrección sólo modifica coordinación documental y guardrails; no cambia DOM, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 39. Revisión nocturna incremental — 15 de agosto de 2026, 06:25 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 05:25; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los informes históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build quedó bloqueado por escritura de `.next`; pasó al repetir con permiso sobre el directorio solicitado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 40. Revisión nocturna incremental — 15 de agosto de 2026, 07:24 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 06:27; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los informes históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La carga automática del runtime local no respondió; se usó el runtime ya cacheado. El primer intento de build no encontró `node` en `PATH` y el segundo quedó bloqueado por escritura de `.next`; pasó con el runtime explícito y permiso sobre el directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 41. Revisión nocturna incremental — 15 de agosto de 2026, 08:42 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 07:26; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los informes históricos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La carga automática del runtime local no respondió; se usó el runtime cacheado. El primer intento de build quedó bloqueado por escritura de `.next`; pasó al repetir con permiso sobre el directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 42. Revisión nocturna incremental — 15 de agosto de 2026, 10:20 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 08:59; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Las menciones históricas de la taxonomía `published/unpublished` permanecen sólo en informes que registran el estado de sus pasadas; no se reescribieron para conservar trazabilidad.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La carga automática del runtime local no respondió; se usó el runtime cacheado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 43. Revisión nocturna incremental — 15 de agosto de 2026, 10:30 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 10:22; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La carga automática del runtime local no respondió; se usó el runtime cacheado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 44. Revisión nocturna incremental — 15 de agosto de 2026, 11:33 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 10:34; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La carga automática del runtime local no respondió; se usó el runtime cacheado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 45. Revisión nocturna incremental — 15 de agosto de 2026, 12:43 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 11:34; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer intento de build no encontró `node` en el `PATH`; pasó al repetir con el runtime local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 46. Revisión nocturna incremental — 15 de agosto de 2026, 14:30 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 12:45; sólo cambió este brief como parte del cierre anterior y se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0, P1 ni P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La carga automática del runtime local no respondió; se usó el runtime cacheado. El primer build fue bloqueado por escritura de `.next`; pasó al repetir con permiso sobre el directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 47. Revisión nocturna incremental — 15 de agosto de 2026, 14:38 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. El único cambio posterior al disparo anterior estaba en este brief; se preservó el resto del worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva de producto ni un P0/P1 de runtime. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- Se detectó un P2 documental en este registro: la sección 46 había quedado insertada entre las secciones 15 y 16, rompiendo el orden consecutivo que protege el guardrail del brief.
+- Las cinco decisiones abiertas siguen sin cambio; no se modificó runtime, PRD ni contratos.
+
+### Mejora local reversible aplicada
+
+- La sección 46 se movió completa al final del registro, después de la sección 45 y sin alterar su contenido. Este cierre queda como sección 47.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- La primera ejecución de la suite identificó el orden incorrecto: **72/73 PASS**. Después de mover la sección 46, la suite completa cerró en **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer build fue bloqueado por escritura de `.next`; pasó al repetir con permiso sobre el directorio solicitado. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 48. Revisión nocturna incremental — 15 de agosto de 2026, 15:42 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. Desde el cierre 14:42 no hubo cambios de producto, PRD o runtime; sólo estaba modificado este brief por el registro anterior. Se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El build se ejecutó con el runtime local explícito porque `node` no está expuesto en el `PATH` de la shell. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 49. Revisión nocturna incremental — 15 de agosto de 2026, 17:42 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo cambios de producto, PRD o runtime posteriores al cierre documentado de las 15:45; sólo este brief conservaba la actualización del registro anterior a las 15:48. Se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva intención material, explicación del gate y elección de canal antes del OTP demo; pre-registro, KYC y capacidad siguen separados. Home Banking y Tarjetas permanecen sin flujo explorable; Remesas sigue fuera de alcance; Builder no afirma sincronización externa; Reviews mantiene `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las menciones de `compartido` revisadas corresponden a gastos/datos o a la infraestructura de feedback, no a una promesa de disponibilidad del Review.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- Los primeros intentos de build no encontraron `node` en el `PATH` y no pudieron escribir `.next`; el build pasó con el runtime local explícito y permiso limitado al directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 50. Revisión nocturna incremental — 15 de agosto de 2026, 17:43 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo cambios de producto, PRD o runtime; durante el cierre apareció concurrentemente la sección 49 dentro del registro histórico. Se preservó íntegro el worktree local y ese bloque concurrente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva de producto ni un P0/P1 de runtime. Onboarding conserva exploración antes de identidad, acción material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce de los informes QA históricos con las fuentes activas, la implementación y los 73 guardrails no mostró una regresión nueva. Los hallazgos resueltos o supersedidos se conservaron intactos y las cinco decisiones abiertas siguen sin cambio.
+- El guardrail final detectó un P2 documental: la sección 49 concurrente había quedado entre las secciones 15 y 16 y duplicaba la numeración de este cierre.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Mejora local reversible aplicada
+
+- La sección 49 concurrente se movió completa después de la sección 48, sin alterar su contenido. Este cierre se renumeró como sección 50.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- El guardrail focalizado detectó primero el orden concurrente (**20/21 PASS**) y pasó después de consolidarlo (**21/21 PASS**).
+- `git diff --check`: **PASS**.
+- La carga automática del runtime quedó esperando y se detuvo; build y tests pasaron con el runtime local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 51. Revisión nocturna incremental — 15 de agosto de 2026, 18:40 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. No hubo archivos de producto posteriores al cierre 17:46; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El build se ejecutó con el runtime local explícito porque `node` no está expuesto en el `PATH` de la shell. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 52. Revisión nocturna incremental — 15 de agosto de 2026, 19:42 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. Desde el cierre 18:41 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El build se ejecutó con el runtime local explícito porque `node` no está expuesto en el `PATH` de la shell. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 53. Revisión nocturna incremental — 15 de agosto de 2026, 20:46 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. Desde el cierre 19:48 no hubo cambios de producto, PRD o runtime; sólo cambió metadata de Git y se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Los primeros intentos de build no encontraron `node` en el `PATH` y no pudieron escribir `.next`; el build pasó con el runtime local explícito y permiso limitado al directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 54. Revisión nocturna incremental — 15 de agosto de 2026, 21:45 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. Desde el cierre 20:49 no hubo cambios de producto, PRD o runtime; sólo cambió `.git/FETCH_HEAD`. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. La mención `Versión oficial publicada` de `PLAN-DE-TRABAJO.md` describe el estado final del proceso de aprobación y no el estado de explorabilidad de un producto, por lo que no contradice la taxonomía activa.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- La carga automática del runtime no respondió y se detuvo. El primer build no encontró `node` en el `PATH`; pasó al repetir con el runtime local explícito. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 55. Revisión nocturna incremental — 15 de agosto de 2026, 22:43 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. Desde el cierre 21:49 no hubo cambios de producto, PRD o runtime; se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las menciones residuales de `published` están limitadas a informes QA históricos y se conservaron para no reescribir la evidencia de pasadas anteriores.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo. El primer build no encontró `node` en el `PATH`; pasó al repetir con el runtime local explícito. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 56. Revisión nocturna incremental — 15 de agosto de 2026, 23:44 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 22:47 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer intento de build no encontró `node` en el `PATH` y el siguiente no pudo escribir `.next`; el build pasó con el runtime local explícito y permiso limitado al directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 57. Revisión nocturna incremental — 16 de agosto de 2026, 00:46 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 23:46 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos históricos resueltos o supersedidos se conservaron intactos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+- El primer append de esta sección coincidió con un bloque histórico repetido y quedó temporalmente junto a la sección 15; el guardrail lo detectó y el bloque se movió íntegro al final. El estado final conserva secciones 1–57 consecutivas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa final: **73/73 PASS**, 0 fallidos.
+- El guardrail focalizado detectó primero el orden temporal (**20/21 PASS**) y pasó después de consolidarlo (**21/21 PASS**).
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El build y los tests usaron el runtime local explícito porque `node` no está expuesto en el `PATH` de la shell. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 58. Revisión nocturna incremental — 16 de agosto de 2026, 01:47 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 00:47 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las coincidencias focalizadas de `compartido` corresponden a gastos/datos o a la infraestructura de feedback; las menciones de sincronización activas son negaciones o procesos internos y no prometen una integración externa.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- El guardrail focalizado detectó primero el orden temporal (**20/21 PASS**) y pasó después de consolidarlo (**21/21 PASS**).
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer intento de build no encontró `node` en el `PATH`; pasó al repetir con el runtime local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 59. Revisión nocturna incremental — 16 de agosto de 2026, 02:48 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 01:49 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las coincidencias residuales de `published/unpublished` están limitadas a informes históricos o aserciones negativas; las menciones de sincronización activas son negaciones o procesos internos y no prometen una integración externa.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; se usó el Node local de la app. Next.js descartó el binding SWC nativo por una firma incompatible y completó correctamente con WASM. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 60. Revisión nocturna incremental — 16 de agosto de 2026, 03:49 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 02:49 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las coincidencias residuales de `published/unpublished` están limitadas a informes históricos o aserciones negativas; las menciones de `compartido` corresponden a gastos/datos o a la infraestructura de feedback, y las de sincronización activas son negaciones o procesos internos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; el primer intento de build tampoco encontró `node` en el `PATH`. El build pasó al repetir con el Node local explícito. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 61. Revisión nocturna incremental — 16 de agosto de 2026, 04:49 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 03:51 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las coincidencias residuales de `published/unpublished` están limitadas a informes históricos o aserciones negativas; las menciones de `compartido` corresponden a gastos/datos o a la infraestructura de feedback, y las de sincronización activas son negaciones o procesos internos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- El guardrail focalizado detectó primero que el bloque 61 había quedado junto a una lista histórica repetida; pasó después de moverlo íntegro al final.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El build usó el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 62. Revisión nocturna incremental — 16 de agosto de 2026, 05:50 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 04:51 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las coincidencias residuales de `published/unpublished` están limitadas a informes históricos o aserciones negativas; las menciones de `compartido` corresponden a gastos/datos o a la infraestructura de feedback, y las de sincronización activas son negaciones o procesos internos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- El guardrail focalizado detectó primero que el bloque 62 había quedado junto a una sección histórica repetida; pasó después de moverlo íntegro al final.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El build usó el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 63. Revisión nocturna incremental — 16 de agosto de 2026, 06:51 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 05:53 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Las coincidencias residuales de `published/unpublished` están limitadas a informes históricos o aserciones negativas; las menciones de `compartido` corresponden a gastos/datos o a la infraestructura de feedback, y las de sincronización activas son negaciones o procesos internos.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- El guardrail focalizado detectó primero que el bloque 63 había quedado junto a una sección histórica repetida; pasó después de moverlo íntegro al final.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El build usó el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 64. Revisión nocturna incremental — 16 de agosto de 2026, 07:53 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 06:54 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática de dependencias no respondió y se detuvo; build y tests pasaron con el Node local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 65. Revisión nocturna incremental — 16 de agosto de 2026, 08:52 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 07:54 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática de dependencias no respondió y se detuvo. El primer build no pudo escribir `.next`; pasó con el Node local explícito y permiso limitado al directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 66. Revisión nocturna incremental — 16 de agosto de 2026, 09:52 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 08:55 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El build usó el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 67. Revisión nocturna incremental — 16 de agosto de 2026, 10:54 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 09:54 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; el build usó el Node local explícito. Next descartó el binding SWC nativo por una firma incompatible y completó correctamente con WASM. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 68. Revisión nocturna incremental — 16 de agosto de 2026, 11:55 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 10:55 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; build y tests pasaron con el Node local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 69. Revisión nocturna incremental — 16 de agosto de 2026, 12:55 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 11:55 no hubo cambios de producto, PRD o runtime; sólo este brief conservaba el registro anterior. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer intento de build no encontró `node` en el `PATH`; build y tests pasaron con el binario Node local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 70. Revisión nocturna incremental — 16 de agosto de 2026, 13:54 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 12:56 no hubo cambios de producto, PRD o runtime; sólo hubo actividad de metadatos Git. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; build y tests pasaron con el Node local explícito. Next descartó el binding SWC nativo por una firma incompatible y completó correctamente con WASM. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 71. Revisión nocturna incremental — 16 de agosto de 2026, 14:57 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 13:56 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; build y tests pasaron con el Node local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 72. Revisión nocturna incremental — 16 de agosto de 2026, 15:57 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 15:00 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 73. Revisión nocturna incremental — 16 de agosto de 2026, 17:00 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 16:01 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; build y tests pasaron con el Node local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 74. Revisión nocturna incremental — 16 de agosto de 2026, 17:58 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 17:04 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 75. Revisión nocturna incremental — 16 de agosto de 2026, 19:00 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 18:00 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer intento de build no encontró `node` en el `PATH`; el build pasó con el binario Node local añadido explícitamente. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 76. Revisión nocturna incremental — 16 de agosto de 2026, 20:01 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 19:08 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo. El primer build fue bloqueado por escritura de `.next`; pasó con el Node local explícito y permiso limitado al directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 77. Revisión nocturna incremental — 16 de agosto de 2026, 21:04 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 20:05 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 78. Revisión nocturna incremental — 16 de agosto de 2026, 22:05 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 21:05 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer intento de build no encontró `node` en el `PATH`; el build pasó al invocar directamente el runtime Node local. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 79. Revisión nocturna incremental — 16 de agosto de 2026, 23:08 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 22:07 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo. El primer intento de build no encontró `node` en el `PATH`; el segundo fue bloqueado por escritura de `.next`. El build pasó con el Node local explícito y permiso limitado al directorio solicitado. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 80. Revisión nocturna incremental — 17 de agosto de 2026, 00:08 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 23:08 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 81. Revisión nocturna incremental — 17 de agosto de 2026, 01:09 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 00:08 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 82. Revisión nocturna incremental — 17 de agosto de 2026, 02:09 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 01:11 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el Node local explícito porque `node` no está expuesto en el `PATH`. El primer intento quedó bloqueado por escritura de `.next`; la repetición con permiso limitado al directorio solicitado pasó. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 83. Revisión nocturna incremental — 17 de agosto de 2026, 03:10 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre 02:12 no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; build y tests usaron el Node local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 84. Revisión nocturna incremental — 17 de agosto de 2026, 04:13 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre efectivo 03:13:33 CLT no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El primer intento no encontró `node` al ejecutar Next; la repetición con el runtime Node local explícito pasó. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 85. Revisión nocturna incremental — 17 de agosto de 2026, 05:27 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre efectivo 04:13:55 CLT no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el runtime Node local explícito porque `node` no está expuesto en el `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 86. Revisión nocturna incremental — 17 de agosto de 2026, 06:21 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre efectivo 05:29:03 CLT no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo; build y tests usaron el runtime Node local explícito. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 87. Revisión nocturna incremental — 17 de agosto de 2026, 07:20 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre efectivo 06:23:00 CLT no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- La carga automática del runtime no respondió y se detuvo. El primer build fue bloqueado por escritura de `.next`; pasó con el Node local explícito y permiso limitado al directorio solicitado. Next descartó el binding SWC nativo por firma incompatible y completó correctamente con WASM. No fueron fallas del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 88. Revisión nocturna incremental — 17 de agosto de 2026, 08:24 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Desde el cierre efectivo 07:23:29 CLT no hubo cambios de producto, PRD o runtime. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el runtime Node local explícito porque `node` no está expuesto en `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 89. Revisión nocturna incremental — 17 de agosto de 2026, 09:26 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails. Se usó como corte efectivo el cierre 08:26:56 CLT, posterior al metadato de `Last run`; no hubo archivos de producto, PRD o runtime posteriores a ese corte. Se preservó íntegro el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció una contradicción nueva ni un P0, P1 o P2 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece fuera de alcance; Builder no afirma sincronización externa; Reviews conserva `Resuelto` separado del destino editorial.
+- El cruce con los informes QA, la dirección canónica, las fuentes activas, la implementación y los guardrails no mostró regresiones nuevas. Los hallazgos antiguos permanecen resueltos o supersedidos por las fuentes activas; las coincidencias residuales de `published/unpublished`, `compartido` y sincronización corresponden a trazabilidad histórica, gastos/datos, infraestructura de feedback o negaciones explícitas.
+- No se modificó runtime, PRD ni contratos porque no había un hallazgo nuevo que justificara cambiar producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa: **73/73 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- Build y tests usaron el runtime Node local explícito porque `node` no está expuesto en `PATH`. No fue una falla del producto.
+- No se repitió QA visual interactivo porque no cambió runtime, copy visible, layout, navegación ni estado.
+
+### Preguntas abiertas / decisiones requeridas, sin cambio
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
 2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
 3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
 4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.

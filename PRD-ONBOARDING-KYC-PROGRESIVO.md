@@ -5,7 +5,7 @@
 **Jurisdicción base:** Chile.  
 **Tesis:** entregar una primera utilidad antes de pedir identidad; solicitar cada dato solo frente a una capacidad aprobada que realmente lo necesite.
 
-La ficha pública resume la regla crítica como “KYC nunca habilita una capacidad por sí solo”. La matriz ejecutable de trazabilidad está en `lib/onboarding-canonical-trace.json`.
+La especificación interna resume la regla crítica como “KYC nunca habilita una capacidad por sí solo”. La matriz ejecutable de trazabilidad está en `lib/onboarding-canonical-trace.json`.
 
 ## Resultado que buscamos
 
@@ -69,7 +69,7 @@ La continuidad de la demo usa `lib/onboarding-demo-storage.ts`: guarda en este n
 
 La captura local usa `lib/onboarding-validation.ts`. Email y teléfono deben pasar formato mínimo antes de OTP; el error queda asociado al input y se anuncia. Los controles del módulo tienen target táctil mínimo de 44 px, foco visible y reduced motion global. Ninguna validación consulta si el contacto existe.
 
-La superficie KYC usa `app-onboarding`, no el contenedor `app-unpublished`: mantiene scroll vertical y no reserva una navegación inferior inexistente. Los estados largos se alinean arriba y existen breakpoints de ancho/altura; el QA visual runtime continúa siendo un gate separado.
+La superficie KYC usa `app-onboarding`, no el contenedor `app-research`: mantiene scroll vertical y no reserva una navegación inferior inexistente. Los estados largos se alinean arriba y existen breakpoints de ancho/altura; el QA visual runtime continúa siendo un gate separado.
 
 La recuperación no confirma si un contacto existe: presenta una respuesta neutral y ofrece continuar. Los `data-event` del módulo usan la misma allowlist del builder seguro; recuperación OTP, account recovery, soporte y borrado son eventos distintos y nunca incluyen contacto u OTP.
 

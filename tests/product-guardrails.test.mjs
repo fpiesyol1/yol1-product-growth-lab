@@ -105,6 +105,58 @@ test("feedback y respuestas llegan a una bandeja editorial con fallback local", 
   assert.match(architecture, /nunca reescribe automáticamente/i);
 });
 
+test("brief y ciclo QA conservan estados editoriales y alcance canónicos", async () => {
+  const brief = await source("BRIEF-NOCHE-EJECUCION.md");
+  const qaCycle = await source("QA-CICLO-TRIPLE.md");
+  const productDesign = await source("PRODUCT-DESIGN.md");
+  const onboardingPrd = await source("PRD-ONBOARDING-KYC-PROGRESIVO.md");
+  const technicalStandard = await source("ESTANDAR-QA-TECNICO-PRD.md");
+  const nightBoard = await source("TABLERO-NOCHE.md");
+  const nightPlan = await source("PLAN-NOCHE-YOL1.md");
+  const onboardingScope = brief.match(/## 3\. Onboarding y KYC progresivo[\s\S]*?(?=\n## 4\.)/)?.[0] ?? "";
+  const remittancesScope = brief.match(/## 6\. Remesas[\s\S]*?(?=\n## 7\.)/)?.[0] ?? "";
+  const confirmedDirection = brief.match(/## 10\. Dirección de producto confirmada por Felipe[\s\S]*?(?=\n## 11\.)/)?.[0] ?? "";
+  const synthesis = brief.match(/## 11\. Síntesis de las tres auditorías[\s\S]*?(?=\n## 12\.)/)?.[0] ?? "";
+  const priorities = qaCycle.match(/## Prioridades actuales[\s\S]*$/)?.[0] ?? "";
+  const remittancesPlan = nightPlan.match(/### Remesas[\s\S]*?(?=\n### Construir mi propio producto)/)?.[0] ?? "";
+  assert.match(onboardingScope, /acceso gradual gobernado por una capacidad aprobada/);
+  assert.doesNotMatch(onboardingScope, /desbloqueo incremental según KYC, licencias y producto/);
+  assert.match(remittancesScope, /Fuera de alcance hasta nueva instrucción de Felipe/);
+  assert.match(remittancesScope, /No investigar, definir, diseñar ni prototipar/);
+  assert.doesNotMatch(remittancesScope, /Solo investigación y definición/);
+  assert.match(confirmedDirection, /KYC puede ser un requisito progresivo de una capacidad aprobada, pero nunca la habilita por sí solo/);
+  assert.doesNotMatch(confirmedDirection, /KYC es una progresión que desbloquea capacidades/);
+  assert.match(synthesis, /Nuevo, En revisión, Guardar para después, Resuelto e Ignorado/);
+  assert.doesNotMatch(synthesis, /Guardar para después, Convertido e Ignorado/);
+  assert.match(synthesis, /destino `mejora \/ guía Markdown \/ proyecto` sigue siendo una decisión aparte/);
+  assert.match(priorities, /Remesas queda fuera de alcance hasta nueva instrucción/);
+  assert.doesNotMatch(priorities, /Remesas queda en investigación/);
+  assert.match(qaCycle, /Por cada pantalla implementada o propuesta que pase a revisión/);
+  assert.match(qaCycle, /actualización de la especificación interna, PRD/);
+  assert.doesNotMatch(qaCycle, /Por cada pantalla publicada|actualización de Ficha de producto/);
+  assert.match(technicalStandard, /especificación interna de producto del Lab/);
+  assert.match(technicalStandard, /no la renderiza en la experiencia pública/);
+  assert.doesNotMatch(technicalStandard, /Aplica a los productos publicados|El Lab ya expone una Ficha por pantalla/);
+  assert.match(productDesign, /no se agregan diagonales ni triángulos decorativos al pie/);
+  assert.match(productDesign, /Las fichas de producto[\s\S]*son material interno y no se renderizan en la experiencia pública/);
+  assert.match(productDesign, /Feedback permanece disponible en todos los espacios/);
+  assert.match(onboardingPrd, /La especificación interna resume la regla crítica/);
+  assert.doesNotMatch(onboardingPrd, /La ficha pública resume la regla crítica/);
+  assert.doesNotMatch(productDesign, /Acid identifica el único producto publicado/);
+  assert.doesNotMatch(productDesign, /La Ficha de producto vive debajo del teléfono/);
+  assert.match(nightBoard, /borrador local en investigación/);
+  assert.doesNotMatch(nightBoard, /borrador local no publicado/);
+  assert.match(remittancesPlan, /Fuera de alcance: no abrir preguntas, research, diseño ni prototipos/);
+  assert.doesNotMatch(remittancesPlan, /¿Quién envía|¿Qué dolor|¿Qué debe poder entender|¿Qué partner/);
+  assert.doesNotMatch(nightPlan, /pantallas actuales, tanto local como la versión publicada/);
+});
+
+test("el registro nocturno conserva secciones consecutivas en orden", async () => {
+  const brief = await source("BRIEF-NOCHE-EJECUCION.md");
+  const sections = [...brief.matchAll(/^## (\d+)\./gm)].map((match) => Number(match[1]));
+  assert.deepEqual(sections, Array.from({ length: sections.length }, (_, index) => index + 1));
+});
+
 test("intake compartido protege Postgres y la revisión privada", async () => {
   const route = await source("app/api/feedback/route.ts");
   const store = await source("lib/server/feedback-store.ts");
@@ -262,20 +314,23 @@ test("feedback conserva fallback local y permanece desacoplado de GitHub", async
   assert.match(architecture, /branch \+ PR.*aprobación|branch\/PR.*aprobación/i);
 });
 
-test("portfolio mantiene seis productos y publica Acompañante más Onboarding", async () => {
+test("portfolio mantiene seis productos y tres prototipos explorables", async () => {
   const page = await source("app/page.tsx");
   const portfolio = await source("lib/product-portfolio.ts");
   const css = await source("app/globals.css");
   const definitions = portfolio.match(/\{ id: "(?:companion|kyc|banking|cards|remittances|builder)"/g) ?? [];
   assert.equal(definitions.length, 6);
-  assert.match(portfolio, /name: "Acompañante financiero"[\s\S]*published: true/);
+  assert.match(portfolio, /name: "Acompañante financiero"[\s\S]*explorable: true/);
   assert.match(portfolio, /name: "Onboarding y KYC progresivo"/);
   assert.match(portfolio, /name: "Home Banking"/);
   assert.match(portfolio, /name: "Tarjetas"/);
   assert.match(portfolio, /name: "Remesas"/);
   assert.match(portfolio, /name: "Construir mi propio producto"/);
-  assert.equal((portfolio.match(/published: true/g) ?? []).length, 3);
-  assert.equal((portfolio.match(/published: false/g) ?? []).length, 3);
+  assert.equal((portfolio.match(/explorable: true/g) ?? []).length, 3);
+  assert.equal((portfolio.match(/explorable: false/g) ?? []).length, 3);
+  assert.doesNotMatch(portfolio, /published: (?:true|false)/);
+  assert.doesNotMatch(portfolio, /flujo publicado|Especificaciones de producto publicadas/);
+  assert.doesNotMatch(css, /productos publicados|experiencias publicadas/);
   assert.match(page, /EN INVESTIGACIÓN/);
   assert.doesNotMatch(page, /Volver al Acompañante financiero/);
   assert.match(portfolio, /EMPTY_STATE_LIBRARY[\s\S]*perro feliz que te hará compañía/i);
@@ -292,16 +347,11 @@ test("portfolio mantiene seis productos y publica Acompañante más Onboarding",
   assert.doesNotMatch(page, /MCP conectado|banco conectado|KYC aprobado|remesa enviada/i);
 });
 
-test("la ficha de producto explica cómo construir sin exponer decisiones internas", async () => {
+test("los contratos de producto siguen internos y no aparecen en la experiencia pública", async () => {
   const page = await source("app/page.tsx");
   const portfolio = await source("lib/product-portfolio.ts");
   const feedback = await source("lib/feedback-intake.ts");
-  assert.match(page, /FICHA DE PRODUCTO · CHILE/);
-  assert.match(page, /Cómo se construiría/);
-  assert.match(page, /EVENTO PROPUESTO/);
-  assert.match(page, /ARQUITECTURA SUGERIDA/);
-  assert.match(page, /DATOS Y FUENTES/);
-  assert.match(page, /TODO LO QUE PUEDE SALIR MAL/);
+  assert.doesNotMatch(page, /ProductSpecification|FICHA DE PRODUCTO · CHILE|Cómo se construiría|EVENTO PROPUESTO|ARQUITECTURA SUGERIDA|DATOS Y FUENTES|TODO LO QUE PUEDE SALIR MAL/);
   assert.doesNotMatch(page, /Felipe resuelve contradicciones|Estado de revisión|onPointerOver|onFocusCapture/);
   assert.match(portfolio, /eventMetadata\(/);
   assert.match(portfolio, /user_id/);
@@ -327,11 +377,13 @@ test("los productos en investigación no simulan una app ni muestran ficha técn
   assert.match(page, /productId === "companion" \|\| productId === "kyc"/);
   assert.doesNotMatch(page, /productId === "cards" && <CardsDiscovery/);
   assert.match(page, /TENGO UNA IDEA/);
-  assert.match(page, /activeProduct\.published && <ProductSpecification/);
-  assert.match(page, /className="unpublished-phone"/);
-  assert.match(page, /className="unpublished-halo"/);
-  assert.match(css, /\.unpublished-phone \{/);
-  assert.match(css, /\.unpublished-halo \{/);
+  assert.doesNotMatch(page, /ProductSpecification|living-spec/);
+  assert.match(page, /className="research-phone"/);
+  assert.match(page, /className="research-halo"/);
+  assert.match(css, /\.research-phone \{/);
+  assert.match(css, /\.research-halo \{/);
+  assert.doesNotMatch(page, /Unpublished|unpublished/);
+  assert.doesNotMatch(css, /unpublished/);
 });
 
 test("el builder separa la conversación externa de la vista previa y el envío editorial", async () => {
@@ -341,7 +393,7 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   const outputContract = await source("BUILDER-OUTPUT-CONTRACT.md");
   const flowMap = await source("BUILDER-FLOW-MAP.md");
   const localIntake = await source("lib/feedback-intake.ts");
-  const submitPanel = page.slice(page.indexOf("function ProjectSubmitPanel"), page.indexOf("function UnpublishedStage"));
+  const submitPanel = page.slice(page.indexOf("function ProjectSubmitPanel"), page.indexOf("function ResearchStage"));
   assert.match(page, /function ProjectBuilderScreen/);
   assert.match(page, /En este espacio,[\s\S]*el próximo producto lo construyes tú/);
   assert.match(page, /YOL1 no lee ni sincroniza tu conversación/i);

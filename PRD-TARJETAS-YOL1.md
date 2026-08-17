@@ -1,7 +1,7 @@
 # PRD exploratorio — Tarjetas YOL1
 
 **Versión:** 0.2 · pasada local 1  
-**Estado:** discovery/prototipo interno, no publicado  
+**Estado:** discovery/prototipo interno, en investigación
 **Fuente canónica:** `DIRECCION-PRODUCTOS-FELIPE.md`  
 **Research:** `RESEARCH-TARJETAS-YOL1-2026-08-14.md`
 

@@ -4,7 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { localFeedbackIntake, type FeedbackKind } from "../lib/feedback-intake";
 import { localChatFeedbackIntake, type ChatFeedbackRating } from "../lib/chat-feedback";
 import { submitChatResponse, submitGeneralFeedback } from "../lib/shared-feedback-client";
-import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, simpleEventName, type LivingSpec, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
+import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
 import { ONBOARDING_STAGE_META, transitionOnboarding, type OnboardingStage, type OnboardingTransition } from "../lib/onboarding-state-machine";
 import { buildOnboardingDemoSnapshot, ONBOARDING_DEMO_STORAGE_KEY, parseOnboardingDemoSnapshot, type OnboardingDemoSnapshot } from "../lib/onboarding-demo-storage";
 import { buildAccessLedger } from "../lib/onboarding-access-ledger";
@@ -166,7 +166,7 @@ export default function Home() {
 
   const activeProduct = PORTFOLIO_PRODUCTS.find((product) => product.id === productId) ?? PORTFOLIO_PRODUCTS[0];
   const activeTitle = productId === "companion" ? tabLabels[tab] : activeProduct.name;
-  const editorialEyebrow = activeProduct.published ? "PRODUCTO PARA EXPLORAR" : "ESPACIO EN INVESTIGACIÓN";
+  const editorialEyebrow = activeProduct.explorable ? "PRODUCTO PARA EXPLORAR" : "ESPACIO EN INVESTIGACIÓN";
   const editorialHeading = productId === "companion"
     ? <>Tu plata,<br /><span>más clara.</span></>
     : productId === "kyc"
@@ -188,7 +188,7 @@ export default function Home() {
     <main className="lab-shell" data-theme={theme}>
       <section className="portfolio-rail" aria-label="Portfolio de productos del Lab">
         <nav className="product-selector">
-          {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event="portfolio_product_selected" data-product-key={product.id} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.published ? "PARA EXPLORAR" : "EN INVESTIGACIÓN"}</small></button>)}
+          {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-event="portfolio_product_selected" data-product-key={product.id} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{product.explorable ? "PARA EXPLORAR" : "EN INVESTIGACIÓN"}</small></button>)}
         </nav>
       </section>
       <section className={`lab-intro product-${productId}`}>
@@ -236,35 +236,9 @@ export default function Home() {
           </nav>}
         </div>
         {productId === "builder" && <ProjectSubmitPanel open={projectSubmitOpen} onToggle={() => setProjectSubmitOpen((current) => !current)} onSubmitted={() => undefined} />}
-      </section> : <UnpublishedStage product={activeProduct} stateIndex={emptyStateIndex} />}
-      {activeProduct.published && <ProductSpecification product={activeProduct} screen={activeTitle} />}
+      </section> : <ResearchStage product={activeProduct} stateIndex={emptyStateIndex} />}
     </main>
   );
-}
-
-function StateBadge({ state }: { state: LivingSpec["kyc"]["state"] }) {
-  return <span className={`certainty-badge certainty-${state.toLowerCase().replaceAll(" ", "-")}`}>{state}</span>;
-}
-
-function ProductSpecification({ product, screen }: { product: ProductDefinition; screen: string }) {
-  const spec = getLivingSpec(product, screen);
-  const event = spec.event;
-  return <section className="living-spec" aria-label={`Ficha de producto de ${product.name}`}>
-    <header className="living-spec-head">
-      <div><small>FICHA DE PRODUCTO · CHILE</small><h2>Cómo se construiría</h2></div>
-      <div><strong>{product.name}</strong><span>{screen}</span></div>
-      <p>Una guía práctica para diseño, producto e ingeniería. Las capacidades, partners y requisitos legales se validan antes de operar.</p>
-    </header>
-    <div className="spec-grid">
-      <article className="spec-event"><small>EVENTO PROPUESTO</small><strong>{simpleEventName(event, product, screen)}</strong><div className="event-metadata">{eventMetadata(event, product, screen).map(([key, value]) => <span key={key}><b>{key}</b>{value}</span>)}</div><p>Evento corto para instrumentación. La metadata permite analizar el contexto sin mezclarla con el nombre.</p></article>
-      <article><small>ARQUITECTURA SUGERIDA</small><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><em>HIPÓTESIS TÉCNICA · REVISAR CON INGENIERÍA</em></article>
-      <article className="spec-data"><small>DATOS Y FUENTES</small><strong>Guardar</strong><ul>{spec.data.store.map((item) => <li key={item}>{item}</li>)}</ul><strong>Consultar</strong><ul>{spec.data.query.map((item) => <li key={item}>{item}</li>)}</ul><strong>Fuentes</strong><ul>{spec.data.sources.map((item) => <li key={item}>{item}</li>)}</ul><p>{spec.data.handling}</p></article>
-      <article><small>KYC</small><StateBadge state={spec.kyc.state} /><p>{spec.kyc.reason}</p></article>
-      <article><small>LICENCIAS · CHILE</small><StateBadge state={spec.licenses.state} /><p>{spec.licenses.reason}</p></article>
-      <article><small>PREGUNTAS PARA CERRAR</small><ol>{spec.questions.map((question) => <li key={question}>{question}</li>)}</ol></article>
-      <article className="spec-risks"><small>TODO LO QUE PUEDE SALIR MAL</small><ul>{spec.risks.map((risk) => <li key={risk}>{risk}</li>)}</ul><p>QA debe recorrer cada acción como una persona promedio y resolver salidas muertas antes de publicar.</p></article>
-    </div>
-  </section>;
 }
 
 function OnboardingFlow({ stage, setStage, onSnapshotChange, onEnterAdvisor, onOpenBank }: { stage: OnboardingStage; setStage: (stage: OnboardingStage) => void; onSnapshotChange: (snapshot: OnboardingDemoSnapshot | null) => void; onEnterAdvisor: () => void; onOpenBank: () => void }) {
@@ -480,18 +454,18 @@ function ProjectSubmitPanel({ open, onToggle, onSubmitted }: { open: boolean; on
   </section>;
 }
 
-function UnpublishedStage({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
-  return <section className="unpublished-stage" aria-label={`${product.name}, en investigación`}>
-    <span className="unpublished-halo" aria-hidden="true" />
-    <div className="unpublished-phone" aria-label={`${product.name} en investigación`}>
-      <div className="unpublished-notch" />
+function ResearchStage({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
+  return <section className="research-stage" aria-label={`${product.name}, en investigación`}>
+    <span className="research-halo" aria-hidden="true" />
+    <div className="research-phone" aria-label={`${product.name} en investigación`}>
+      <div className="research-notch" />
       <header><Brand compact /><span>{product.name} · EN INVESTIGACIÓN</span><small>SIN FLUJO DISPONIBLE</small></header>
-      <UnpublishedProduct product={product} stateIndex={stateIndex} />
+      <ResearchProduct product={product} stateIndex={stateIndex} />
     </div>
   </section>;
 }
 
-function UnpublishedProduct({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
+function ResearchProduct({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
   const fixedState: Record<Exclude<ProductId, "companion">, number> = { kyc: 1, banking: 0, cards: 2, remittances: 5, builder: 3 };
   const empty = EMPTY_STATE_LIBRARY[fixedState[product.id as Exclude<ProductId, "companion">] ?? (stateIndex % EMPTY_STATE_LIBRARY.length)];
   return <section className={`product-empty product-${product.id} gesture-${empty.gesture}`} aria-label={`${product.name}, en investigación`}>

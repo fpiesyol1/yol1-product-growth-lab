@@ -86,7 +86,7 @@ La primera pasada local debe explorar cuatro superficies: elegir cómo pagar, re
 
 ## 6. Implicaciones de diseño para la pasada 1
 
-1. Mantener `Tarjetas` con `published: false` en la ficha interna y, mientras siga accesible en el selector, rotularla **En investigación · Borrador local**; no usar `NO PUBLICADO` como copy público.
+1. Mantener `Tarjetas` con `explorable: false` en la especificación interna y, mientras siga accesible en el selector, rotularla **En investigación · Borrador local**; no usar `NO PUBLICADO` como copy público.
 2. Rotular la pantalla `BORRADOR LOCAL · DATOS SINTÉTICOS · NO PAGA`.
 3. Usar un instrumento ficticio sin logos de red, banco real o partner.
 4. No mostrar QR, NFC, wallet ni CTA `Pagar`.

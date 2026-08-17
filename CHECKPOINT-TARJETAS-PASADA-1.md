@@ -13,7 +13,7 @@
 5. Guardrails automatizados en `tests/cards-discovery.test.mjs`.
 6. Evidencia de QA en `QA-TARJETAS-PASADA-1.md`.
 
-Tarjetas debe permanecer `published: false`. La integración no autoriza una capacidad transaccional.
+Tarjetas debe permanecer `explorable: false` y `En investigación`. La integración no autoriza una capacidad transaccional.
 
 ## Qué cambió respecto de referencias previas
 

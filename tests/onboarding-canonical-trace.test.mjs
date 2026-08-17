@@ -26,7 +26,7 @@ test("cada regla apunta a evidencia local existente", async () => {
   }
 });
 
-test("la ficha pública no afirma que KYC o licencias liberen productos", async () => {
+test("la especificación interna no afirma que KYC o licencias liberen productos", async () => {
   const portfolio = await readFile(new URL("lib/product-portfolio.ts", root), "utf8");
   const onboarding = portfolio.split('{ id: "kyc"')[1]?.split("},")[0] ?? "";
 

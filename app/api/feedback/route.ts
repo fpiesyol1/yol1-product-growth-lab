@@ -43,7 +43,7 @@ function isKnownFeedbackContext(value: string) {
   if (screens.has(value)) return true;
   const [product, screen, ...rest] = value.split(" · ");
   // Un producto puede tener subpantallas nuevas antes de que el catálogo del
-  // servidor las conozca. Validamos el producto publicado y conservamos la
+  // servidor las conozca. Validamos que el producto sea conocido y conservamos la
   // etiqueta de pantalla como contexto editorial; no es un permiso ni una ruta.
   return rest.length === 0 && Boolean(screen) && products.has(product);
 }

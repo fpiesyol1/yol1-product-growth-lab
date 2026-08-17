@@ -20,7 +20,7 @@ test("los eventos de ficha y onboarding usan snake_case y no exponen identificad
   const specEvents = [...portfolio.matchAll(/event:\s*"([^"]+)"/g)].map((match) => match[1]);
   const proposedEvents = onboardingEvents(onboardingPrd);
 
-  assert.ok(specEvents.length >= 8, "debe haber eventos para las fichas publicadas");
+  assert.ok(specEvents.length >= 8, "debe haber eventos para las especificaciones internas");
   assert.ok(proposedEvents.length >= 6, "Onboarding debe declarar su catálogo mínimo");
   for (const event of [...specEvents, ...proposedEvents]) {
     assert.match(event, snakeCase, `${event} debe usar snake_case`);
