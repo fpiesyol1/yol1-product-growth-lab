@@ -1,8 +1,8 @@
-# Builder — contrato de salida editorial v0.1
+# Builder — contrato de salida editorial v0.2
 
-**Estado:** candidato local para revisión.  
-**Autoridad:** `DIRECCION-PRODUCTOS-FELIPE.md`.  
-**Límite:** no habilita MCP remoto, persistencia compartida, publicación, branch ni core.
+**Estado:** piloto compartido para revisión.
+**Autoridad:** `DIRECCION-PRODUCTOS-FELIPE.md`.
+**Límite:** habilita un borrador compartido por enlace opaco; no habilita publicación, branch, identidad verificada ni core.
 
 ## Propósito
 
@@ -14,7 +14,7 @@ borrador con una decisión de producto.
 
 | Campo | Tipo | Regla |
 |---|---|---|
-| `proposal_id` | UUID local | Lo crea el Lab al guardar; no viene del chat |
+| `proposal_id` | ID opaco | Lo crea el Lab al guardar; no viene del chat |
 | `proposal_version` | string | Comienza en `0.1`; cambia sólo al editar el borrador |
 | `status` | enum | `draft` o `new`; otros estados son editoriales |
 | `proposer_name` | string | Nombre visible; no se usa como identidad verificada |
@@ -26,7 +26,7 @@ borrador con una decisión de producto.
 | `risks` | array | Riesgos/fallas/reversas del resumen |
 | `open_decisions` | array | Preguntas que necesitan decisión humana |
 | `source_kind` | enum | `manual_summary`, `manual_reference`, `lab_created` |
-| `submission_mode` | enum | En esta pasada: `local_only` |
+| `submission_mode` | enum | `local_only` para el formulario o `shared_draft` para el MCP |
 | `created_at` | ISO-8601 | Hora local normalizada por el Lab |
 
 ## Objeto `screen_draft`
@@ -53,8 +53,9 @@ draft (persona edita)
   → review | later | resolved | ignored_wrong
 ```
 
-En esta pasada sólo existen `draft → new` dentro del navegador. La transición a una
-bandeja compartida necesita API, autorización, moderación, retención y owner editorial.
+El MCP sólo crea `draft` después de una confirmación explícita y devuelve un enlace
+opaco. `draft → new` y cualquier decisión editorial siguen necesitando identidad,
+roles, moderación y un owner definidos.
 
 ## Datos que no deben entrar
 
@@ -66,7 +67,7 @@ bandeja compartida necesita API, autorización, moderación, retención y owner 
 
 ## Confirmación UX
 
-Después de guardar localmente debe decir:
+Después de guardar desde el formulario local debe decir:
 
 > “Borrador guardado sólo en este navegador. No se envió a una bandeja compartida.”
 
@@ -76,16 +77,19 @@ incluya un identificador de recepción.
 Mientras el prototipo use almacenamiento local, debe ofrecer una reversa inmediata:
 `Borrar este borrador local`. No promete borrado remoto porque no existe envío remoto.
 
+Después de guardar desde el MCP debe devolver `project_id`, estado `draft`, fecha de
+expiración y un enlace al Lab. Debe repetir que no publicó ni modificó pantallas.
+
 ## Criterios de aceptación
 
 - El formulario pide nombre, título, propósito, fit YOL1 y resumen/referencia.
 - El usuario puede completar el flujo sin MCP.
 - La UI diferencia prompt copiado de URL MCP copiada.
-- Sin URL validada, el control MCP está deshabilitado y legible.
+- La URL pública del MCP se deriva del mismo dominio del Lab o de `NEXT_PUBLIC_MCP_URL`.
 - El teléfono no afirma que recibe cambios del chat externo.
-- El estado editorial visible permanece `borrador`/`local`.
+- El estado editorial visible permanece `borrador`; la UI distingue local de compartido.
 - Después de guardar, la persona puede borrar ese borrador del navegador.
-- Ninguna acción genera fetch, branch, publicación o cambio de core desde Builder.
+- Guardar vía MCP genera sólo el registro compartido; ninguna acción crea branch, publicación o cambio de core.
 
 ## Decisiones abiertas
 

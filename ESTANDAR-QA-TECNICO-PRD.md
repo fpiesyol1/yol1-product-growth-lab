@@ -1,6 +1,6 @@
 # Estándar QA técnico / PRD — YOL1
 
-**Propósito.** Convertir la especificación interna de producto del Lab en un insumo útil para ingeniería, datos, producto y Legal, sin confundir hipótesis con decisiones. Aplica a las experiencias implementadas y a cualquier propuesta que pase a revisión; no implica publicación operativa ni exposición de la especificación al público.
+**Propósito.** Convertir la especificación de producto del Lab en un insumo útil para ingeniería, datos, producto y Legal, sin confundir hipótesis con decisiones. Aplica a las experiencias implementadas y a cualquier propuesta que pase a revisión. En los productos explorables, el Lab muestra una ficha resumida debajo de la composición para conversar sobre la acción inspeccionada; esto no implica publicación operativa, integración activa ni disponibilidad de una capacidad.
 
 **Fuente prioritaria.** Decisión verbal de Felipe → decisiones aprobadas → material de proyecto/Notion → referencias externas. Este documento no reemplaza una definición legal, de seguridad ni de proveedor.
 
@@ -8,7 +8,7 @@
 
 ### Hecho en el repositorio
 
-- El Lab conserva una especificación interna por pantalla con evento, metadatos, arquitectura, datos, KYC, licencias, preguntas y riesgos (`lib/product-portfolio.ts`); no la renderiza en la experiencia pública.
+- El Lab conserva una fuente de especificación por pantalla con evento, metadatos, arquitectura, datos, KYC, licencias, preguntas y riesgos (`lib/product-portfolio.ts`). La ficha resumida se renderiza a ancho completo sólo para Acompañante, Onboarding y Builder; los productos en investigación o pausa no la muestran.
 - La base declarada por el equipo es **React Native + AWS**; Onboarding nombra Cognito, API Gateway, Lambda, DynamoDB y una capa CDP aún por definir.
 - El prototipo no instrumenta analytics productivo ni conecta bancos, pagos ni KYC real.
 - La especificación interna actual mezcla tres niveles: decisión tomada, candidato técnico y pendiente regulatorio. Hay que separarlos para que un ingeniero no interprete una hipótesis como un requerimiento cerrado.

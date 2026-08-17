@@ -68,7 +68,7 @@ Las fichas de producto se muestran debajo de la composición principal, a ancho 
 - `Por validar`: amarillo/decisión abierta; nunca se presenta como exención ni requisito.
 - `Requerido`: coral/riesgo regulatorio únicamente cuando exista fuente aprobada.
 
-El catálogo interno conserva evento estable y metadata separada para producto, pantalla, acción y origen. Esa trazabilidad no se expone como inspector público ni implica que el evento se emita.
+El catálogo base conserva evento estable y metadata separada para producto, pantalla, acción y origen. La ficha resume esa trazabilidad para la acción inspeccionada; verla no implica que el evento se emita ni que exista analytics productivo.
 
 Los nuevos tokens `--decision-bg` y `--decision-text` conservan contraste del estado amarillo en dark y light. Violeta sigue reservado para exploración/feedback y el perro animado respeta `prefers-reduced-motion`.
 

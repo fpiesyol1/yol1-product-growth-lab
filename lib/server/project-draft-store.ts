@@ -1,0 +1,150 @@
+import { createHash, randomBytes } from "node:crypto";
+import { neon } from "@neondatabase/serverless";
+import type { ProjectDraftInput, SharedProjectDraft } from "../project-draft-types";
+
+let schemaReady: Promise<void> | null = null;
+
+function getSql() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) return null;
+  return neon(connectionString);
+}
+
+async function ensureSchema() {
+  const sql = getSql();
+  if (!sql) throw new Error("STORAGE_NOT_CONFIGURED");
+  if (!schemaReady) {
+    schemaReady = (async () => {
+      await sql.query(`
+        CREATE TABLE IF NOT EXISTS yol1_project_drafts (
+          id text PRIMARY KEY,
+          idempotency_hash text NOT NULL UNIQUE,
+          creator_hash text NOT NULL,
+          title text NOT NULL,
+          idea text NOT NULL,
+          problem text NOT NULL,
+          audience text NOT NULL,
+          value_proposition text NOT NULL,
+          assumptions jsonb NOT NULL DEFAULT '[]'::jsonb,
+          open_questions jsonb NOT NULL DEFAULT '[]'::jsonb,
+          reference_links jsonb NOT NULL DEFAULT '[]'::jsonb,
+          status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft')),
+          created_at timestamptz NOT NULL DEFAULT now(),
+          expires_at timestamptz NOT NULL DEFAULT (now() + interval '90 days')
+        )
+      `);
+      await sql.query(`CREATE INDEX IF NOT EXISTS yol1_project_drafts_creator_idx ON yol1_project_drafts (creator_hash, created_at DESC)`);
+    })();
+  }
+  await schemaReady;
+  return sql;
+}
+
+type ProjectDraftRow = {
+  id: string;
+  title: string;
+  idea: string;
+  problem: string;
+  audience: string;
+  value_proposition: string;
+  assumptions: unknown;
+  open_questions: unknown;
+  reference_links: unknown;
+  status: "draft";
+  created_at: string | Date;
+  expires_at: string | Date;
+};
+
+function stringList(value: unknown) {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function toDraft(row: ProjectDraftRow): SharedProjectDraft {
+  return {
+    id: row.id,
+    title: row.title,
+    idea: row.idea,
+    problem: row.problem,
+    audience: row.audience,
+    valueProposition: row.value_proposition,
+    assumptions: stringList(row.assumptions),
+    openQuestions: stringList(row.open_questions),
+    references: stringList(row.reference_links),
+    status: row.status,
+    createdAt: new Date(row.created_at).toISOString(),
+    expiresAt: new Date(row.expires_at).toISOString(),
+  };
+}
+
+export function isProjectDraftStorageConfigured() {
+  return Boolean(process.env.DATABASE_URL);
+}
+
+export function projectCreatorHash(request: Request) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const agent = request.headers.get("user-agent") || "unknown";
+  const salt = process.env.YOL1_PROJECT_HASH_SALT || "yol1-project-pilot";
+  return createHash("sha256").update(`${salt}:${forwarded}:${agent}`).digest("hex");
+}
+
+export async function countRecentProjectDrafts(creatorHash: string) {
+  const sql = await ensureSchema();
+  const rows = await sql`
+    SELECT count(*)::int AS count
+    FROM yol1_project_drafts
+    WHERE creator_hash = ${creatorHash}
+      AND created_at > now() - interval '1 hour'
+  ` as Array<{ count: number }>;
+  return rows[0]?.count ?? 0;
+}
+
+function idempotencyHash(submissionId: string, creatorHash: string) {
+  return createHash("sha256").update(`${creatorHash}:${submissionId}`).digest("hex");
+}
+
+export async function findProjectDraftBySubmission(submissionId: string, creatorHash: string) {
+  const sql = await ensureSchema();
+  const hash = idempotencyHash(submissionId, creatorHash);
+  const rows = await sql`
+    SELECT id, title, idea, problem, audience, value_proposition,
+      assumptions, open_questions, reference_links, status, created_at, expires_at
+    FROM yol1_project_drafts
+    WHERE idempotency_hash = ${hash} AND expires_at > now()
+    LIMIT 1
+  ` as ProjectDraftRow[];
+  return rows[0] ? toDraft(rows[0]) : null;
+}
+
+export async function saveProjectDraft(input: ProjectDraftInput, creatorHash: string) {
+  const sql = await ensureSchema();
+  const submissionHash = idempotencyHash(input.submissionId, creatorHash);
+  const id = `prj_${randomBytes(16).toString("hex")}`;
+  const rows = await sql`
+    INSERT INTO yol1_project_drafts (
+      id, idempotency_hash, creator_hash, title, idea, problem, audience,
+      value_proposition, assumptions, open_questions, reference_links
+    ) VALUES (
+      ${id}, ${submissionHash}, ${creatorHash}, ${input.title}, ${input.idea},
+      ${input.problem}, ${input.audience}, ${input.valueProposition},
+      ${JSON.stringify(input.assumptions)}::jsonb, ${JSON.stringify(input.openQuestions)}::jsonb,
+      ${JSON.stringify(input.references)}::jsonb
+    )
+    ON CONFLICT (idempotency_hash) DO UPDATE
+      SET idempotency_hash = EXCLUDED.idempotency_hash
+    RETURNING id, title, idea, problem, audience, value_proposition,
+      assumptions, open_questions, reference_links, status, created_at, expires_at
+  ` as ProjectDraftRow[];
+  return toDraft(rows[0]);
+}
+
+export async function getProjectDraft(id: string) {
+  const sql = await ensureSchema();
+  const rows = await sql`
+    SELECT id, title, idea, problem, audience, value_proposition,
+      assumptions, open_questions, reference_links, status, created_at, expires_at
+    FROM yol1_project_drafts
+    WHERE id = ${id} AND expires_at > now()
+    LIMIT 1
+  ` as ProjectDraftRow[];
+  return rows[0] ? toDraft(rows[0]) : null;
+}

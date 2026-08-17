@@ -274,6 +274,37 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
 5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
 
+### Registro provisional de la revisión 93 — 17 de agosto de 2026, 13:36 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, la implementación y los guardrails. Se usó como corte efectivo el cierre 12:38:34 CLT. Después de ese corte cambiaron Builder, la ficha pública y sus guardrails; se preservó el resto del worktree local y los dos PDF no versionados. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, control de canal, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece pausado; la ficha pública continúa limitada a Acompañante, Onboarding y Builder.
+- Se cerró un **P1 de disponibilidad en Builder**: el runtime construía por defecto una URL MCP pública y habilitaba “Conectar” aunque `lib/product-portfolio.ts` declara el MCP remoto con OAuth como etapa posterior y `/api/mcp` se autodefine como demo local sin compatibilidad externa aprobada. `NEXT_PUBLIC_MCP_URL` ahora debe existir explícitamente; sin esa configuración la guía sigue visible, pero la URL y el mensaje de inicio quedan deshabilitados, la URL pública no aparece en el DOM y el copy declara que conexión/compatibilidad siguen por validar.
+- Se cerró un **P1 de recuperación del flujo de copia**: un fallo al copiar la URL enviaba a copiar el paso 04, que contiene el mensaje de inicio. El fallback ahora indica copiar manualmente el contenido correspondiente y sirve para ambos controles.
+- El guardrail de Builder ahora falla si reaparece un fallback MCP implícito, y exige estados/copy no operativos cuando falta configuración. No se modificó la ruta MCP local ni se probó una integración externa.
+- La ampliación reciente de la ficha es consistente con la decisión vigente: contrato de datos, arquitectura candidata, QA de experiencia y captura de preguntas siguen rotulados como material para desarrollo; verlos no afirma integración, licencia, KYC ni capacidad operativa.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa final: **75/75 PASS**, 0 fallidos.
+- QA interactivo antes del ajuste: **PASS** en `1440×900`, `390×844` y `320×568` para Builder, ficha e inspector; cero overflow horizontal y el cambio de Acompañante a Onboarding limpió la acción inspeccionada.
+- Comprobación funcional posterior al ajuste en `1440×900`: ambos controles MCP quedaron deshabilitados sin `NEXT_PUBLIC_MCP_URL`, no apareció el fallback público, no hubo overflow horizontal ni errores de consola.
+- El cierre visual estilado posterior quedó **pendiente por entorno local**: `next start` entregó el HTML pero devolvió 404 para su CSS generado aun cuando el archivo existía; `next dev` encontró otro servidor activo del mismo proyecto y no se intervino ese proceso ajeno. No se confundió la captura sin estilos con una regresión del producto.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+
+### Preguntas abiertas / decisiones requeridas
+
+1. **Builder MCP remoto:** definir URL aprobada, OAuth/autorización, clientes compatibles y criterio de habilitación antes de configurar `NEXT_PUBLIC_MCP_URL` o volver operativos los pasos de conexión.
+2. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+3. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+4. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+5. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+6. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+7. **QA visual post-ajuste:** repetir la pasada estilada cuando se estabilice el servidor local y verificar por qué `next start` no sirvió el CSS del build actual.
+
 ### Registro posterior de revisión — 15 de agosto de 2026, 01:42 CLT
 
 **Alcance ejecutado:** pasada incremental de QA de producto/PRD, consistencia y flujos sobre brief, PRD de Onboarding/KYC, QA triple, informes QA, implementación y guardrails. No hubo archivos de producto posteriores al cierre 00:18; se preservó el worktree local existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
@@ -2407,3 +2438,32 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 4. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
 5. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
 6. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 92. Revisión nocturna incremental — 17 de agosto de 2026, 12:35 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia, instrumentación visible y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, el tablero de discovery, la implementación y los guardrails. Se usó como corte efectivo el cierre 11:30:38 CLT. Después de ese corte quedó registrada una decisión posterior de Felipe que devuelve la ficha de producto a la superficie pública del Lab para los tres productos explorables; esta decisión reemplaza los cierres anteriores que pedían mantenerla sólo en `/review` o modo Equipo. Los dos PDF no versionados se conservaron sin cambios. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 nuevo. Onboarding conserva exploración antes de identidad, intención material y explicación antes del OTP, y mantiene separados pre-registro, control de canal, KYC y capacidad. Home Banking y Tarjetas siguen sin flujo explorable; Remesas permanece pausado; Builder no afirma sincronización externa ni publicación automática.
+- Se cerró un **P1 documental**: `ESTANDAR-QA-TECNICO-PRD.md` todavía exigía que la ficha no se renderizara en público, mientras la decisión posterior, `PRODUCT-DESIGN.md`, `PRODUCT-DISCOVERY-BOARD.md`, runtime y guardrail ya exigían lo contrario. El estándar ahora declara la ficha resumida y pública sólo en Acompañante, Onboarding y Builder, sin convertirla en capacidad operativa. `PRODUCT-DESIGN.md` también dejó de negar el inspector que la propia interfaz muestra.
+- Se cerró un **P1 de consistencia del inspector**: al cambiar de producto podía quedar visible la última acción inspeccionada del producto anterior. El selector ahora limpia ese estado; cada producto abre con su evento base y metadata propios.
+- Se cerró un **P1 de significado**: la ficha rotulaba `Evento base de esta pantalla`, pero mostraba `Sin evento definido` aun cuando `LivingSpec` sí declaraba uno. La ficha ahora muestra el evento catalogado (`financial_home_viewed`, `onboarding_started` o `builder_viewed` según el producto). Una acción realmente sin ID continúa como deuda de instrumentación y no se deriva del copy.
+- Se cerró un **P1 responsive**: en Home Banking móvil, el halo decorativo ampliaba el documento a 465 px sobre un viewport de 390 px. El recorte horizontal queda limitado al estado de investigación y conserva el overflow vertical necesario en pantallas bajas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; siete rutas generadas, incluida `/_not-found`.
+- Suite completa final: **75/75 PASS**, 0 fallidos.
+- QA interactivo final: **PASS** en `1440×900`, `390×844` y `320×568`. Acompañante, Onboarding y Builder muestran exactamente una ficha con su evento base; cambiar desde una acción inspeccionada a Onboarding limpia la acción anterior; Home Banking no muestra ficha ni flujo explorable.
+- Responsive: **0 overflow horizontal** en los tres viewports finales. En `320×568`, Home Banking conserva scroll vertical (`895 px`) sin clipping horizontal. Consola del navegador: **0 errores**.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- El runtime local no estaba expuesto en `PATH`; se usó el Node local explícito. Build y servidor temporal necesitaron permiso limitado a `.next` y al puerto local `3017`; el servidor se detuvo al terminar. No fueron fallas del producto.
+
+### Preguntas abiertas / decisiones requeridas
+
+1. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+2. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.

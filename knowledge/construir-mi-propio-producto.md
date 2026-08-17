@@ -8,11 +8,11 @@ Permitir que un colaborador convierta una idea en una propuesta revisable sin da
 
 ## Flujo inicial
 
-1. La persona elige una guía para su propio ChatGPT o Claude. Instala MCP sólo cuando exista URL validada, compatibilidad confirmada y autorización visible; si no, usa el prompt y pega referencias manualmente.
+1. La persona elige una guía para su propio ChatGPT o Claude, agrega la URL del MCP piloto y habilita el conector en un chat nuevo.
 2. Conversa e itera en su propia sesión sobre problema, persona, recorrido, datos, tecnología candidata y riesgos.
-3. Copia o incorpora explícitamente al Lab sólo las pantallas o el resumen que desea revisar. El MCP de lectura no materializa pantallas ni sincroniza la conversación.
-4. Cuando la propuesta tiene forma, recién abre “Enviar proyecto” y completa: nombre, título, qué busca hacer y por qué calza con YOL1.
-5. La propuesta llega a la bandeja editorial. Felipe la aprueba, pide cambios o descarta.
+3. Cuando la propuesta tiene forma, la IA pregunta si la persona quiere guardarla. Sólo una confirmación explícita permite ejecutar `yol1_save_project_draft`.
+4. El MCP guarda la propuesta estructurada y devuelve un enlace opaco para verla dentro de “Construir mi propio producto”; no copia la conversación completa.
+5. La propuesta sigue en estado borrador. Publicar, convertirla en pantalla real o llevarla a GitHub exige una decisión posterior y separada.
 
 ## Contexto que el paquete debe contener
 
@@ -25,11 +25,12 @@ Permitir que un colaborador convierta una idea en una propuesta revisable sin da
 ## Límites de esta etapa
 
 - YOL1 no entra, lee ni controla la cuenta de ChatGPT o Claude de una persona.
-- ChatGPT y Claude pueden tener compatibilidad, menús y permisos distintos; la guía debe verificarlos por cliente antes de mostrar una instalación como disponible.
+- ChatGPT y Claude tienen menús y confirmaciones distintos; la guía mantiene pasos específicos por cliente y la acción de guardar se declara como escritura.
 - No se comparten credenciales, API keys, conversaciones privadas ni repositorios privados.
 - Enviar un proyecto no crea una rama, no publica una pantalla y no activa un producto.
 - GitHub versiona el código, el contexto público y las decisiones aprobadas; no convierte por sí solo el MCP en una integración utilizable.
-- El MCP remoto requiere una fase posterior con servidor HTTPS desplegado, OAuth, permisos por persona y herramientas separadas de lectura/escritura.
+- El piloto ya usa un servidor HTTPS y herramientas separadas de lectura/escritura. OAuth, identidad por persona, listado privado y roles quedan para una fase posterior.
+- Los enlaces de borrador son opacos, no se listan públicamente y expiran a los 90 días; quien tenga el enlace puede ver la propuesta.
 
 ## Salida esperada de la IA colaboradora
 

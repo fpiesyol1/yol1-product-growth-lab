@@ -10,6 +10,7 @@ import { buildOnboardingDemoSnapshot, ONBOARDING_DEMO_STORAGE_KEY, parseOnboardi
 import { buildAccessLedger } from "../lib/onboarding-access-ledger";
 import { validateAccessContact, type AccessMethod } from "../lib/onboarding-validation";
 import { normalizeKycState, type NormalizedKycState } from "../lib/onboarding-safety";
+import type { SharedProjectDraft } from "../lib/project-draft-types";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
 type Theme = "dark" | "light";
@@ -63,7 +64,8 @@ const initialDraft: CollectDraft = {
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const YOL1_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
-const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL || `${YOL1_SITE_URL}/api/mcp`;
+const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL?.trim() || `${YOL1_SITE_URL}/api/mcp`;
+const BUILDER_START_MESSAGE = `Usa el MCP de YOL1 conectado antes de responder. Ejecuta yol1_start_builder, yol1_get_context y yol1_get_delivery_contract. Luego acompáñame a crear un producto YOL1: hazme una pregunta a la vez para entender problema, usuario, momento, pantallas, datos, riesgos y cómo mejorarlo. Primero muéstrame el enlace del Lab. Puedo mandarte referencias, fotos o dibujos y quiero que los uses para iterar. Cuando la propuesta tenga forma, pregúntame si quiero guardarla. Sólo si confirmo explícitamente, ejecuta yol1_save_project_draft y entrégame el enlace del borrador; no publiques ni sincronices la conversación completa.`;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
@@ -72,6 +74,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
 export default function Home() {
   const [tab, setTab] = useState<Tab>("inicio");
   const [productId, setProductId] = useState<ProductId>("companion");
+  const [labGuideOpen, setLabGuideOpen] = useState(true);
   const [theme, setTheme] = useState<Theme>("dark");
   const [source, setSource] = useState("General");
   const [selectedMovement, setSelectedMovement] = useState<string | null>(null);
@@ -93,6 +96,9 @@ export default function Home() {
   const [bankCapability, setBankCapability] = useState<"direct" | "receive_value">("direct");
   const [projectSubmitOpen, setProjectSubmitOpen] = useState(false);
   const [builderGuide, setBuilderGuide] = useState<BuilderGuide>(null);
+  const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
+  const [sharedProject, setSharedProject] = useState<SharedProjectDraft | null>(null);
+  const [sharedProjectState, setSharedProjectState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [inspectedAction, setInspectedAction] = useState<InspectedAction | null>(null);
   const appContentRef = useRef<HTMLDivElement>(null);
   const resetAppContentScroll = useCallback(() => {
@@ -104,10 +110,31 @@ export default function Home() {
     setTheme(stored === "light" || stored === "dark" ? stored : "dark");
     setDemoSnapshot(parseOnboardingDemoSnapshot(window.localStorage.getItem(ONBOARDING_DEMO_STORAGE_KEY)));
     const requestedProduct = new URLSearchParams(window.location.search).get("product");
+    const requestedDraft = new URLSearchParams(window.location.search).get("draft");
     if (PORTFOLIO_PRODUCTS.some((product) => product.id === requestedProduct)) {
       setProductId(requestedProduct as ProductId);
+      setLabGuideOpen(false);
+    }
+    if (requestedDraft && /^prj_[a-f0-9]{32}$/.test(requestedDraft)) {
+      setProductId("builder");
+      setLabGuideOpen(false);
+      setSharedProjectId(requestedDraft);
     }
   }, []);
+
+  useEffect(() => {
+    if (!sharedProjectId) return;
+    let active = true;
+    setSharedProjectState("loading");
+    fetch(`/api/projects/${encodeURIComponent(sharedProjectId)}`, { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json() as { project?: SharedProjectDraft };
+        if (!response.ok || !payload.project) throw new Error("PROJECT_NOT_AVAILABLE");
+        if (active) { setSharedProject(payload.project); setSharedProjectState("ready"); }
+      })
+      .catch(() => { if (active) setSharedProjectState("error"); });
+    return () => { active = false; };
+  }, [sharedProjectId]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -195,7 +222,9 @@ export default function Home() {
         ? <>El próximo producto<br /><span>lo construyes tú.</span></>
         : <>{activeProduct.name}<br /><span>en investigación.</span></>;
   const chooseProduct = (next: ProductId) => {
+    setLabGuideOpen(false);
     setProductId(next);
+    setInspectedAction(null);
     const index = PORTFOLIO_PRODUCTS.findIndex((product) => product.id === next);
     setEmptyStateIndex(next === "builder" ? 1 : Math.max(0, index * 2));
     setFeedbackOpen(false);
@@ -215,10 +244,13 @@ export default function Home() {
 
   if (messagePreview) return <MessagePreviewScreen preview={messagePreview} theme={theme} onBack={() => setMessagePreview(null)} />;
 
+  if (labGuideOpen) return <LabWelcome theme={theme} onTheme={() => chooseTheme(theme === "dark" ? "light" : "dark")} onChooseProduct={chooseProduct} />;
+
   return (
     <main className="lab-shell" data-theme={theme} onPointerOverCapture={(event) => inspectAction(event.target)} onFocusCapture={(event) => inspectAction(event.target)}>
       <section className="portfolio-rail" aria-label="Portfolio de productos del Lab">
         <nav className="product-selector">
+          <button className="lab-guide-tab" onClick={() => setLabGuideOpen(true)}><span aria-hidden="true">✦</span><b>Laboratorio YOL1</b><small>CÓMO USARLO</small></button>
           {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} className={product.id === productId ? "selected" : ""} onClick={() => chooseProduct(product.id)} data-product-key={product.id} data-maturity={product.maturity} aria-current={product.id === productId ? "page" : undefined}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{maturityLabel(product)}</small></button>)}
         </nav>
       </section>
@@ -244,7 +276,7 @@ export default function Home() {
           <div ref={appContentRef} className={`app-content app-${productId === "companion" ? tab : productId === "kyc" ? "onboarding" : "builder"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
             <>
               {productId === "kyc" && <OnboardingFlow key={onboardingResetKey} stage={onboardingStage} setStage={setOnboardingStage} onSnapshotChange={setDemoSnapshot} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Ya puedes explorar tu acompañante financiero."); }} onOpenBank={() => { setBankCapability("receive_value"); setProductId("companion"); go("banco", "Handoff demo: revisa los requisitos posibles sin entregar identidad."); }} />}
-              {productId === "builder" && <ProjectBuilderScreen guide={builderGuide} onGuide={setBuilderGuide} />}
+              {productId === "builder" && <ProjectBuilderScreen guide={builderGuide} onGuide={setBuilderGuide} project={sharedProject} projectState={sharedProjectState} />}
               {productId === "companion" && tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
               {productId === "companion" && tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
               {productId === "companion" && tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} reviewed={reviewedMovements} onUnreview={(id) => setReviewedMovements((items) => items.filter((item) => item !== id))} notes={movementNotes} setNotes={setMovementNotes} savedNotes={savedMovementNotes} setSavedNotes={setSavedMovementNotes} onAction={handleMovementAction} onNotice={notify} />}
@@ -285,21 +317,111 @@ function productSpecScreen(product: ProductDefinition, screen: string) {
   return "inicio";
 }
 
+function LabWelcome({ theme, onTheme, onChooseProduct }: { theme: Theme; onTheme: () => void; onChooseProduct: (product: ProductId) => void }) {
+  return <main className="lab-welcome lab-shell" data-theme={theme}>
+    <header className="lab-welcome-head"><div className="brand-plate"><Brand /><span>PRODUCT GROWTH LAB · 01</span></div><button className="theme-toggle" onClick={onTheme}>{theme === "dark" ? "☀ Claro" : "◐ Oscuro"}</button></header>
+    <section className="lab-welcome-hero"><p className="eyebrow">BIENVENIDO AL LABORATORIO YOL1</p><h1>Ideas con forma.<br /><span>Productos con contexto.</span></h1><p>Este es un espacio de trabajo: puedes navegar prototipos, entender qué falta para construirlos y dejar decisiones que el equipo de producto y tecnología pueda retomar.</p></section>
+    <section className="lab-welcome-steps" aria-label="Cómo usar el Laboratorio YOL1">
+      <article><span>01</span><h2>Explora un producto</h2><p>Elige una pestaña. Las experiencias son mockups interactivos: sus botones responden, pero no conectan bancos, pagos ni servicios reales.</p></article>
+      <article><span>02</span><h2>Mira cómo se construye</h2><p>Baja en cada producto explorable. La ficha traduce pantalla a datos, eventos, arquitectura candidata, gates y riesgos de experiencia.</p></article>
+      <article><span>03</span><h2>Deja una decisión útil</h2><p>Marca lo que está por validar, deja una propuesta, idea o comentario. Todo entra a la bandeja de aprendizaje para priorizarlo después.</p></article>
+      <article><span>04</span><h2>Construye tu propio producto</h2><p>Conecta ChatGPT o Claude al MCP de YOL1 y parte por una idea, referencia, foto o dibujo. El Lab te guía para convertirla en propuesta.</p><button onClick={() => onChooseProduct("builder")}>Ir a Construir mi propio producto →</button></article>
+    </section>
+    <section className="lab-welcome-products"><p className="eyebrow">PRODUCTOS DISPONIBLES PARA EXPLORAR</p><div>{PORTFOLIO_PRODUCTS.filter((product) => product.id !== "builder").map((product) => <button key={product.id} onClick={() => onChooseProduct(product.id)}><span>{product.icon}</span><strong>{product.name}</strong><small>{product.explorable ? "Abrir mockup y ficha" : maturityLabel(product)}</small></button>)}</div></section>
+  </main>;
+}
+
 function ProductSpecPanel({ product, screen, inspectedAction }: { product: ProductDefinition; screen: string; inspectedAction: InspectedAction | null }) {
   const spec = getLivingSpec(product, productSpecScreen(product, screen));
   const inspectedEvent = inspectedAction?.eventId ?? spec.event;
-  const hasExplicitEvent = Boolean(inspectedAction?.eventId);
-  const metadata = eventMetadata(inspectedEvent, product, screen).map(([key, value]) => [key, key === "event_name" && !hasExplicitEvent ? "Sin evento definido" : value] as [string, string]);
+  const hasEvent = Boolean(inspectedAction ? inspectedAction.eventId : spec.event);
+  const metadata = eventMetadata(inspectedEvent, product, screen).map(([key, value]) => [key, key === "event_name" && !hasEvent ? "Sin evento definido" : value] as [string, string]);
+  const dataContract = {
+    readModel: spec.data.query,
+    writeModel: spec.data.store,
+    sourceOfTruth: spec.data.sources,
+    operationalRecord: "BD operacional por definir · conservar origen, frescura y versión de regla",
+    analytics: "CDP / warehouse por definir · enviar sólo evento allowlisted, IDs pseudónimos y consentimiento",
+    observability: "Logs estructurados + correlation_id · sin PII, OTP, credenciales ni payloads financieros crudos",
+  };
+  const architectureGuide = [
+    "React Native: componentes reutilizables, navegación tipada, estado de carga/error/vacío y accesibilidad desde el componente.",
+    "BFF / API: contrato versionado por pantalla; valida autorización y devuelve sólo el read model que necesita la vista.",
+    "AWS: API Gateway → Lambda por dominio candidato; DynamoDB/RDS según patrón de acceso y auditoría; EventBridge para eventos asíncronos sólo cuando exista una integración aprobada.",
+    "Operación: feature flag por capability, trazabilidad con correlation_id, observabilidad y rollback antes de habilitar una acción material.",
+  ];
   const sections = [
-    { title: "Evento y metadata", content: <><p className="team-spec-inspector"><span>{hasExplicitEvent ? "INSPECCIONANDO ACCIÓN" : "EVENTO BASE DE ESTA PANTALLA"}</span><strong>{inspectedAction?.label ?? simpleEventName(spec.event, product, screen)}</strong></p><p className="team-spec-event">{hasExplicitEvent ? simpleEventName(inspectedEvent, product, screen) : "Sin evento definido"}</p><code>{hasExplicitEvent ? inspectedEvent : "instrumentación pendiente"}</code>{!hasExplicitEvent && inspectedAction && <p className="team-spec-warning">Esta acción aún no tiene <code>data-event-id</code>. La ficha no inventa un evento: queda como deuda de instrumentación.</p>}<dl>{metadata.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>{inspectedAction?.parameters.length ? <><p className="team-spec-parameters-label">Parámetros de esta interacción</p><dl>{inspectedAction.parameters.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></> : null}</> },
-    { title: "Datos", content: <><p><b>Guardar:</b> {spec.data.store.join(" · ")}</p><p><b>Consultar:</b> {spec.data.query.join(" · ")}</p><p><b>Fuentes:</b> {spec.data.sources.join(" · ")}</p><p>{spec.data.handling}</p></> },
-    { title: "Arquitectura candidata", content: <ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul> },
-    { title: "KYC, licencias y riesgos", content: <><p><b>KYC · {spec.kyc.state}:</b> {spec.kyc.reason}</p><p><b>Licencias · {spec.licenses.state}:</b> {spec.licenses.reason}</p><p><b>Riesgos:</b> {spec.risks.join(" · ")}</p><p><b>Preguntas abiertas:</b> {spec.questions.join(" · ")}</p></> },
+    { title: "Evento y metadata", content: <><p className="team-spec-inspector"><span>{inspectedAction ? "INSPECCIONANDO ACCIÓN" : "EVENTO BASE DE ESTA PANTALLA"}</span><strong>{inspectedAction?.label ?? simpleEventName(spec.event, product, screen)}</strong></p><p className="team-spec-event">{hasEvent ? simpleEventName(inspectedEvent, product, screen) : "Sin evento definido"}</p><code>{hasEvent ? inspectedEvent : "instrumentación pendiente"}</code>{!hasEvent && inspectedAction && <p className="team-spec-warning">Esta acción aún no tiene <code>data-event-id</code>. La ficha no inventa un evento: queda como deuda de instrumentación.</p>}<dl>{metadata.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>{inspectedAction?.parameters.length ? <><p className="team-spec-parameters-label">Parámetros de esta interacción</p><dl>{inspectedAction.parameters.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></> : null}</> },
+    { title: "Contrato de datos", content: <div className="team-spec-contract"><p><b>Read model · consulta la pantalla:</b> {dataContract.readModel.join(" · ")}</p><p><b>Write model · genera o modifica:</b> {dataContract.writeModel.join(" · ")}</p><p><b>System of record · fuentes:</b> {dataContract.sourceOfTruth.join(" · ")}</p><p><b>BD operacional:</b> {dataContract.operationalRecord}</p><p><b>Analítica / CDP / warehouse:</b> {dataContract.analytics}</p><p><b>Observabilidad:</b> {dataContract.observability}</p><p className="team-spec-note">{spec.data.handling}</p></div> },
+    { title: "Arquitectura candidata", content: <><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><div className="team-spec-architecture-guide">{architectureGuide.map((item) => <p key={item}>{item}</p>)}</div></> },
+    { title: "Experiencia, gates y Error capa 8", content: <><ExperienceInputs product={product.name} screen={screen} kyc={`${spec.kyc.state}: ${spec.kyc.reason}`} licenses={`${spec.licenses.state}: ${spec.licenses.reason}`} risks={spec.risks} /><DecisionCapture product={product.name} screen={screen} questions={spec.questions} /></> },
   ];
   return <section className="team-spec" aria-label={`Ficha técnica de ${screen}`}>
-    <header><div><p className="eyebrow">FICHA DE PRODUCTO · PARA DESARROLLO</p><h2>{screen}</h2><p>Resumen técnico para conversar con diseño e ingeniería; no representa una integración activa.</p></div><aside><small>OWNER</small><strong>{spec.governance.owner}</strong><small>REVISAR</small><span>{spec.governance.reviewBy}</span></aside></header>
+    <header><div><p className="eyebrow">FICHA DE PRODUCTO · PARA DESARROLLO</p><h2>{screen}</h2><p>De decisión técnica a experiencia: contrato de datos, arquitectura candidata, instrumentación y QA para que el equipo pueda construir sin adivinar.</p></div><aside><small>OWNER</small><strong>{spec.governance.owner}</strong><small>REVISAR</small><span>{spec.governance.reviewBy}</span></aside></header>
     <div className="team-spec-accordion">{sections.map((section, index) => <details key={section.title} open={index === 0}><summary>{section.title}<span>+</span></summary><div>{section.content}</div></details>)}</div>
   </section>;
+}
+
+function DecisionCapture({ product, screen, questions }: { product: string; screen: string; questions: string[] }) {
+  const [kind, setKind] = useState<FeedbackKind>("idea");
+  const [message, setMessage] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [questionStates, setQuestionStates] = useState<Record<string, "pending" | "answered" | "not_applicable">>({});
+  const labels: Record<FeedbackKind, string> = { like: "Comentario", improve: "Propuesta", idea: "Idea" };
+  const stateLabels = { pending: "Por validar", answered: "Respondida", not_applicable: "No aplica" } as const;
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!message.trim()) return;
+    const input = { product, screen: `${screen} · decisión técnica`, kind, message: message.trim(), topics: "pregunta técnica" };
+    localFeedbackIntake.submit(input);
+    setSubmitting(true);
+    try {
+      const shared = await submitGeneralFeedback({ screen: `${product} · ${screen} · decisión técnica`, kind, message: message.trim(), topics: "pregunta técnica" });
+      setConfirmation(shared ? "Propuesta enviada a la bandeja de aprendizaje." : "Guardada en este navegador para revisión.");
+    } catch {
+      setConfirmation("Guardada en este navegador para revisión.");
+    } finally {
+      setSubmitting(false);
+      setMessage("");
+    }
+  };
+  return <form className="decision-capture" onSubmit={submit}>
+    <div className="decision-capture-questions"><p className="team-spec-parameters-label">Preguntas para construir</p>{questions.map((question, index) => {
+      const state = questionStates[question] ?? "pending";
+      return <article key={question}><span>{String(index + 1).padStart(2, "0")}</span><div><strong>{question}</strong><small>{state === "answered" ? "Respuesta/evidencia por conectar a fuente aprobada." : state === "not_applicable" ? "Fuera de alcance de esta pantalla." : "Aún no existe una decisión o evidencia aprobada."}</small></div><button type="button" className={`decision-state decision-${state}`} onClick={() => setQuestionStates((current) => ({ ...current, [question]: state === "pending" ? "answered" : state === "answered" ? "not_applicable" : "pending" }))} aria-label={`Cambiar estado: ${stateLabels[state]}`}>{stateLabels[state]}</button></article>;
+    })}</div>
+    <p>Convierte una duda en material para BRD, arquitectura o backlog. No incluyas datos personales ni financieros reales.</p>
+    <div className="decision-capture-kinds">{(["idea", "improve", "like"] as FeedbackKind[]).map((value) => <button type="button" key={value} className={kind === value ? "selected" : ""} onClick={() => setKind(value)}>{labels[value]}</button>)}</div>
+    <label><span>{labels[kind]} para esta pantalla</span><textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={700} required placeholder="Ej.: Propongo persistir el pre-registro sólo después de verificar el canal y conservar un estado recuperable." /></label>
+    <button type="submit" disabled={submitting || !message.trim()}>{submitting ? "Guardando…" : "Guardar en bandeja"}</button>
+    {confirmation && <p className="decision-capture-confirmation" role="status">✓ {confirmation}</p>}
+  </form>;
+}
+
+function ExperienceInputs({ product, screen, kyc, licenses, risks }: { product: string; screen: string; kyc: string; licenses: string; risks: string[] }) {
+  const items = [
+    { key: "experience", title: "Experiencia", body: "Recorrer feliz, vacío, carga, error recuperable, sin permiso y retorno. Cada CTA debe tener salida, confirmación y reversibilidad cuando aplique." },
+    { key: "gates", title: "Gates por resolver", body: `KYC: ${kyc} Licencias: ${licenses}` },
+    { key: "layer8", title: "Error capa 8", body: risks.join(" · ") },
+  ];
+  const [open, setOpen] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!open || !message.trim()) return;
+    const input = { product, screen: `${screen} · ${open}`, kind: "improve" as FeedbackKind, message: message.trim(), topics: open };
+    localFeedbackIntake.submit(input);
+    try {
+      const shared = await submitGeneralFeedback({ screen: `${product} · ${screen} · ${open}`, kind: "improve", message: message.trim(), topics: open });
+      setConfirmation(shared ? "Input enviado a la bandeja de aprendizaje." : "Input guardado localmente para revisión.");
+    } catch {
+      setConfirmation("Input guardado localmente para revisión.");
+    }
+    setMessage("");
+  };
+  return <form className="experience-inputs" onSubmit={submit}>{items.map((item) => <article key={item.key}><div><p>{item.title}</p><span>{item.body}</span></div><button type="button" onClick={() => { setOpen(open === item.key ? null : item.key); setConfirmation(""); }}>{open === item.key ? "Cerrar input" : "Agregar input"}</button>{open === item.key && <label><span>Comentario para {item.title}</span><textarea value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Describe el problema, una propuesta o la evidencia que falta." maxLength={700} required /><button type="submit">Enviar propuesta</button></label>}</article>)}{confirmation && <p className="decision-capture-confirmation" role="status">✓ {confirmation}</p>}</form>;
 }
 
 function OnboardingFlow({ stage, setStage, onSnapshotChange, onEnterAdvisor, onOpenBank }: { stage: OnboardingStage; setStage: (stage: OnboardingStage) => void; onSnapshotChange: (snapshot: OnboardingDemoSnapshot | null) => void; onEnterAdvisor: () => void; onOpenBank: () => void }) {
@@ -417,57 +539,88 @@ function ProfileMenu({ snapshot, onClose, onOnboarding, onBank, onClearDemo }: {
   return <aside className="profile-menu" aria-label="Menú de perfil"><div className="profile-menu-head"><div><small>TU PERFIL</small><strong>Accesos y permisos</strong></div><button onClick={onClose} aria-label="Cerrar menú">×</button></div><p>Este ledger muestra sólo el estado local; no necesitas completar datos por adelantado.</p><div className="profile-checklist">{rows.map((row) => { const content = <><span>{row.mark}</span><div><strong>{row.label}</strong><small>{row.status}</small></div></>; return row.action ? <button key={row.key} className={`ledger-row state-${row.mark === "✓" ? "ready" : "pending"}`} data-event-id={row.action === "clear_demo" ? "preregistration_demo_deleted" : undefined} onClick={() => act(row.action)}>{content}</button> : <div key={row.key} className="ledger-row state-empty">{content}</div>; })}</div></aside>;
 }
 
-function ProjectBuilderScreen({ guide, onGuide }: { guide: BuilderGuide; onGuide: (guide: BuilderGuide) => void }) {
+function ProjectBuilderScreen({ guide, onGuide, project, projectState }: { guide: BuilderGuide; onGuide: (guide: BuilderGuide) => void; project: SharedProjectDraft | null; projectState: "idle" | "loading" | "ready" | "error" }) {
   if (guide) return <BuilderGuideScreen guide={guide} onBack={() => onGuide(null)} />;
+  if (projectState === "loading") return <section className="builder-project-state" aria-live="polite"><span>✦</span><p className="kicker">ABRIENDO BORRADOR</p><h2>Trayendo tu propuesta al Lab…</h2><p>No estamos leyendo tu conversación; sólo el borrador que decidiste guardar.</p></section>;
+  if (projectState === "error") return <section className="builder-project-state is-error" role="alert"><span>!</span><p className="kicker">BORRADOR NO DISPONIBLE</p><h2>No pudimos abrir esta propuesta.</h2><p>El enlace puede estar incompleto, haber expirado o la bandeja compartida puede estar temporalmente fuera de servicio.</p><a href="/?product=builder">Volver a Construir mi propio producto</a></section>;
+  if (projectState === "ready" && project) return <ProjectDraftPreview project={project} onHow={() => onGuide("how")} />;
   return <section className="builder-phone-empty" aria-label="Vista previa de proyecto en construcción">
     <div className="builder-phone-art" aria-hidden="true"><span>✦</span><i /><i /><i /></div>
-    <p className="kicker">TU ESPACIO DE EXPERIMENTOS</p>
-    <h2>En este espacio,<br /><span>el próximo producto lo construyes tú.</span></h2>
-    <p>Trabaja en tu propio ChatGPT o Claude y trae al Lab sólo el resumen o las pantallas que decidas incorporar.</p>
+    <p className="kicker">LAB DE PRODUCTO · TU ZONA DE EXPERIMENTOS</p>
+    <h2>Tu idea entra acá.<br /><span>Tu producto empieza a tomar forma.</span></h2>
+    <p className="builder-main-copy">Conecta tu IA, conversa, manda referencias o dibujos y trae al Lab sólo la versión que decidas guardar como borrador.</p>
+    <div className="builder-promise"><b>Este teléfono es editable por propuesta.</b><span>El resto del Lab queda intacto mientras exploras.</span></div>
     <div className="builder-connect-grid" aria-label="Elegir una guía de IA">
-      <button onClick={() => onGuide("chatgpt")} data-event-id="builder_guide_viewed" data-client="chatgpt"><span>◌</span><strong>Ver guía para<br />ChatGPT</strong><small>Compatibilidad por validar</small></button>
-      <button onClick={() => onGuide("claude")} data-event-id="builder_guide_viewed" data-client="claude"><span>✦</span><strong>Ver guía para<br />Claude</strong><small>Compatibilidad por validar</small></button>
+      <button onClick={() => onGuide("chatgpt")} data-event-id="builder_guide_viewed" data-client="chatgpt"><span>01</span><strong>Ver guía para<br />ChatGPT</strong><small>Piloto disponible</small></button>
+      <button onClick={() => onGuide("claude")} data-event-id="builder_guide_viewed" data-client="claude"><span>02</span><strong>Ver guía para<br />Claude</strong><small>Piloto disponible</small></button>
     </div>
+    <div className="builder-idea-examples"><small>DESPUÉS, PUEDES PARTIR ASÍ</small><p>“Diseña una tarjeta de crédito con beneficios para la gente que come siempre afuera.”</p><p>“Quiero resolver un problema de viajes con amigos. Te mando una referencia.”</p></div>
     <button className="builder-how-button" onClick={() => onGuide("how")} data-event-id="builder_how_viewed">Cómo ocupar <span>→</span></button>
-    <small className="builder-phone-disclaimer">YOL1 no lee ni sincroniza tu conversación. Nada aparece en este teléfono hasta que tú lo incorporas explícitamente y nada se publica automáticamente.</small>
+    <small className="builder-phone-disclaimer">YOL1 no lee tu conversación ni publica nada automáticamente. La propuesta pasa a revisión cuando tú decides traerla al Lab.</small>
+  </section>;
+}
+
+function ProjectDraftPreview({ project, onHow }: { project: SharedProjectDraft; onHow: () => void }) {
+  return <section className="builder-project-preview" aria-label={`Borrador ${project.title}`}>
+    <div className="builder-project-status"><span>PROPUESTA TRAÍDA AL LAB</span><b>En borrador</b></div>
+    <p className="kicker">CONSTRUIR MI PROPIO PRODUCTO</p>
+    <h2>{project.title}</h2>
+    <p className="builder-project-idea">{project.idea}</p>
+    <div className="builder-project-facts">
+      <article><small>PROBLEMA</small><p>{project.problem}</p></article>
+      <article><small>PARA QUIÉN</small><p>{project.audience}</p></article>
+      <article><small>PROPUESTA DE VALOR</small><p>{project.valueProposition}</p></article>
+    </div>
+    {(project.assumptions.length > 0 || project.openQuestions.length > 0) && <div className="builder-project-columns">
+      {project.assumptions.length > 0 && <article><small>SUPUESTOS</small><ul>{project.assumptions.map((item) => <li key={item}>{item}</li>)}</ul></article>}
+      {project.openQuestions.length > 0 && <article><small>PREGUNTAS ABIERTAS</small><ul>{project.openQuestions.map((item) => <li key={item}>{item}</li>)}</ul></article>}
+    </div>}
+    <button className="builder-how-button" onClick={onHow}>Cómo seguir mejorándola <span>→</span></button>
+    <a className="builder-project-new" href="/?product=builder">Empezar otra idea</a>
+    <small className="builder-phone-disclaimer">Este enlace muestra un borrador compartido por 90 días. No está publicado y no cambió ninguna otra pantalla del Lab.</small>
   </section>;
 }
 
 function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, null>; onBack: () => void }) {
-  const [urlCopyStatus, setUrlCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [copyStatus, setCopyStatus] = useState<"idle" | "url" | "prompt" | "failed">("idle");
   const isHow = guide === "how";
   const provider = guide === "chatgpt" ? "ChatGPT" : "Claude";
   const hasMcpUrl = Boolean(YOL1_MCP_URL);
-  const compatibility = hasMcpUrl ? "URL configurada · requiere prueba en este cliente" : "Integración MCP por validar";
+  const providerPath = guide === "claude" ? "Settings → Connectors → Add custom connector" : "Settings → Apps → Advanced settings → Developer mode";
   const copyUrl = async () => {
     if (!hasMcpUrl) return;
-    try { await navigator.clipboard.writeText(YOL1_MCP_URL); setUrlCopyStatus("copied"); } catch { setUrlCopyStatus("failed"); }
+    try { await navigator.clipboard.writeText(YOL1_MCP_URL); setCopyStatus("url"); } catch { setCopyStatus("failed"); }
+  };
+  const copyPrompt = async () => {
+    try { await navigator.clipboard.writeText(BUILDER_START_MESSAGE); setCopyStatus("prompt"); } catch { setCopyStatus("failed"); }
   };
   if (isHow) return <section className="builder-how-screen" aria-label="Cómo ocupar YOL1 MCP">
     <button className="back-link" onClick={onBack}>← Volver</button>
-    <p className="kicker">CÓMO OCUPARLO</p><h2>Hablas.<br /><span>Lo conviertes en propuesta.</span></h2>
+    <p className="kicker">CÓMO SACARLE PROVECHO</p><h2>Parte simple.<br /><span>Mejora en conjunto.</span></h2>
     <div className="builder-demo-window" aria-label="Demostración de una conversación externa y una pantalla incorporada manualmente">
       <div className="builder-demo-head"><span>CHAT EXTERNO · EJEMPLO</span><i /><i /><i /></div>
-      <div className="builder-demo-chat"><p className="user">“Quiero ordenar los gastos de un viaje.”</p><p className="assistant">Entiendo. Voy a proponer el flujo y sus reglas.</p><p className="tool">↳ Referencias YOL1 pegadas o leídas por un MCP validado</p></div>
-      <div className="builder-demo-preview"><small>BORRADOR INCORPORADO</small><strong>Viaje sin<br />cuentas pendientes</strong><span>Copiado manualmente · no sincronizado</span></div>
+      <div className="builder-demo-chat"><p className="user">“Diseña una tarjeta de crédito con beneficios para comer afuera.”</p><p className="assistant">¿Para quién, en qué momento y qué beneficio debería importar primero?</p><p className="tool">↳ Trae una foto, un link o un dibujo si tienes una referencia.</p></div>
+      <div className="builder-demo-preview"><small>BORRADOR EN EL LAB</small><strong>Tarjeta para<br />salir a comer</strong><span>Propuesta revisable · no publicada</span></div>
     </div>
-    <ol className="builder-how-list"><li>Conecta YOL1 una sola vez desde la guía de ChatGPT o Claude.</li><li>Abre un chat nuevo y selecciona <strong>YOL1</strong> con <strong>@YOL1</strong> o desde Herramientas.</li><li>Escribe solamente <strong>“Partamos.”</strong> No debes editar ningún prompt.</li><li>YOL1 te recibe, muestra <strong>“Aprieta acá para abrir la vista del Lab”</strong> y hace la primera pregunta.</li><li>Trae referencias, fotos o dibujos cuando quieras mover, cambiar o mejorar algo.</li></ol>
-    <small className="builder-install-note">La conversación no se sincroniza con YOL1. El teléfono muestra únicamente lo que incorporas de forma explícita.</small>
+    <ol className="builder-how-list"><li><strong>Describe la idea en simple.</strong> Puedes partir con una necesidad, no con una solución perfecta.</li><li><strong>Déjate guiar.</strong> La IA pregunta por persona, momento, pantalla y límite antes de dibujar.</li><li><strong>Manda referencias.</strong> Una foto, link, croquis o comentario como “haz el botón más visible” acelera la iteración.</li><li><strong>Revisa el borrador.</strong> Lo que veas en Construir es una propuesta, no un cambio al resto del Lab.</li><li><strong>Envía cuando tenga forma.</strong> La publicación y cualquier integración se revisan por separado.</li></ol>
+    <div className="builder-example-prompt"><small>EJEMPLO PARA PROBAR</small><p>“Diseña un producto de tarjeta de crédito que tenga beneficios para comer afuera. Parte preguntándome lo mínimo para entender a quién ayuda y muéstrame una primera versión.”</p></div>
+    <small className="builder-install-note">La conversación no se sincroniza con YOL1. El teléfono muestra únicamente una propuesta que decidas incorporar de forma explícita.</small>
   </section>;
   return <section className="builder-install-screen" aria-label={`Guía de YOL1 para ${provider}`}>
     <button className="back-link" onClick={onBack}>← Volver</button>
-    <p className="kicker">CONÉCTALO UNA VEZ · {compatibility}</p><h2>{provider}<br /><span>con YOL1.</span></h2>
-    <p className="builder-guide-intro">Conecta YOL1 una vez y, después, selecciónalo dentro de un chat nuevo. Escribe <b>“Partamos.”</b> y YOL1 se encarga de darte la bienvenida y guiarte.</p>
+    <p className="kicker">CONFIGURACIÓN ÚNICA · {provider.toUpperCase()}</p><h2>Conecta.<br /><span>Habla. Construye.</span></h2>
+    <p className="builder-guide-intro">Esta guía conecta el MCP público piloto de YOL1 con {provider}. Las acciones de escritura deben pedir tu confirmación antes de guardar un borrador.</p>
     <div className="builder-install-steps">
-      <article><span>01</span><div><strong>Crea o abre la App YOL1</strong><small>En <b>Settings → Apps</b>, abre YOL1. Si no la ves, activa modo desarrollador o usa el workspace donde fue creada.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
-      <article><span>02</span><div><strong>Completa exactamente estos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> <code>{YOL1_MCP_URL}</code><br />Sin argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
-      <article><span>03</span><div><strong>Escanea y abre un chat normal</strong><small>Presiona <b>Scan tools</b> y <b>Create</b>. En un chat nuevo usa <b>@YOL1</b>; luego escribe <b>“Partamos.”</b></small></div><i className="guide-ui guide-link" aria-hidden="true">@YOL1</i></article>
+      <article><span>01</span><div><strong>Busca Conectores / MCP</strong><small>En {provider}, abre <b>{providerPath}</b>. Si el nombre cambia, busca “connector”, “MCP” o “custom integration”.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
+      <article><span>02</span><div><strong>Pega solo estos dos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> {hasMcpUrl ? <code>{YOL1_MCP_URL}</code> : <b>URL MCP remota por validar</b>}<br />No agregues argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
+      <article><span>03</span><div><strong>Guarda y habilítalo en un chat nuevo</strong><small>Busca <b>YOL1</b> en herramientas o conectores. Si no aparece, vuelve a la configuración y verifica que la URL se haya guardado.</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1</i></article>
     </div>
-    <button className="builder-copy-url" onClick={copyUrl} disabled={!hasMcpUrl}>{urlCopyStatus === "copied" ? "URL MCP copiada ✓" : "Copiar URL de YOL1"}</button>
-    {urlCopyStatus === "failed" && <small className="builder-copy-status" role="alert">No pudimos copiar la URL. Selecciónala manualmente en el paso 02.</small>}
+    <button className="builder-copy-url" onClick={copyUrl} disabled={!hasMcpUrl}>{copyStatus === "url" ? "URL MCP copiada ✓" : hasMcpUrl ? "Copiar URL de YOL1" : "URL MCP aún no habilitada"}</button>
     <a className="builder-open-lab" href={`${YOL1_SITE_URL}/?product=builder`} target="_blank" rel="noreferrer">Abrir la vista del Lab ahora ↗</a>
-    <div className="builder-paste-box"><small>04 · COMPRUEBA QUE RESPONDE</small><p>Con <b>@YOL1</b> seleccionado, escribe <b>“Partamos.”</b> Debe aparecer la bienvenida y una invitación para abrir la vista del Lab. Si no aparece YOL1, vuelve al paso 03: la compatibilidad del cliente todavía está por validar.</p></div>
-    <small className="builder-install-note">YOL1 no lee tu conversación ni recibe sus cambios. Para llevar algo al Lab debes copiar el resumen o completar “Enviar proyecto” de forma explícita.</small>
+    <div className="builder-paste-box"><small>04 · PEGA ESTE MENSAJE, SIN EDITARLO</small><p>{BUILDER_START_MESSAGE}</p></div>
+    <button className="builder-copy-template" onClick={copyPrompt} disabled={!hasMcpUrl}>{copyStatus === "prompt" ? "Mensaje de inicio copiado ✓" : hasMcpUrl ? "Copiar mensaje de inicio" : "Mensaje disponible cuando exista conexión"}</button>
+    {copyStatus === "failed" && <small className="builder-copy-status" role="alert">No pudimos copiar. Selecciona el contenido correspondiente y cópialo manualmente.</small>}
+    <small className="builder-install-note">YOL1 no lee tu conversación ni recibe cambios automáticamente. El Lab muestra solo una propuesta que decidas enviar a revisión.</small>
   </section>;
 }
 
