@@ -2497,3 +2497,24 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 5. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
 6. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
 7. **QA compartido:** repetir entre navegadores con Postgres y credenciales operativas administradas; no se configuraron secretos ni se conectaron integraciones en esta pasada.
+
+## 94. Revisión nocturna incremental — 17 de agosto de 2026, 16:32 CLT
+
+**Alcance ejecutado:** revisión del delta posterior al cierre operativo 15:32 CLT sobre Builder/MCP y el nuevo discovery de Onboarding Chile. Se preservaron sin cambios el documento y SVG no versionados de onboarding, además de todo trabajo concurrente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 nuevo. La ficha progresiva se abre después de la primera propuesta, el guardado continúa siendo explícito y los campos nuevos se normalizan, acotan y recorren el mismo filtro de datos sensibles. El discovery de Onboarding mantiene valor antes de identidad, separa acceso, KYC y capacidad, y presenta Cognito, proveedores y capacidades como candidatos o decisiones pendientes.
+- Se cerró un **P1 de contrato MCP**: `yol1_start_builder` informaba `delivery` dentro de `context_modules_loaded`, aunque ese valor no pertenece al catálogo canónico `core / product_sheet / technology / data_analytics / continuity`. La respuesta ahora declara sólo `core` y `product_sheet`, y expone la guía de entrega por separado mediante `delivery_guidance_loaded: true`.
+- La guía visible de Codex se contrastó con la documentación oficial y la CLI local: Streamable HTTP usa URL, `config.toml` usa `url`, la app ofrece Restart y `/mcp` permite comprobar servidores. No fue necesario modificar ese flujo.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; ocho rutas generadas.
+- Suite completa previa a la corrección: **75/75 PASS**. Guardrails focalizados finales: **21/21 PASS**.
+- `git diff --check`: **PASS**.
+- No se repitió QA visual: la corrección afecta sólo metadata estructurada del MCP y no cambia UI, navegación ni layout.
+
+### Preguntas abiertas nuevas
+
+- Ninguna. Permanecen vigentes las decisiones abiertas de Builder colaborativo/canvas, Tarjetas, primera capacidad de Onboarding, excepciones de identidad, Reviews y QA compartido registradas en la pasada 93.

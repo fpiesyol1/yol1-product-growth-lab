@@ -85,6 +85,7 @@ test("Onboarding declara valor antes de pedir OTP", async () => {
 
   assert.match(onboardingPrd, /entregar una primera utilidad antes de pedir identidad/i);
   assert.ok(onboardingPrd.indexOf("| Bienvenida") < onboardingPrd.indexOf("| Confirmar OTP"), "Bienvenida debe ocurrir antes de OTP");
-  assert.match(page, /Entiende tu plata\.\s*<br \/><span>Antes de pedirte datos\./);
-  assert.ok(page.indexOf("Explorar YOL1") < page.indexOf("Enviar código"), "la exploración debe existir antes de pedir OTP");
+  assert.match(page, /Tu plata, más clara\.\s*<br \/><span>Entiende qué está pasando hoy\./);
+  assert.match(page, /Registrarme →/);
+  assert.match(page, /Registrarme con este canal →/);
 });

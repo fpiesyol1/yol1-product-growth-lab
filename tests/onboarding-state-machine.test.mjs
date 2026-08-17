@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ONBOARDING_STAGE_META, transitionOnboarding } from "../lib/onboarding-state-machine.ts";
 
-test("la ruta feliz exige intención, explicación y canal antes del pre-registro", () => {
+test("la ruta feliz crea acceso, elige objetivo y explica requisitos antes de guardar la ruta", () => {
   const events = [
     "VIEW_ACTIVATIONS",
-    "SELECT_CAPABILITY",
-    "START_PREREGISTRATION",
     "REQUEST_OTP_DEMO",
     "VERIFY_OTP_DEMO",
+    "SELECT_CAPABILITY",
+    "START_PREREGISTRATION",
   ];
   const stages = events.reduce(
     (visited, event) => [...visited, transitionOnboarding(visited.at(-1), event)],
@@ -17,10 +17,10 @@ test("la ruta feliz exige intención, explicación y canal antes del pre-registr
 
   assert.deepEqual(stages, [
     "welcome",
-    "capability_chooser",
-    "requirements_explained",
     "channel_select",
     "otp_entry",
+    "capability_chooser",
+    "requirements_explained",
     "preregistered_demo",
   ]);
 });
@@ -34,7 +34,7 @@ test("eventos fuera de orden no adelantan el journey", () => {
 
 test("cambiar canal y volver conservan estados seguros", () => {
   assert.equal(transitionOnboarding("otp_entry", "CHANGE_CHANNEL"), "channel_select");
-  assert.equal(transitionOnboarding("channel_select", "BACK_TO_REQUIREMENTS"), "requirements_explained");
+  assert.equal(transitionOnboarding("channel_select", "BACK_TO_REQUIREMENTS"), "welcome");
   assert.equal(transitionOnboarding("consent_preview", "BACK_TO_PREREGISTERED"), "preregistered_demo");
 });
 

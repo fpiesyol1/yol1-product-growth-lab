@@ -537,6 +537,8 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(route, /technology_baseline: technologyBaselineManifest\(\)/);
   assert.match(route, /continuity: continuityManifest\(\)/);
   assert.match(route, /CONTEXT_MODULES = \["core", "product_sheet", "technology", "data_analytics", "continuity"\]/);
+  assert.match(route, /context_modules_loaded: \["core", "product_sheet"\], delivery_guidance_loaded: true/);
+  assert.doesNotMatch(route, /context_modules_loaded: \[[^\]]*"delivery"/);
   assert.match(route, /universal_for_every_collaborator_and_product_idea/);
   assert.match(route, /hide_until_proposal_exists: \["technical_sheet", "event_catalog", "architecture_details", "internal_tooling"\]/);
   assert.match(route, /only_skills_explicitly_exposed_and_relevant_to_the_current_task/);

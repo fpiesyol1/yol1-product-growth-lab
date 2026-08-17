@@ -521,7 +521,7 @@ export async function POST(request: Request) {
       const knownContext = cleanList(args.known_context, 10, 300);
       const rawCapabilities = args.host_capabilities && typeof args.host_capabilities === "object" ? args.host_capabilities as Record<string, unknown> : {};
       const hostCapabilities = Object.fromEntries(["artifact_html", "local_files", "preview", "save_draft", "publish"].flatMap((key) => typeof rawCapabilities[key] === "boolean" ? [[key, rawCapabilities[key]]] : []));
-      return response(rpc.id, { content: [{ type: "text", text: startBuilderText(idea, knownContext) }], structuredContent: { ...bootstrapMetadata(), idea: idea || null, known_context: knownContext, host_capabilities: hostCapabilities, context_modules_loaded: ["core", "product_sheet", "delivery"], draft_saved: false } });
+      return response(rpc.id, { content: [{ type: "text", text: startBuilderText(idea, knownContext) }], structuredContent: { ...bootstrapMetadata(), idea: idea || null, known_context: knownContext, host_capabilities: hostCapabilities, context_modules_loaded: ["core", "product_sheet"], delivery_guidance_loaded: true, draft_saved: false } });
     }
     if (params.name === "yol1_get_context") {
       const args = params.arguments && typeof params.arguments === "object" ? params.arguments as { modules?: unknown } : {};

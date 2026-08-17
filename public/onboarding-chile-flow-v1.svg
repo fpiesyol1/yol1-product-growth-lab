@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
+  <title id="title">YOL1 Onboarding Chile v1</title>
+  <desc id="desc">Flujo visual de onboarding progresivo: valor, exploración o acceso, home, capacidades y validación contextual.</desc>
+  <defs>
+    <style>
+      .bg{fill:#061f27}.card{fill:#103640;stroke:#7a8f8d;stroke-width:2}.phone{fill:#082a33;stroke:#9ca6a1;stroke-width:3}.screen{fill:#0d3440}.lime{fill:#7bf000}.aqua{fill:#6edbd1}.pink{fill:#ff82ad}.cream{fill:#fff1df}.muted{fill:#a7b8bd}.line{stroke:#65d9cf;stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round}.dash{stroke:#5d747a;stroke-width:2;stroke-dasharray:7 8;fill:none}.mono{font-family:Menlo,Monaco,monospace;font-size:15px;font-weight:700;letter-spacing:1.2px}.h1{font-family:Arial,sans-serif;font-size:58px;font-weight:800;letter-spacing:-2px}.h2{font-family:Arial,sans-serif;font-size:28px;font-weight:800;letter-spacing:-.5px}.body{font-family:Arial,sans-serif;font-size:19px;font-weight:500}.small{font-family:Arial,sans-serif;font-size:15px;font-weight:500}.button{fill:#7bf000}.buttonText{font-family:Menlo,Monaco,monospace;font-size:14px;font-weight:800;fill:#062126}.pill{fill:#15434b}.pillText{font-family:Menlo,Monaco,monospace;font-size:12px;font-weight:800;fill:#b5c4c6}.num{font-family:Menlo,Monaco,monospace;font-size:16px;font-weight:800;fill:#062126}
+    </style>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="10" dy="13" stdDeviation="0" flood-color="#001118" flood-opacity="1"/></filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#6edbd1"/></marker>
+  </defs>
+  <rect class="bg" width="1800" height="1120"/>
+  <text x="80" y="85" class="mono aqua">YOL1 · ONBOARDING CHILE · PROPUESTA DE FLUJO V1</text>
+  <text x="80" y="155" class="h1 cream">Valor primero. Activación cuando tenga sentido.</text>
+  <text x="80" y="194" class="body muted">Wireframe de conversación para Producto, Diseño, Arquitectura, Legal y Riesgo. No representa servicios financieros habilitados.</text>
+  
+  <!-- Steps rail -->
+  <g transform="translate(80 255)">
+    <rect class="card" width="222" height="70" rx="22"/><rect class="lime" x="18" y="16" width="38" height="38" rx="12"/><text x="29" y="41" class="num">01</text><text x="72" y="31" class="mono cream">ENTRAR</text><text x="72" y="53" class="small muted">valor antes de datos</text>
+    <rect class="card" x="246" width="222" height="70" rx="22"/><rect class="lime" x="264" y="16" width="38" height="38" rx="12"/><text x="275" y="41" class="num">02</text><text x="318" y="31" class="mono cream">ELEGIR RUTA</text><text x="318" y="53" class="small muted">explorar o guardar</text>
+    <rect class="card" x="492" width="222" height="70" rx="22"/><rect class="lime" x="510" y="16" width="38" height="38" rx="12"/><text x="521" y="41" class="num">03</text><text x="564" y="31" class="mono cream">HOME</text><text x="564" y="53" class="small muted">situaciones, no góndola</text>
+    <rect class="card" x="738" width="222" height="70" rx="22"/><rect class="lime" x="756" y="16" width="38" height="38" rx="12"/><text x="767" y="41" class="num">04</text><text x="810" y="31" class="mono cream">OBJETIVO</text><text x="810" y="53" class="small muted">capacidad concreta</text>
+    <rect class="card" x="984" width="222" height="70" rx="22"/><rect class="lime" x="1002" y="16" width="38" height="38" rx="12"/><text x="1013" y="41" class="num">05</text><text x="1056" y="31" class="mono cream">GATE</text><text x="1056" y="53" class="small muted">requisito explicado</text>
+    <rect class="card" x="1230" width="222" height="70" rx="22"/><rect class="lime" x="1248" y="16" width="38" height="38" rx="12"/><text x="1259" y="41" class="num">06</text><text x="1302" y="31" class="mono cream">AYUDA</text><text x="1302" y="53" class="small muted">revisar o recuperar</text>
+  </g>
+
+  <!-- Device 1 -->
+  <g transform="translate(110 395)" filter="url(#shadow)">
+    <rect class="phone" width="270" height="570" rx="38"/>
+    <rect class="screen" x="12" y="38" width="246" height="492" rx="25"/>
+    <rect x="91" y="15" width="89" height="14" rx="8" fill="#021b23"/>
+    <text x="37" y="84" class="mono aqua">BIENVENIDO A YOL1</text>
+    <text x="37" y="138" class="h2 cream">Tu plata,</text><text x="37" y="170" class="h2 lime">más clara.</text>
+    <text x="37" y="209" class="small muted">Entiende qué está pasando hoy.</text><text x="37" y="231" class="small muted">Activa más cuando lo necesites.</text>
+    <circle cx="135" cy="315" r="55" class="pink"/><path d="M135 281l10 23 24 10-24 10-10 24-10-24-24-10 24-10z" fill="#0d3440"/>
+    <rect class="button" x="37" y="410" width="196" height="46" rx="13"/><text x="77" y="438" class="buttonText">EXPLORAR YOL1 →</text>
+    <rect x="37" y="466" width="196" height="41" rx="13" fill="none" stroke="#ff82ad" stroke-width="2"/><text x="61" y="491" class="buttonText" fill="#fff1df">VER CÓMO SE ACTIVA</text>
+  </g>
+  <text x="110" y="1012" class="mono aqua">PANTALLA 01 · BIENVENIDA</text>
+  <text x="110" y="1040" class="body cream">La propuesta de valor llega antes que el formulario.</text>
+
+  <!-- branch -->
+  <path class="line" d="M400 638 H488" marker-end="url(#arrow)"/>
+  <path class="dash" d="M488 638 V508 H558" marker-end="url(#arrow)"/>
+  <path class="dash" d="M488 638 V770 H558" marker-end="url(#arrow)"/>
+  <rect x="412" y="594" width="138" height="31" rx="13" class="pill"/><text x="429" y="615" class="pillText">ELEGIR RUTA</text>
+
+  <!-- branch cards -->
+  <g transform="translate(570 410)">
+    <rect class="card" width="278" height="170" rx="24"/><rect class="lime" x="22" y="22" width="38" height="38" rx="12"/><text x="33" y="47" class="num">A</text>
+    <text x="75" y="49" class="mono cream">EXPLORAR SIN CUENTA</text><text x="22" y="96" class="body cream">Preguntar, mirar productos</text><text x="22" y="121" class="body cream">y guardar sólo en este equipo.</text>
+    <text x="22" y="150" class="small muted">No crea pre-registro ni relación financiera.</text>
+    <rect x="0" y="215" class="card" width="278" height="170" rx="24"/><rect class="pink" x="22" y="237" width="38" height="38" rx="12"/><text x="33" y="262" class="num">B</text>
+    <text x="75" y="264" class="mono cream">GUARDAR MI AVANCE</text><text x="22" y="310" class="body cream">Google · Apple · email · teléfono</text><text x="22" y="335" class="small muted">SSO/OTP controla acceso; no valida identidad.</text>
+    <rect x="22" y="348" width="233" height="26" rx="10" class="pill"/><text x="37" y="366" class="pillText">CREA: PERSON + ACCESS ID</text>
+  </g>
+  <text x="570" y="842" class="mono aqua">BIFURCACIÓN 02 · EXPLORAR / GUARDAR</text>
+  <text x="570" y="870" class="body cream">El acceso es opt-in: guardar continuidad no promete una cuenta.</text>
+  
+  <!-- Device 3 -->
+  <g transform="translate(930 395)" filter="url(#shadow)">
+    <rect class="phone" width="270" height="570" rx="38"/><rect class="screen" x="12" y="38" width="246" height="492" rx="25"/><rect x="91" y="15" width="89" height="14" rx="8" fill="#021b23"/>
+    <text x="34" y="85" class="mono aqua">HOLA. ¿QUÉ RESOLVEMOS?</text>
+    <rect x="32" y="111" width="205" height="62" rx="15" fill="#17434b"/><text x="47" y="140" class="body cream">Ordenar lo que</text><text x="47" y="161" class="body cream">debo y me deben</text>
+    <rect x="32" y="186" width="205" height="62" rx="15" fill="#17434b"/><text x="47" y="215" class="body cream">Entender mis gastos</text><text x="47" y="236" class="small muted">o una cartola</text>
+    <rect x="32" y="261" width="205" height="62" rx="15" fill="#17434b"/><text x="47" y="290" class="body cream">Ver qué puedo activar</text><text x="47" y="311" class="small muted">sin promesas falsas</text>
+    <text x="32" y="361" class="mono aqua">AHORA EN YOL1</text>
+    <text x="32" y="393" class="small cream">Acompañante · explorable</text><text x="32" y="419" class="small muted">Mi banco · por validar</text><text x="32" y="445" class="small muted">Tarjetas · investigación</text>
+    <rect x="32" y="470" width="205" height="32" rx="11" fill="#143a43"/><text x="52" y="492" class="pillText">☰ VAMOS CONOCIÉNDONOS</text>
+  </g>
+  <text x="930" y="1012" class="mono aqua">PANTALLA 03 · HOME DE EXPLORACIÓN</text>
+  <text x="930" y="1040" class="body cream">Situaciones primero; productos y estados reales después.</text>
+
+  <!-- Checklist -->
+  <path class="line" d="M1220 680 H1292" marker-end="url(#arrow)"/>
+  <g transform="translate(1305 395)">
+    <rect class="card" width="385" height="570" rx="30"/>
+    <text x="29" y="50" class="mono aqua">VAMOS CONOCIÉNDONOS</text><text x="29" y="87" class="h2 cream">Activa sólo lo que necesitas.</text>
+    <rect x="25" y="112" width="335" height="77" rx="16" fill="#143b44"/><circle cx="52" cy="143" r="14" class="lime"/><text x="46" y="149" class="num">✓</text><text x="78" y="141" class="body cream">Guardar mi acceso</text><text x="78" y="164" class="small muted">Vuelves a tu espacio · sin dinero</text>
+    <rect x="25" y="202" width="335" height="93" rx="16" fill="#143b44"/><circle cx="52" cy="233" r="14" fill="#fff1df"/><text x="47" y="239" class="num">?</text><text x="78" y="231" class="body cream">Conectar mis datos</text><text x="78" y="254" class="small muted">Requiere consentimiento específico</text><text x="78" y="275" class="small muted">y ruta aprobada.</text>
+    <rect x="25" y="308" width="335" height="93" rx="16" fill="#143b44"/><circle cx="52" cy="339" r="14" fill="#fff1df"/><text x="47" y="345" class="num">?</text><text x="78" y="337" class="body cream">Recibir o mover dinero</text><text x="78" y="360" class="small muted">Requiere vehículo, partner,</text><text x="78" y="381" class="small muted">política y controles.</text>
+    <rect x="25" y="414" width="335" height="93" rx="16" fill="#143b44"/><circle cx="52" cy="445" r="14" fill="#fff1df"/><text x="47" y="451" class="num">?</text><text x="78" y="443" class="body cream">Tarjeta o crédito</text><text x="78" y="466" class="small muted">Pide requisitos sólo cuando</text><text x="78" y="487" class="small muted">exista una oferta habilitada.</text>
+    <rect x="25" y="524" width="335" height="28" rx="10" fill="#351f47"/><text x="45" y="543" class="pillText">CADA PASO EXPLICA SU GATE</text>
+  </g>
+  <text x="1305" y="1012" class="mono aqua">PANTALLA 04 · CHECKLIST / GATES</text>
+  <text x="1305" y="1040" class="body cream">No hay “KYC completo”: hay requisitos comprensibles por capacidad.</text>
+
+  <!-- footer -->
+  <path d="M80 1085 H1720" stroke="#234951" stroke-width="2"/>
+  <text x="80" y="1108" class="small muted">PRÓXIMA ITERACIÓN: elegir primera capacidad material real · validar partner/vehículo · diseñar OTP, recuperación y el home de exploración.</text>
+</svg>
