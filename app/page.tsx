@@ -119,13 +119,13 @@ export default function Home() {
       setProductId("builder");
       setLabGuideOpen(false);
       setSharedProjectId(requestedDraft);
+      setSharedProjectState("loading");
     }
   }, []);
 
   useEffect(() => {
     if (!sharedProjectId) return;
     let active = true;
-    setSharedProjectState("loading");
     fetch(`/api/projects/${encodeURIComponent(sharedProjectId)}`, { cache: "no-store" })
       .then(async (response) => {
         const payload = await response.json() as { project?: SharedProjectDraft };
@@ -542,7 +542,7 @@ function ProfileMenu({ snapshot, onClose, onOnboarding, onBank, onClearDemo }: {
 function ProjectBuilderScreen({ guide, onGuide, project, projectState }: { guide: BuilderGuide; onGuide: (guide: BuilderGuide) => void; project: SharedProjectDraft | null; projectState: "idle" | "loading" | "ready" | "error" }) {
   if (guide) return <BuilderGuideScreen guide={guide} onBack={() => onGuide(null)} />;
   if (projectState === "loading") return <section className="builder-project-state" aria-live="polite"><span>✦</span><p className="kicker">ABRIENDO BORRADOR</p><h2>Trayendo tu propuesta al Lab…</h2><p>No estamos leyendo tu conversación; sólo el borrador que decidiste guardar.</p></section>;
-  if (projectState === "error") return <section className="builder-project-state is-error" role="alert"><span>!</span><p className="kicker">BORRADOR NO DISPONIBLE</p><h2>No pudimos abrir esta propuesta.</h2><p>El enlace puede estar incompleto, haber expirado o la bandeja compartida puede estar temporalmente fuera de servicio.</p><a href="/?product=builder">Volver a Construir mi propio producto</a></section>;
+  if (projectState === "error") return <section className="builder-project-state is-error" role="alert"><span>!</span><p className="kicker">BORRADOR NO DISPONIBLE</p><h2>No pudimos abrir esta propuesta.</h2><p>El enlace puede estar incompleto, haber expirado o la bandeja compartida puede estar temporalmente fuera de servicio.</p><button type="button" className="builder-project-new" onClick={() => window.location.assign("/?product=builder")}>Volver a Construir mi propio producto</button></section>;
   if (projectState === "ready" && project) return <ProjectDraftPreview project={project} onHow={() => onGuide("how")} />;
   return <section className="builder-phone-empty" aria-label="Vista previa de proyecto en construcción">
     <div className="builder-phone-art" aria-hidden="true"><span>✦</span><i /><i /><i /></div>
@@ -576,7 +576,7 @@ function ProjectDraftPreview({ project, onHow }: { project: SharedProjectDraft; 
       {project.openQuestions.length > 0 && <article><small>PREGUNTAS ABIERTAS</small><ul>{project.openQuestions.map((item) => <li key={item}>{item}</li>)}</ul></article>}
     </div>}
     <button className="builder-how-button" onClick={onHow}>Cómo seguir mejorándola <span>→</span></button>
-    <a className="builder-project-new" href="/?product=builder">Empezar otra idea</a>
+    <button type="button" className="builder-project-new" onClick={() => window.location.assign("/?product=builder")}>Empezar otra idea</button>
     <small className="builder-phone-disclaimer">Este enlace muestra un borrador compartido por 90 días. No está publicado y no cambió ninguna otra pantalla del Lab.</small>
   </section>;
 }
