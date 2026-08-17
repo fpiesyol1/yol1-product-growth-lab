@@ -47,17 +47,18 @@ La herramienta inicial declara un recurso `ui://` y devuelve datos estructurados
 - Cambios incompatibles se publican como una nueva versión y conservan adaptadores para la versión anterior.
 - Cada respuesta declara `server_version`, `context_version`, `ui_version` y `schema_version`.
 - La UI usa recursos versionados para evitar mezclar HTML nuevo con datos antiguos.
-- Una sesión ya abierta puede conservar caché. La guía debe indicar “abre un chat nuevo o reconecta” cuando la versión activa no coincide; nunca afirmar actualización instantánea universal.
+- Una sesión ya abierta puede conservar el catálogo de herramientas. El flujo legacy debe seguir completo con `yol1_start_builder`, que carga el contexto y el contrato vigentes en su propia respuesta; las herramientas nuevas son mejoras opcionales y nunca un bloqueo.
+- La persona no revisa versiones ni cuenta herramientas. Si el cliente conserva el catálogo anterior, el asistente continúa en modo texto y sólo omite el guardado compartido que no esté disponible.
 
 ## Primer recorrido
 
 El mensaje inicial debe pedir:
 
-1. `yol1_start_builder` para abrir el canvas.
-2. `yol1_get_context` y `yol1_get_delivery_contract` para cargar reglas vigentes.
-3. Una pregunta por vez para problema, usuario, momento, valor y restricciones.
-4. Actualizaciones incrementales del canvas, no una propuesta cerrada de golpe.
-5. Confirmación explícita antes de `yol1_save_project_draft`.
+1. Sólo `yol1_start_builder`, que abre el Lab y carga las reglas vigentes.
+2. Una pregunta por vez para problema, usuario, momento, valor y restricciones.
+3. Actualizaciones incrementales del borrador, no una propuesta cerrada de golpe.
+4. Confirmación explícita antes de guardar, cuando esa acción esté disponible.
+5. Entrega del brief en el chat cuando el cliente no exponga guardado, sin detener el trabajo ni afirmar que se guardó.
 
 ## Criterios de aceptación
 

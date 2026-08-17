@@ -424,9 +424,11 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   assert.doesNotMatch(page, /YOL1_MCP_URL = process\.env\.NEXT_PUBLIC_MCP_URL \|\|/);
   assert.match(page, /Abrir la vista del Lab ahora/);
   assert.match(page, /No agregues argumentos, environment ni working directory/i);
-  assert.match(page, /PEGA ESTE MENSAJE, SIN EDITARLO/);
-  assert.match(page, /Ejecuta yol1_start_builder, yol1_get_context y yol1_get_delivery_contract/);
-  assert.match(page, /Sólo si confirmo explícitamente, ejecuta yol1_save_project_draft/);
+  assert.match(page, /PEGA ESTE MENSAJE Y SIGUE CON TU IDEA/);
+  assert.match(page, /ejecuta yol1_start_builder antes de responder/i);
+  assert.match(page, /Continúa aunque veas sólo las herramientas originales/i);
+  assert.match(page, /si no la tienes, entrégame el brief completo/i);
+  assert.doesNotMatch(page, /Ejecuta yol1_start_builder, yol1_get_context y yol1_get_delivery_contract/);
   assert.match(page, /Propuesta revisable · no publicada/);
   assert.match(page, /data-event-id="builder_guide_viewed" data-client="chatgpt"/);
   assert.match(page, /data-event-id="builder_guide_viewed" data-client="claude"/);
@@ -479,6 +481,12 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(route, /yol1_get_lab_view/);
   assert.match(route, /tools\/list/);
   assert.match(route, /tools\/call/);
+  assert.match(route, /SERVER_VERSION = "0\.3\.0"/);
+  assert.match(route, /workflow_mode: "legacy-compatible"/);
+  assert.match(route, /loaded: \["product_context", "delivery_contract", "lab_view"\]/);
+  assert.match(route, /Continúa aunque el cliente sólo muestre las herramientas originales/i);
+  assert.match(route, /no pidas a la persona revisar versiones, contar herramientas/i);
+  assert.match(route, /\$\{contextText\(\)\}[\s\S]*\$\{deliveryContractText\(\)\}/);
   assert.match(route, /sólo después de una petición explícita/i);
   assert.match(route, /readOnlyHint: false, destructiveHint: false, idempotentHint: true/);
   assert.match(route, /No está publicado · No modificó ninguna pantalla automáticamente/);

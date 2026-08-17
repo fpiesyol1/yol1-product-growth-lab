@@ -65,7 +65,7 @@ const initialDraft: CollectDraft = {
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const YOL1_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
 const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL?.trim() || `${YOL1_SITE_URL}/api/mcp`;
-const BUILDER_START_MESSAGE = `Usa el MCP de YOL1 conectado antes de responder. Ejecuta yol1_start_builder, yol1_get_context y yol1_get_delivery_contract. Luego acompáñame a crear un producto YOL1: hazme una pregunta a la vez para entender problema, usuario, momento, pantallas, datos, riesgos y cómo mejorarlo. Primero muéstrame el enlace del Lab. Puedo mandarte referencias, fotos o dibujos y quiero que los uses para iterar. Cuando la propuesta tenga forma, pregúntame si quiero guardarla. Sólo si confirmo explícitamente, ejecuta yol1_save_project_draft y entrégame el enlace del borrador; no publiques ni sincronices la conversación completa.`;
+const BUILDER_START_MESSAGE = `Usa YOL1 y ejecuta yol1_start_builder antes de responder. Esa llamada carga el contexto y la pauta vigentes. Continúa aunque veas sólo las herramientas originales: no me pidas revisar versiones, contar herramientas ni reconectar. Ayúdame a crear o mejorar mi producto con una pregunta a la vez; puedo mandarte referencias, fotos o dibujos. Cuando la propuesta tenga forma, pregúntame si quiero guardarla. Si tienes una acción para guardar, úsala sólo después de mi confirmación; si no la tienes, entrégame el brief completo en este chat sin afirmar que quedó guardado. No publiques ni sincronices la conversación completa.`;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
@@ -319,16 +319,29 @@ function productSpecScreen(product: ProductDefinition, screen: string) {
 
 function LabWelcome({ theme, onTheme, onChooseProduct }: { theme: Theme; onTheme: () => void; onChooseProduct: (product: ProductId) => void }) {
   return <main className="lab-welcome lab-shell" data-theme={theme}>
+    <section className="portfolio-rail lab-welcome-rail" aria-label="Navegación del Laboratorio YOL1">
+      <nav className="product-selector">
+        <button className="lab-guide-tab selected" aria-current="page"><span aria-hidden="true">✦</span><b>Laboratorio YOL1</b><small>CÓMO USARLO</small></button>
+        {PORTFOLIO_PRODUCTS.map((product) => <button key={product.id} onClick={() => onChooseProduct(product.id)} data-product-key={product.id} data-maturity={product.maturity}><span aria-hidden="true">{product.icon}</span><b>{product.name}</b><small>{maturityLabel(product)}</small></button>)}
+      </nav>
+    </section>
     <header className="lab-welcome-head"><div className="brand-plate"><Brand /><span>PRODUCT GROWTH LAB · 01</span></div><button className="theme-toggle" onClick={onTheme}>{theme === "dark" ? "☀ Claro" : "◐ Oscuro"}</button></header>
     <section className="lab-welcome-hero"><p className="eyebrow">BIENVENIDO AL LABORATORIO YOL1</p><h1>Ideas con forma.<br /><span>Productos con contexto.</span></h1><p>Este es un espacio de trabajo: puedes navegar prototipos, entender qué falta para construirlos y dejar decisiones que el equipo de producto y tecnología pueda retomar.</p></section>
     <section className="lab-welcome-steps" aria-label="Cómo usar el Laboratorio YOL1">
-      <article><span>01</span><h2>Explora un producto</h2><p>Elige una pestaña. Las experiencias son mockups interactivos: sus botones responden, pero no conectan bancos, pagos ni servicios reales.</p></article>
-      <article><span>02</span><h2>Mira cómo se construye</h2><p>Baja en cada producto explorable. La ficha traduce pantalla a datos, eventos, arquitectura candidata, gates y riesgos de experiencia.</p></article>
-      <article><span>03</span><h2>Deja una decisión útil</h2><p>Marca lo que está por validar, deja una propuesta, idea o comentario. Todo entra a la bandeja de aprendizaje para priorizarlo después.</p></article>
-      <article><span>04</span><h2>Construye tu propio producto</h2><p>Conecta ChatGPT o Claude al MCP de YOL1 y parte por una idea, referencia, foto o dibujo. El Lab te guía para convertirla en propuesta.</p><button onClick={() => onChooseProduct("builder")}>Ir a Construir mi propio producto →</button></article>
+      <article><span>01</span><LabPreview type="explore" /><h2>Explora un producto</h2><p>Elige una pestaña. Las pantallas son mockups interactivos: sus botones responden, pero no conectan bancos, pagos ni servicios reales.</p></article>
+      <article><span>02</span><LabPreview type="spec" /><h2>Mira cómo se construye</h2><p>Baja en cada producto explorable. La ficha traduce pantalla a datos, eventos, arquitectura candidata, gates y riesgos de experiencia.</p></article>
+      <article><span>03</span><LabPreview type="input" /><h2>Deja una edición útil</h2><p>Marca qué está por validar y deja una propuesta, idea o comentario. Entra a la bandeja de aprendizaje para priorizarlo después.</p></article>
+      <article><span>04</span><LabPreview type="builder" /><h2>Construye tu propio producto</h2><p>Conecta ChatGPT o Claude al MCP de YOL1 y parte por una idea, referencia, foto o dibujo. El Lab te guía para convertirla en propuesta.</p></article>
     </section>
     <section className="lab-welcome-products"><p className="eyebrow">PRODUCTOS DISPONIBLES PARA EXPLORAR</p><div>{PORTFOLIO_PRODUCTS.filter((product) => product.id !== "builder").map((product) => <button key={product.id} onClick={() => onChooseProduct(product.id)}><span>{product.icon}</span><strong>{product.name}</strong><small>{product.explorable ? "Abrir mockup y ficha" : maturityLabel(product)}</small></button>)}</div></section>
   </main>;
+}
+
+function LabPreview({ type }: { type: "explore" | "spec" | "input" | "builder" }) {
+  if (type === "explore") return <figure className="lab-step-preview lab-preview-explore" aria-label="Vista previa de un mockup interactivo"><div className="lab-preview-phone"><i /><b>Inicio</b><span>Entiende tus finanzas.</span><em>Revisar</em></div></figure>;
+  if (type === "spec") return <figure className="lab-step-preview lab-preview-spec" aria-label="Vista previa de una ficha técnica"><small>FICHA DE PRODUCTO</small><b>Contrato de datos</b><i /><i /><i /><span>event_name · user_id · event_at</span></figure>;
+  if (type === "input") return <figure className="lab-step-preview lab-preview-input" aria-label="Vista previa de un input de decisión"><small>EXPERIENCIA · POR VALIDAR</small><b>¿Qué mejorarías aquí?</b><span>Idea para esta pantalla…</span><em>Enviar propuesta</em></figure>;
+  return <figure className="lab-step-preview lab-preview-builder" aria-label="Vista previa de una conversación que construye un producto"><small>MCP YOL1 · EN CONVERSACIÓN</small><b>Quiero una tarjeta para viajar.</b><span>✦ El Lab prepara la primera vista</span><i /><i /><i /></figure>;
 }
 
 function ProductSpecPanel({ product, screen, inspectedAction }: { product: ProductDefinition; screen: string; inspectedAction: InspectedAction | null }) {
@@ -609,18 +622,18 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
   return <section className="builder-install-screen" aria-label={`Guía de YOL1 para ${provider}`}>
     <button className="back-link" onClick={onBack}>← Volver</button>
     <p className="kicker">CONFIGURACIÓN ÚNICA · {provider.toUpperCase()}</p><h2>Conecta.<br /><span>Habla. Construye.</span></h2>
-    <p className="builder-guide-intro">Esta guía conecta el MCP público piloto de YOL1 con {provider}. Las acciones de escritura deben pedir tu confirmación antes de guardar un borrador.</p>
+    <p className="builder-guide-intro">Conecta YOL1 una sola vez. Desde ahí, una acción carga el contexto y la pauta vigente; no necesitas conocer versiones ni nombres de herramientas.</p>
     <div className="builder-install-steps">
       <article><span>01</span><div><strong>Busca Conectores / MCP</strong><small>En {provider}, abre <b>{providerPath}</b>. Si el nombre cambia, busca “connector”, “MCP” o “custom integration”.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
       <article><span>02</span><div><strong>Pega solo estos dos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> {hasMcpUrl ? <code>{YOL1_MCP_URL}</code> : <b>URL MCP remota por validar</b>}<br />No agregues argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
-      <article><span>03</span><div><strong>Guarda y habilítalo en un chat nuevo</strong><small>Busca <b>YOL1</b> en herramientas o conectores. Si no aparece, vuelve a la configuración y verifica que la URL se haya guardado.</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1</i></article>
+      <article><span>03</span><div><strong>Guarda y abre un chat nuevo</strong><small>Habilita <b>YOL1</b> y sigue con tu idea. Si ves el conector, está listo: no necesitas revisar cuántas herramientas aparecen ni crear otra versión.</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1</i></article>
     </div>
     <button className="builder-copy-url" onClick={copyUrl} disabled={!hasMcpUrl}>{copyStatus === "url" ? "URL MCP copiada ✓" : hasMcpUrl ? "Copiar URL de YOL1" : "URL MCP aún no habilitada"}</button>
     <a className="builder-open-lab" href={`${YOL1_SITE_URL}/?product=builder`} target="_blank" rel="noreferrer">Abrir la vista del Lab ahora ↗</a>
-    <div className="builder-paste-box"><small>04 · PEGA ESTE MENSAJE, SIN EDITARLO</small><p>{BUILDER_START_MESSAGE}</p></div>
+    <div className="builder-paste-box"><small>04 · PEGA ESTE MENSAJE Y SIGUE CON TU IDEA</small><p>{BUILDER_START_MESSAGE}</p></div>
     <button className="builder-copy-template" onClick={copyPrompt} disabled={!hasMcpUrl}>{copyStatus === "prompt" ? "Mensaje de inicio copiado ✓" : hasMcpUrl ? "Copiar mensaje de inicio" : "Mensaje disponible cuando exista conexión"}</button>
     {copyStatus === "failed" && <small className="builder-copy-status" role="alert">No pudimos copiar. Selecciona el contenido correspondiente y cópialo manualmente.</small>}
-    <small className="builder-install-note">YOL1 no lee tu conversación ni recibe cambios automáticamente. El Lab muestra solo una propuesta que decidas enviar a revisión.</small>
+    <small className="builder-install-note">No necesitas renombrar el conector ni instalar “v0.2”. YOL1 no lee tu conversación ni recibe cambios automáticamente. El Lab muestra solo una propuesta que decidas enviar a revisión.</small>
   </section>;
 }
 

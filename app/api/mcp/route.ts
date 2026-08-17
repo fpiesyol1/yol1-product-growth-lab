@@ -16,6 +16,9 @@ const MAX_IDEA_LENGTH = 1_200;
 const PROJECT_ID = /^prj_[a-f0-9]{32}$/;
 const LAB_VIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
 const CONTEXT_VERSION = "yol1-lab-context/0.2";
+const SERVER_VERSION = "0.3.0";
+const SCHEMA_VERSION = "project-draft/0.2";
+const UI_VERSION = "lab-web/0.2";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",
@@ -43,7 +46,21 @@ function deliveryContractText() {
 }
 
 function projectBrief(idea: string) {
-  return `# Borrador de propuesta YOL1\n\n## Idea inicial\n${idea}\n\n${deliveryContractText()}\n\nEste resultado es un borrador de trabajo: no publica una funcionalidad ni representa una capacidad operativa.`;
+  return `# Borrador de propuesta YOL1\n\n## Idea inicial\n${idea}\n\n${deliveryContractText()}\n\nEste resultado es un borrador de trabajo: no publica una funcionalidad ni representa una capacidad operativa. Continúa desarrollándolo en el chat aunque la acción de guardar no esté visible. En ese caso, entrega el brief completo y el enlace del Lab, sin afirmar que fue guardado.`;
+}
+
+function bootstrapMetadata() {
+  return {
+    bootstrap_status: "ready",
+    workflow_mode: "legacy-compatible",
+    server_version: SERVER_VERSION,
+    context_version: CONTEXT_VERSION,
+    schema_version: SCHEMA_VERSION,
+    ui_version: UI_VERSION,
+    loaded: ["product_context", "delivery_contract", "lab_view"],
+    next_action: "continue_product_conversation",
+    saving: "optional_and_requires_explicit_confirmation",
+  };
 }
 
 function clean(value: unknown, max: number) {
@@ -110,7 +127,7 @@ function labViewLink() {
 }
 
 function startBuilderText() {
-  return `¡Bienvenido a YOL1! En este espacio iremos creando prototipos de productos YOL1. Conversaremos por aquí y, cuando una idea tome forma, podrás verla en el Lab.\n\n[Aprieta acá para abrir la vista del Lab](${LAB_VIEW_URL}/?product=builder)\n\nPara partir, cuéntame con tus palabras qué te gustaría crear. Te haré una pregunta a la vez y te ayudaré a convertirlo en una primera propuesta.`;
+  return `# YOL1 está listo\n\nLa conexión ya cargó el contexto y la pauta vigente. No necesitas revisar versiones ni contar herramientas para continuar.\n\n[Aprieta acá para abrir la vista del Lab](${LAB_VIEW_URL}/?product=builder)\n\nPara partir o retomar, cuéntame con tus palabras qué te gustaría crear o mejorar. Te haré una pregunta a la vez y te ayudaré a convertirlo en una primera propuesta.\n\n## Instrucciones vigentes para el asistente\n- Continúa aunque el cliente sólo muestre las herramientas originales de YOL1. No le pidas a la persona reconectar, renombrar el conector ni hacer un diagnóstico técnico.\n- Haz una pregunta a la vez y usa el contexto y el contrato incluidos abajo antes de proponer pantallas.\n- Si la acción de guardar está disponible, úsala sólo después de una confirmación explícita. Si no está disponible, entrega el brief completo en el chat y el enlace del Lab; no detengas el trabajo y no afirmes que fue guardado.\n- Nunca prometas publicación, sincronización automática del chat ni capacidades financieras sin evidencia.\n\n${contextText()}\n\n${deliveryContractText()}`;
 }
 
 export async function OPTIONS() {
@@ -120,9 +137,15 @@ export async function OPTIONS() {
 export async function GET() {
   return NextResponse.json({
     name: "YOL1 Product Growth Lab MCP",
-    version: "0.2.0",
+    version: SERVER_VERSION,
     transport: "streamable-http",
     access: "public-pilot-explicit-write",
+    setup: "plug-and-play",
+    legacy_compatible: true,
+    start_tool: "yol1_start_builder",
+    context_version: CONTEXT_VERSION,
+    schema_version: SCHEMA_VERSION,
+    ui_version: UI_VERSION,
     tools: ["yol1_start_builder", "yol1_get_context", "yol1_get_delivery_contract", "yol1_create_project_brief", "yol1_save_project_draft", "yol1_get_project_draft", "yol1_get_lab_view"],
     note: "Piloto público: sólo guarda borradores cuando la persona lo pide explícitamente. No publica, sincroniza conversaciones ni modifica productos automáticamente.",
   }, { headers });
@@ -141,8 +164,8 @@ export async function POST(request: Request) {
     return response(rpc.id, {
       protocolVersion: PROTOCOL_VERSION,
       capabilities: { tools: {} },
-      serverInfo: { name: "yol1-product-growth-lab", version: "0.2.0" },
-      instructions: "MCP piloto de YOL1. Lee contexto y prepara propuestas. Guarda un borrador sólo después de una petición explícita de la persona; nunca asumas publicación, sincronización del chat ni capacidades financieras reales.",
+      serverInfo: { name: "yol1-product-growth-lab", version: SERVER_VERSION },
+      instructions: "Empieza siempre con yol1_start_builder: esa única llamada carga el contexto, el contrato de entrega y el enlace vigentes. Continúa normalmente si el cliente sólo muestra las cuatro herramientas originales; no pidas a la persona revisar versiones, contar herramientas, renombrar ni reconectar el conector. Guarda un borrador sólo después de una petición explícita; si esa acción no está visible, entrega el brief en el chat sin afirmar que fue guardado. Nunca asumas publicación, sincronización del chat ni capacidades financieras reales.",
     });
   }
 
@@ -152,7 +175,7 @@ export async function POST(request: Request) {
     return response(rpc.id, { tools: [
       {
         name: "yol1_start_builder",
-        description: "Llama esta herramienta al inicio de toda conversación de creación de producto con YOL1. Da la bienvenida, explica el flujo en pocas líneas y devuelve el enlace Markdown ‘Aprieta acá para abrir la vista del Lab’.",
+        description: "Única acción necesaria para empezar o retomar un producto YOL1. Carga en una sola llamada el contexto, el contrato de entrega y el enlace del Lab. Es retrocompatible: continúa aunque el cliente sólo muestre las herramientas originales y no exige diagnósticos técnicos.",
         inputSchema: { type: "object", properties: {}, additionalProperties: false },
         annotations: { readOnlyHint: true },
       },
@@ -220,14 +243,14 @@ export async function POST(request: Request) {
 
   if (rpc.method === "tools/call") {
     const params = rpc.params && typeof rpc.params === "object" ? rpc.params as { name?: unknown; arguments?: unknown } : {};
-    if (params.name === "yol1_start_builder") return response(rpc.id, { content: [{ type: "text", text: startBuilderText() }] });
-    if (params.name === "yol1_get_context") return response(rpc.id, { content: [{ type: "text", text: contextText() }] });
-    if (params.name === "yol1_get_delivery_contract") return response(rpc.id, { content: [{ type: "text", text: deliveryContractText() }] });
+    if (params.name === "yol1_start_builder") return response(rpc.id, { content: [{ type: "text", text: startBuilderText() }], structuredContent: bootstrapMetadata() });
+    if (params.name === "yol1_get_context") return response(rpc.id, { content: [{ type: "text", text: contextText() }], structuredContent: bootstrapMetadata() });
+    if (params.name === "yol1_get_delivery_contract") return response(rpc.id, { content: [{ type: "text", text: deliveryContractText() }], structuredContent: bootstrapMetadata() });
     if (params.name === "yol1_get_lab_view") return response(rpc.id, { content: [{ type: "text", text: labViewLink() }] });
     if (params.name === "yol1_create_project_brief") {
       const args = params.arguments && typeof params.arguments === "object" ? params.arguments as { idea?: unknown } : {};
       if (typeof args.idea !== "string" || !args.idea.trim() || args.idea.length > MAX_IDEA_LENGTH) return response(rpc.id, { isError: true, content: [{ type: "text", text: "Incluye una idea de hasta 1200 caracteres." }] });
-      return response(rpc.id, { content: [{ type: "text", text: projectBrief(args.idea.trim()) }] });
+      return response(rpc.id, { content: [{ type: "text", text: projectBrief(args.idea.trim()) }], structuredContent: { ...bootstrapMetadata(), idea: args.idea.trim(), draft_saved: false } });
     }
     if (params.name === "yol1_save_project_draft") {
       const project = normalizeProjectDraft(params.arguments);
