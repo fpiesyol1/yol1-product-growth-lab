@@ -1,6 +1,6 @@
 # Dirección MCP App YOL1
 
-**Estado:** decisión de producto para diseñar antes de publicar.  
+**Estado:** piloto público reversible; canvas embebido e identidad siguen pendientes.
 **Objetivo:** que una persona empiece en ChatGPT o Claude y sienta que diseña dentro del mismo Product Growth Lab.
 
 ## Promesa de experiencia

@@ -2467,3 +2467,33 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 3. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
 4. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
 5. **QA compartido:** repetir entre navegadores cuando exista Postgres + token largo; no se configuraron secretos en esta pasada.
+
+## 93. Revisión nocturna incremental — 17 de agosto de 2026, 14:35 CLT
+
+**Alcance ejecutado:** pasada incremental de producto/PRD, consistencia y flujos sobre este brief, el PRD de Onboarding/KYC, el ciclo QA triple, los informes QA, la dirección canónica, el delta de Builder/MCP y los guardrails. Se usó como corte efectivo el cierre 13:38:58 CLT, posterior al metadato de `Last run`. Desde ese corte se incorporó un piloto MCP público con herramientas de lectura, guardado explícito y apertura de borradores por enlace opaco. Se preservó el catastro no versionado existente. No hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- No apareció un P0 nuevo. Onboarding conserva valor antes de identidad, intención material y explicación antes del OTP; KYC no concede capacidad por sí solo. Tarjetas sigue en investigación, Remesas permanece fuera de alcance y la ficha pública continúa limitada a Acompañante, Onboarding y Builder.
+- Se cerró un **P1 documental de alcance**: `MCP-BUILDER-PLAN.md` y `TABLERO-NOCHE.md` todavía describían el MCP como local, sólo lectura o sujeto a una URL futura, contradiciendo el runtime y la dirección MCP vigentes. Ambas fuentes activas ahora distinguen el piloto público, el guardado compartido explícito y el formulario local.
+- Se cerró un **P1 de contrato**: `BUILDER-OUTPUT-CONTRACT.md` especificaba `proposal_draft` con nombre, propósito, fit y pantallas, mientras la herramienta persiste `project-draft/0.2` con idea, problema, audiencia, propuesta de valor, supuestos, preguntas y referencias. El contrato v0.3 refleja el payload real, su expiración y el límite `draft` sin inventar identidad.
+- Se cerró un **P1 de privacidad de referencias**: el guardado ya rechazaba PII, teléfonos, tarjetas y credenciales declaradas, pero podía aceptar una URL con usuario/contraseña embebidos o parámetros `token`, `secret`, `api_key` y equivalentes. Esas referencias ahora se rechazan antes de persistir.
+- Se cerró un **P2 de consistencia del flujo de conexión**: tras hacer la URL plug-and-play, la guía conservaba ramas inalcanzables de “URL por validar/no habilitada”. La URL y ambos controles de copia siguen activos y la recuperación manual ante error permanece visible, sin afirmar guardado ni publicación.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; ocho rutas, incluidas `/api/mcp` y `/api/projects/[id]`.
+- Suite completa final: **75/75 PASS**, 0 fallidos. Guardrails focalizados de producto: **21/21 PASS**.
+- `git diff --check`: **PASS**.
+- El primer intento no pudo escribir `.next/trace-build` por el sandbox del directorio solicitado; la repetición con permiso limitado al build local pasó. El runtime Node local se invocó explícitamente porque no está en `PATH`. No fueron fallas del producto.
+- No se repitió QA visual interactivo: la rama retirada era inalcanzable con la URL derivada vigente y no cambiaron layout, jerarquía ni recorrido visible del estado operativo.
+
+### Preguntas abiertas / decisiones requeridas
+
+1. **Builder colaborativo:** definir proveedor de identidad/OAuth, owner/SLA/permisos de la bandeja y mecanismo autenticado para editar o borrar borradores compartidos.
+2. **Builder canvas:** definir el schema de pantallas incorporadas y el recurso `ui://` antes de prometer un canvas embebido compartido con la web.
+3. **Tarjetas:** decidir si la entrada de investigación sin flujo sigue visible en el selector público o pasa a modo Equipo.
+4. **Onboarding:** elegir si `financial_data_connect`, `receive_value` u otra capacidad será la primera activación real aprobada; la demo no concede disponibilidad.
+5. **Excepciones de identidad:** definir owner, canal y SLA de Customer Success para OTP, pérdida de acceso, KYC en revisión/rechazo y proveedor no disponible.
+6. **Reviews:** definir vista Por tema y el destino editorial explícito `mejora / guía Markdown / proyecto`; `Resuelto` queda sólo como estado.
+7. **QA compartido:** repetir entre navegadores con Postgres y credenciales operativas administradas; no se configuraron secretos ni se conectaron integraciones en esta pasada.

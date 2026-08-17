@@ -1,43 +1,41 @@
 # YOL1 MCP · plan de validación
 
-## Qué hará
+## Qué hace
 
-Una persona podrá conectar el MCP de YOL1 desde su propio ChatGPT o Claude sólo cuando el cliente sea compatible, exista una URL validada y la autorización sea visible. Mientras tanto puede trabajar con el prompt y referencias pegadas manualmente.
+Una persona puede conectar el piloto MCP de YOL1 desde su propio ChatGPT o Claude cuando el cliente admita conectores MCP remotos. La URL HTTPS estable vive en el mismo dominio del Lab; el cliente debe mostrar la confirmación de cualquier herramienta de escritura. Si el cliente no expone el conector o conserva un catálogo anterior, la persona puede seguir trabajando con el prompt y referencias pegadas manualmente.
 
-La conversación vive en su propia cuenta de IA. YOL1 solo recibirá lo que esa persona decida enviar como propuesta.
+La conversación vive en su propia cuenta de IA. YOL1 sólo recibe el resumen estructurado que esa persona decide guardar explícitamente.
 
-## Qué verá en el Lab
+## Qué ve en el Lab
 
 1. Antes de conversar: una vista vacía que invita a partir con la IA.
-2. Durante la conversación: el Lab no recibe cambios; la persona incorpora explícitamente pantallas o un resumen.
-3. Al final: `Enviar proyecto` con nombre, título, problema y vínculo con YOL1.
-4. Después: una propuesta en la bandeja editorial para revisión de Felipe.
+2. Durante la conversación: el Lab no recibe cambios; la persona decide qué resumen estructurado guardar.
+3. Al guardar desde MCP: se crea un borrador compartido con ID opaco y enlace de revisión. El formulario `Enviar proyecto` continúa siendo local al navegador.
+4. Después: la propuesta permanece en borrador. Publicar, cambiar el core o convertirla en trabajo editorial exige una decisión posterior.
 
-## Endpoint de primera prueba local
+## Endpoint del piloto
 
-La primera versión está definida en `/api/mcp` como contrato **local y de solo lectura**. Expone `yol1_get_context` y `yol1_create_project_brief`; no lee conversaciones, no guarda ideas, no pide API keys ni publica cambios.
+La versión vigente está definida en `/api/mcp` como piloto público con herramientas de lectura y una escritura explícita. Expone contexto, contrato de entrega, creación de brief, guardado y recuperación de borradores. No lee conversaciones completas, no pide API keys, no publica cambios y no modifica otras pantallas.
 
-No hay una URL pública aprobada por defecto. Antes de mostrar una URL se debe validar dominio, operación, autorización y compatibilidad por cliente. ChatGPT y Claude no se tratan como instalaciones equivalentes por inferencia.
+La URL se deriva del dominio público del Lab o de `NEXT_PUBLIC_MCP_URL`. ChatGPT y Claude conservan instrucciones específicas porque sus menús y confirmaciones pueden diferir; la compatibilidad se verifica por cliente y no se infiere por compartir protocolo.
 
-## Piezas necesarias para la versión colaborativa
+## Piezas pendientes para la versión colaborativa completa
 
-- Un paquete MCP versionado dentro de este repositorio.
-- Un servidor HTTPS desplegado; GitHub aloja y versiona el código, pero no reemplaza el servidor MCP. La primera prueba usa la ruta `/api/mcp` del Lab desplegado.
-- OAuth y permisos por persona.
-- Herramientas separadas: leer contexto público, crear borrador propio y enviar propuesta.
-- API protegida para recibir propuestas y una URL de preview asociada a cada una.
-- Moderación, límite de uso y auditoría sin guardar conversaciones privadas.
+- OAuth, identidad y permisos por persona para listar, editar o borrar borradores propios.
+- Recurso `ui://` y canvas embebido compartido con la web.
+- Transición editorial protegida desde `draft` a `new`.
+- Moderación, borrado autenticado y auditoría sin guardar conversaciones privadas.
 
 ## Primer alcance seguro
 
-- Solo lectura de contexto aprobado de YOL1.
-- Crear un borrador de pantalla en una sesión propia.
-- Enviar una propuesta explícita a la bandeja.
+- Leer contexto aprobado de YOL1 y crear un brief sin persistencia.
+- Guardar sólo un resumen estructurado después de confirmación explícita.
+- Recuperar el borrador mediante un enlace opaco con expiración, sin listado público.
 - Sin acceso a GitHub de colaboradores, sin publicación automática, sin pagos ni datos financieros.
 
 ## Decisiones que faltan
 
-- Dónde se desplega el servidor MCP y con qué dominio.
 - Proveedor de identidad/OAuth.
-- Qué contexto será público para colaboradores externos.
-- Qué formato representa una pantalla propuesta y cómo se valida antes de mostrarla.
+- Owner, SLA y permisos de la bandeja compartida.
+- Qué formato representa las pantallas propuestas y cómo se incorporan explícitamente.
+- Cómo editar o borrar un borrador compartido sin convertir el enlace opaco en identidad.

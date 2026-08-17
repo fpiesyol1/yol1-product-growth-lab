@@ -407,6 +407,8 @@ test("los productos en investigación no simulan una app ni muestran ficha técn
 test("el builder separa la conversación externa de la vista previa y el envío editorial", async () => {
   const page = await source("app/page.tsx");
   const knowledge = await source("knowledge/construir-mi-propio-producto.md");
+  const builderPlan = await source("MCP-BUILDER-PLAN.md");
+  const nightBoard = await source("TABLERO-NOCHE.md");
   const css = await source("app/globals.css");
   const outputContract = await source("BUILDER-OUTPUT-CONTRACT.md");
   const flowMap = await source("BUILDER-FLOW-MAP.md");
@@ -452,11 +454,8 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   assert.match(knowledge, /piloto ya usa un servidor HTTPS/i);
   assert.match(knowledge, /GitHub versiona el código/i);
   assert.match(knowledge, /no copia la conversación completa/i);
-  assert.match(css, /\.builder-copy-url:disabled,\.builder-copy-template:disabled[^}]*cursor:not-allowed/i);
   assert.match(css, /\.builder-copy-url[^}]*min-height:44px/i);
-  assert.match(page, /URL MCP remota por validar/);
-  assert.match(page, /URL MCP aún no habilitada/);
-  assert.match(page, /Mensaje disponible cuando exista conexión/);
+  assert.doesNotMatch(page, /hasMcpUrl|URL MCP remota por validar|URL MCP aún no habilitada|Mensaje disponible cuando exista conexión/);
   assert.match(page, /No pudimos copiar\. Selecciona el contenido correspondiente/);
   assert.match(page, /builder-copy-status[^>]*role="alert"/);
   assert.match(outputContract, /submission_mode[\s\S]*local_only/);
@@ -464,6 +463,11 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   assert.match(outputContract, /Borrar este borrador local/);
   assert.match(flowMap, /ninguna flecha representa sincronización de conversación, publicación o integración financiera real/i);
   assert.match(flowMap, /Revisión humana/);
+  assert.match(builderPlan, /piloto público con herramientas de lectura y una escritura explícita/i);
+  assert.match(builderPlan, /resumen estructurado que esa persona decide guardar explícitamente/i);
+  assert.doesNotMatch(builderPlan, /contrato \*\*local y de solo lectura\*\*|No hay una URL pública aprobada por defecto/i);
+  assert.match(nightBoard, /piloto MCP público con lectura y guardado explícito de un resumen estructurado/i);
+  assert.doesNotMatch(nightBoard, /MCP sólo con compatibilidad\/URL validadas/i);
   assert.doesNotMatch(page, /teléfono es solo la vista de lo que el MCP vaya materializando/i);
 });
 
@@ -504,6 +508,8 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(route, /No está publicado · No modificó ninguna pantalla automáticamente/);
   assert.match(route, /Alcanzaste el límite temporal de cinco borradores por hora/);
   assert.match(route, /datos personales, credenciales, teléfonos o números de tarjeta/);
+  assert.match(route, /access_\?token\|api_\?key\|auth\|authorization\|code\|credential\|jwt\|password\|secret\|signature\|token/);
+  assert.match(route, /url\.username \|\| url\.password/);
   assert.doesNotMatch(route, /DATABASE_URL|process\.env\.(?!NEXT_PUBLIC_(MCP_URL|SITE_URL))/);
   assert.match(store, /CREATE TABLE IF NOT EXISTS yol1_project_drafts/);
   assert.match(store, /randomBytes\(16\)/);
@@ -512,6 +518,10 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.doesNotMatch(store, /email|phone|rut|conversation/i);
   assert.match(projectApi, /X-Robots-Tag/);
   assert.match(projectApi, /private, no-store/);
+  const outputContract = await source("BUILDER-OUTPUT-CONTRACT.md");
+  assert.match(outputContract, /project-draft\/0\.2/);
+  assert.match(outputContract, /`project_id`[\s\S]*`submission_id`[\s\S]*`value_proposition`[\s\S]*`expires_at`/);
+  assert.doesNotMatch(outputContract, /`proposer_name`|`proposal_version`/);
 });
 
 test("bandeja de decisiones resuelve contradicciones solo en estado local", async () => {

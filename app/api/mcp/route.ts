@@ -164,7 +164,16 @@ function containsSensitiveData(project: ProjectDraftInput) {
     || /\b\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b/.test(text)
     || /\b(?:clave|contraseña|password|cvv|cvc|pin)\s*[:=]/i.test(text)
     || /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(text)
-    || /(?:\+?56\s?)?(?:9\s?)?\d{4}[\s-]?\d{4}/.test(text);
+    || /(?:\+?56\s?)?(?:9\s?)?\d{4}[\s-]?\d{4}/.test(text)
+    || project.references.some((reference) => {
+      try {
+        const url = new URL(reference);
+        const sensitiveKeys = /^(?:access_?token|api_?key|auth|authorization|code|credential|jwt|password|secret|signature|token)$/i;
+        return Boolean(url.username || url.password || [...url.searchParams.keys()].some((key) => sensitiveKeys.test(key)));
+      } catch {
+        return false;
+      }
+    });
 }
 
 function projectViewUrl(id: string) {

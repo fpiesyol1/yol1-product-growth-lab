@@ -598,10 +598,8 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
   const [copyStatus, setCopyStatus] = useState<"idle" | "url" | "prompt" | "failed">("idle");
   const isHow = guide === "how";
   const provider = guide === "chatgpt" ? "ChatGPT" : "Claude";
-  const hasMcpUrl = Boolean(YOL1_MCP_URL);
   const providerPath = guide === "claude" ? "Settings → Connectors → Add custom connector" : "Settings → Apps → Advanced settings → Developer mode";
   const copyUrl = async () => {
-    if (!hasMcpUrl) return;
     try { await navigator.clipboard.writeText(YOL1_MCP_URL); setCopyStatus("url"); } catch { setCopyStatus("failed"); }
   };
   const copyPrompt = async () => {
@@ -625,13 +623,13 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
     <p className="builder-guide-intro">Conecta YOL1 una sola vez. Después sólo necesitas contar tu idea con tus propias palabras: YOL1 carga el contexto y las reglas sin pedirte conocimientos técnicos.</p>
     <div className="builder-install-steps">
       <article><span>01</span><div><strong>Busca Conectores / MCP</strong><small>En {provider}, abre <b>{providerPath}</b>. Si el nombre cambia, busca “connector”, “MCP” o “custom integration”.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
-      <article><span>02</span><div><strong>Pega solo estos dos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> {hasMcpUrl ? <code>{YOL1_MCP_URL}</code> : <b>URL MCP remota por validar</b>}<br />No agregues argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
+      <article><span>02</span><div><strong>Pega solo estos dos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> <code>{YOL1_MCP_URL}</code><br />No agregues argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
       <article><span>03</span><div><strong>Guarda y abre un chat nuevo</strong><small>Habilita <b>YOL1</b> y sigue con tu idea. Si ves el conector, está listo: no necesitas revisar cuántas herramientas aparecen ni crear otra versión.</small></div><i className="guide-ui guide-link" aria-hidden="true">YOL1</i></article>
     </div>
-    <button className="builder-copy-url" onClick={copyUrl} disabled={!hasMcpUrl}>{copyStatus === "url" ? "URL MCP copiada ✓" : hasMcpUrl ? "Copiar URL de YOL1" : "URL MCP aún no habilitada"}</button>
+    <button className="builder-copy-url" onClick={copyUrl}>{copyStatus === "url" ? "URL MCP copiada ✓" : "Copiar URL de YOL1"}</button>
     <a className="builder-open-lab" href={`${YOL1_SITE_URL}/?product=builder`} target="_blank" rel="noreferrer">Abrir la vista del Lab ahora ↗</a>
     <div className="builder-paste-box"><small>04 · REEMPLAZA EL CORCHETE POR TU IDEA</small><p>{BUILDER_START_MESSAGE}</p></div>
-    <button className="builder-copy-template" onClick={copyPrompt} disabled={!hasMcpUrl}>{copyStatus === "prompt" ? "Mensaje de inicio copiado ✓" : hasMcpUrl ? "Copiar mensaje de inicio" : "Mensaje disponible cuando exista conexión"}</button>
+    <button className="builder-copy-template" onClick={copyPrompt}>{copyStatus === "prompt" ? "Mensaje de inicio copiado ✓" : "Copiar mensaje de inicio"}</button>
     {copyStatus === "failed" && <small className="builder-copy-status" role="alert">No pudimos copiar. Selecciona el contenido correspondiente y cópialo manualmente.</small>}
     <small className="builder-install-note">No necesitas renombrar el conector ni instalar “v0.2”. YOL1 no lee tu conversación ni recibe cambios automáticamente. El Lab muestra solo una propuesta que decidas enviar a revisión.</small>
   </section>;

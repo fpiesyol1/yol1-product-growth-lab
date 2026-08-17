@@ -1,4 +1,4 @@
-# Builder — contrato de salida editorial v0.2
+# Builder — contrato de salida editorial v0.3
 
 **Estado:** piloto compartido para revisión.
 **Autoridad:** `DIRECCION-PRODUCTOS-FELIPE.md`.
@@ -10,24 +10,24 @@ Definir el objeto mínimo que una persona decide llevar desde su ChatGPT o Claud
 la bandeja editorial YOL1, sin copiar la conversación completa ni confundir un
 borrador con una decisión de producto.
 
-## Objeto `proposal_draft`
+## Objeto compartido `project_draft/0.2`
 
 | Campo | Tipo | Regla |
 |---|---|---|
-| `proposal_id` | ID opaco | Lo crea el Lab al guardar; no viene del chat |
-| `proposal_version` | string | Comienza en `0.1`; cambia sólo al editar el borrador |
-| `status` | enum | `draft` o `new`; otros estados son editoriales |
-| `proposer_name` | string | Nombre visible; no se usa como identidad verificada |
+| `project_id` | ID opaco | Lo crea el servidor con formato `prj_...`; no viene del chat |
+| `submission_id` | string | Clave de reintento; se transforma en hash y no vuelve en la respuesta |
+| `status` | enum | Sólo `draft` en el piloto |
 | `title` | string | Nombre breve del proyecto |
-| `purpose` | string | Problema, usuario y resultado buscado |
-| `yol1_fit` | string | Por qué calza con dirección/principios YOL1 |
-| `editorial_summary` | string | Texto que la persona decidió copiar; no chat completo |
-| `screens` | array | Sólo pantallas explícitamente incorporadas |
-| `risks` | array | Riesgos/fallas/reversas del resumen |
-| `open_decisions` | array | Preguntas que necesitan decisión humana |
-| `source_kind` | enum | `manual_summary`, `manual_reference`, `lab_created` |
-| `submission_mode` | enum | `local_only` para el formulario o `shared_draft` para el MCP |
-| `created_at` | ISO-8601 | Hora local normalizada por el Lab |
+| `idea` | string | Resumen acordado de la idea; no conversación completa |
+| `problem` | string | Problema concreto que se busca resolver |
+| `audience` | string | Persona o grupo para quien se diseña |
+| `value_proposition` | string | Valor candidato que propone entregar YOL1 |
+| `assumptions` | string[] | Hasta ocho supuestos explícitos, sin presentarlos como hechos |
+| `open_questions` | string[] | Hasta ocho decisiones que necesitan revisión humana |
+| `references` | string[] | Hasta cinco referencias elegidas; sin credenciales, tokens ni datos personales |
+| `created_at` | ISO-8601 | Hora asignada por el servidor |
+| `expires_at` | ISO-8601 | Expiración asignada por el servidor; hoy 90 días |
+| `submission_mode` | enum conceptual | `local_only` para el formulario o `shared_draft` para el MCP; no se persiste en el objeto compartido |
 
 ## Objeto `screen_draft`
 
@@ -86,6 +86,8 @@ expiración y un enlace al Lab. Debe repetir que no publicó ni modificó pantal
 - El usuario puede completar el flujo sin MCP.
 - La UI diferencia prompt copiado de URL MCP copiada.
 - La URL pública del MCP se deriva del mismo dominio del Lab o de `NEXT_PUBLIC_MCP_URL`.
+- El schema compartido coincide con `project-draft/0.2`; no exige nombre ni identidad verificada.
+- Las referencias con credenciales embebidas o parámetros de token/secret se rechazan antes de persistir.
 - El teléfono no afirma que recibe cambios del chat externo.
 - El estado editorial visible permanece `borrador`; la UI distingue local de compartido.
 - Después de guardar, la persona puede borrar ese borrador del navegador.
