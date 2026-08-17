@@ -44,7 +44,7 @@ export const PORTFOLIO_PRODUCTS: ProductDefinition[] = [
   { id: "banking", shortLabel: "Home Banking", name: "Home Banking", icon: "⌂", explorable: false, maturity: "evidence", description: "Espacio reservado. No representa banca construida ni disponible." },
   { id: "cards", shortLabel: "Tarjetas", name: "Tarjetas", icon: "▰", explorable: false, maturity: "evidence", description: "Espacio reservado. No hay emisión, procesamiento ni capacidad operativa." },
   { id: "remittances", shortLabel: "Remesas", name: "Remesas", icon: "↗", explorable: false, maturity: "paused", description: "Pausado por decisión de producto. Remesas no se trabaja ni se investiga en este ciclo." },
-  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", explorable: true, maturity: "explore", description: "Trabaja una idea en ChatGPT o Claude, ordénala con el contexto de YOL1 y envíala a revisión cuando esté lista." },
+  { id: "builder", shortLabel: "Construir", name: "Construir mi propio producto", icon: "✎", explorable: true, maturity: "explore", description: "Trabaja una idea en ChatGPT, Claude o Codex, ordénala con el contexto de YOL1 y envíala a revisión cuando esté lista." },
 ];
 
 export function maturityLabel(product: ProductDefinition) {

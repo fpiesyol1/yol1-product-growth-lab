@@ -339,7 +339,7 @@ test("portfolio mantiene seis productos y tres prototipos explorables", async ()
   assert.match(portfolio, /acá hay un gato tecleando/i);
   assert.match(portfolio, /Alguien no hizo la pega/i);
   assert.match(portfolio, /Remesas no está siendo trabajada ahora/i);
-  assert.match(portfolio, /ChatGPT o Claude/);
+  assert.match(portfolio, /ChatGPT, Claude o Codex/);
   assert.match(portfolio, /Un robot está ordenando los post-its/i);
   assert.ok((portfolio.match(/gesture: "/g) ?? []).length >= 12);
   assert.doesNotMatch(portfolio, /eyebrow: "NO PUBLICADO"/);
@@ -428,6 +428,7 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   assert.match(page, /Ver guía para[\s\S]*ChatGPT/);
   assert.match(page, /Ver guía para[\s\S]*Claude/);
   assert.match(page, /Ver guía para[\s\S]*Codex/);
+  assert.match(page, /MENSAJE LISTO PARA CHATGPT, CLAUDE O CODEX/);
   assert.match(page, /Piloto disponible/i);
   assert.match(page, /Cómo ocupar/);
   assert.match(page, /NEXT_PUBLIC_MCP_URL/);
