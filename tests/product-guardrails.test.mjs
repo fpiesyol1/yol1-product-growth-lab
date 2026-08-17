@@ -461,6 +461,7 @@ test("el builder separa la conversación externa de la vista previa y el envío 
   assert.match(page, /Si ves <code>stdio<\/code> o una URL dentro de <code>command<\/code>/);
   assert.match(page, /codex mcp remove yol1[\s\S]*codex mcp add yol1 --url/);
   assert.match(page, /Copiar reparación segura/);
+  assert.match(page, /closest\("\.app-content"\)\?\.scrollTo\(\{ top: 0 \}\)/);
   assert.match(css, /\.codex-config-fallback/);
   assert.match(css, /\.codex-ready-check/);
   assert.match(page, /no pegues el chat completo ni datos sensibles/i);

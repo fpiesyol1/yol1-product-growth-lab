@@ -651,6 +651,7 @@ function BuilderOrientationPanel() {
 }
 
 function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, null>; onBack: () => void }) {
+  const screenRef = useRef<HTMLElement>(null);
   const [copyStatus, setCopyStatus] = useState<"idle" | "url" | "config" | "repair" | "prompt" | "failed">("idle");
   const isHow = guide === "how";
   const isCodex = guide === "codex";
@@ -669,7 +670,8 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
   const copyCodexRepair = async () => {
     try { await navigator.clipboard.writeText(CODEX_MCP_REPAIR); setCopyStatus("repair"); } catch { setCopyStatus("failed"); }
   };
-  if (isHow) return <section className="builder-how-screen" aria-label="Cómo ocupar YOL1 MCP">
+  useEffect(() => { screenRef.current?.closest(".app-content")?.scrollTo({ top: 0 }); }, [guide]);
+  if (isHow) return <section ref={screenRef} className="builder-how-screen" aria-label="Cómo ocupar YOL1 MCP">
     <button className="back-link" onClick={onBack}>← Volver</button>
     <p className="kicker">CÓMO SACARLE PROVECHO</p><h2>Parte simple.<br /><span>Mejora en conjunto.</span></h2>
     <div className="builder-demo-window" aria-label="Demostración de una conversación externa y una pantalla incorporada manualmente">
@@ -681,7 +683,7 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
     <div className="builder-example-prompt"><small>EJEMPLO PARA PROBAR</small><p>“Diseña un producto de tarjeta de crédito que tenga beneficios para comer afuera. Parte preguntándome lo mínimo para entender a quién ayuda y muéstrame una primera versión.”</p></div>
     <small className="builder-install-note">La conversación no se sincroniza con YOL1. El teléfono muestra únicamente una propuesta que decidas incorporar de forma explícita.</small>
   </section>;
-  return <section className="builder-install-screen" aria-label={`Guía de YOL1 para ${provider}`}>
+  return <section ref={screenRef} className="builder-install-screen" aria-label={`Guía de YOL1 para ${provider}`}>
     <button className="back-link" onClick={onBack}>← Volver</button>
     <p className="kicker">CONFIGURACIÓN ÚNICA · {provider.toUpperCase()}</p><h2>Conecta.<br /><span>Habla. Construye.</span></h2>
     <p className="builder-guide-intro">Conecta YOL1 una sola vez. Después sólo necesitas contar tu idea con tus propias palabras: YOL1 carga el contexto y las reglas sin pedirte conocimientos técnicos.</p>
