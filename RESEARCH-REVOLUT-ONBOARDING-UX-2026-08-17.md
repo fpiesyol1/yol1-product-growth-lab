@@ -3,6 +3,8 @@
 **Fuente analizada:** `ux-ebook-revolut-oboarding-analysis.pdf` de Craft Innovations, 26 páginas, revisado el 17 de agosto de 2026.  
 **Uso correcto:** es una referencia de experiencia y secuencia. No es un requisito legal chileno, una especificación de Revolut, ni evidencia de que un partner o servicio esté disponible para YOL1.
 
+**Decisión YOL1 que prevalece:** el patrón de registro primero no se adopta. Felipe definió valor y exploración antes de identidad; email/teléfono y OTP aparecen sólo después de que la persona elige una ruta concreta y entiende sus requisitos. La referencia se usa para claridad, errores y recuperación, no para cambiar ese orden.
+
 ---
 
 ## 1. Lectura ejecutiva
@@ -47,7 +49,7 @@ Tu plata, más clara.
 Entiende qué está pasando hoy.
 
 YOL1 te ayuda a ordenar preguntas, pendientes y próximos pasos de tus finanzas.
-[ Comenzar mi registro ]
+[ Explorar YOL1 ]
 ```
 
 Debajo del CTA: una grilla de capacidades, no una segunda ruta de navegación competitiva.
@@ -60,9 +62,9 @@ Debajo del CTA: una grilla de capacidades, no una segunda ruta de navegación co
 | Recibir o mover dinero | Requiere validación adicional | Gate a definir por capability, rail y partner. |
 | Tarjeta o crédito | En diseño / por validar | Requisitos por definir; ninguna promesa de aprobación. |
 
-**Cambio respecto de v1:** sacar el CTA “Explorar YOL1”, la frase “Activa más cuando lo necesites” y la ilustración sin función. El único CTA principal es registro. Las capacidades funcionan como contexto y expectativa transparente.
+**Aplicación YOL1:** conservar `Explorar YOL1` como CTA principal y hacer que entregue valor sin registro. El acceso se ofrece después de elegir una ruta y entender qué se guardará. La grilla de capacidades funciona como contexto honesto, no como catálogo operativo.
 
-### B. Crear acceso: una elección por vez
+### B. Crear acceso después de elegir una ruta: una elección por vez
 
 1. Elegir Google, Apple, email o teléfono.
 2. Antes de enviar OTP: confirmar el canal enmascarado y explicar “lo usaremos para entrar y recuperar tu espacio”.
@@ -158,4 +160,3 @@ El deck/ficha de producto de Onboarding debe explicar esta cadena en cuatro pers
 - PDF de Craft Innovations: `ux-ebook-revolut-oboarding-analysis.pdf` — patrones UX y análisis de referencia, no regulación.
 - AWS Cognito documentation — federación/validación de tokens (fuente técnica candidata).
 - CMF Chile — estado del SFA y anexo técnico (fuente regulatoria; validar con Legal/Compliance).
-

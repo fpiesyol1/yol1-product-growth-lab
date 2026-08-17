@@ -2518,3 +2518,25 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 ### Preguntas abiertas nuevas
 
 - Ninguna. Permanecen vigentes las decisiones abiertas de Builder colaborativo/canvas, Tarjetas, primera capacidad de Onboarding, excepciones de identidad, Reviews y QA compartido registradas en la pasada 93.
+
+## 95. Revisión nocturna incremental — 17 de agosto de 2026, 17:34 CLT
+
+**Alcance ejecutado:** revisión del delta posterior al cierre 16:33 CLT. Dos commits profundizaron el journey de Onboarding, su investigación Revolut y la ficha técnica pantalla por pantalla. Se conservaron la nueva ficha, los contratos de ingeniería y las mejoras de OTP/recuperación; no hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Se detectó y cerró un **P0 de dirección de producto**: el runtime, la máquina de estados, la investigación y sus guardrails habían cambiado a `registro/OTP → elegir objetivo`, haciendo de `Registrarme` el CTA principal. Esto contradecía la decisión verbal vigente y el PRD, que exigen valor y explicación de una acción material antes de pedir identidad.
+- El journey vuelve a ser `Explorar YOL1 → elegir objetivo → explicar requisitos y límites → crear acceso/OTP → pre-registro`. Las tres superficies de descubrimiento continúan disponibles sin registro. El copy aclara que el canal se pide sólo para preparar y guardar una ruta concreta.
+- La investigación Revolut ahora distingue explícitamente el patrón de referencia del orden aprobado para YOL1. La ficha técnica y su análisis de flujo quedaron alineados con el runtime: ninguna escritura de identidad en Bienvenida y contacto sólo después de entender el gate.
+- Se reforzaron tres guardrails para bloquear regresiones del orden: fuente visible, máquina de estados y contrato técnico/PRD.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; ocho rutas generadas.
+- Suite completa final: **75/75 PASS**, 0 fallidos.
+- QA interactivo: **PASS** para `Explorar → objetivo → gate → acceso`; en 390×844 no hubo overflow horizontal y la consola quedó sin warnings ni errores.
+- `git diff --check`: **PASS**. El servidor temporal del puerto 3018 se detuvo al terminar.
+
+### Preguntas abiertas nuevas
+
+- Ninguna. Continúan vigentes las decisiones abiertas de la pasada 93; esta corrección no define la primera capacidad material, proveedores, partners ni política de identidad.

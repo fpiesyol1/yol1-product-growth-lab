@@ -60,9 +60,11 @@ test("KYC no habilita capacidades por inferencia", async () => {
   }
 });
 
-test("la UI deja claro que OTP controla acceso antes de elegir una ruta material", async () => {
+test("la UI explica una ruta material antes de pedir acceso u OTP", async () => {
   const source = await page();
-  assert.ok(source.indexOf("¿Cómo quieres entrar?") < source.indexOf("¿Por dónde partimos?"));
+  assert.ok(source.indexOf("¿Por dónde partimos?") < source.indexOf("Crea tu espacio YOL1."));
+  assert.match(source, /Explora cómo YOL1 puede ayudarte antes de registrarte/);
+  assert.match(source, />Explorar YOL1 →</);
   assert.match(source, /data-event-id="material_action_selected" data-capability-key="financial_data_connect"/);
   assert.match(source, /data-event-id="material_action_selected" data-capability-key="receive_value"/);
   assert.doesNotMatch(source, /Quiero activar una función/);
