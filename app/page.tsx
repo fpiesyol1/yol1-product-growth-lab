@@ -65,7 +65,7 @@ const initialDraft: CollectDraft = {
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const YOL1_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
 const YOL1_MCP_URL = process.env.NEXT_PUBLIC_MCP_URL?.trim() || `${YOL1_SITE_URL}/api/mcp`;
-const BUILDER_START_MESSAGE = `Usa YOL1 y ejecuta yol1_start_builder antes de responder. Esa llamada carga el contexto y la pauta vigentes. Continúa aunque veas sólo las herramientas originales: no me pidas revisar versiones, contar herramientas ni reconectar. Ayúdame a crear o mejorar mi producto con una pregunta a la vez; puedo mandarte referencias, fotos o dibujos. Cuando la propuesta tenga forma, pregúntame si quiero guardarla. Si tienes una acción para guardar, úsala sólo después de mi confirmación; si no la tienes, entrégame el brief completo en este chat sin afirmar que quedó guardado. No publiques ni sincronices la conversación completa.`;
+const BUILDER_START_MESSAGE = `Quiero crear o mejorar este producto en YOL1: [escribe aquí tu idea]. Guíame con preguntas simples y muéstrame una primera propuesta con el look & feel vigente. Puedo enviarte fotos, links o dibujos como referencia.`;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
@@ -622,7 +622,7 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
   return <section className="builder-install-screen" aria-label={`Guía de YOL1 para ${provider}`}>
     <button className="back-link" onClick={onBack}>← Volver</button>
     <p className="kicker">CONFIGURACIÓN ÚNICA · {provider.toUpperCase()}</p><h2>Conecta.<br /><span>Habla. Construye.</span></h2>
-    <p className="builder-guide-intro">Conecta YOL1 una sola vez. Desde ahí, una acción carga el contexto y la pauta vigente; no necesitas conocer versiones ni nombres de herramientas.</p>
+    <p className="builder-guide-intro">Conecta YOL1 una sola vez. Después sólo necesitas contar tu idea con tus propias palabras: YOL1 carga el contexto y las reglas sin pedirte conocimientos técnicos.</p>
     <div className="builder-install-steps">
       <article><span>01</span><div><strong>Busca Conectores / MCP</strong><small>En {provider}, abre <b>{providerPath}</b>. Si el nombre cambia, busca “connector”, “MCP” o “custom integration”.</small></div><i className="guide-ui guide-menu" aria-hidden="true"><b /><b /><b /></i></article>
       <article><span>02</span><div><strong>Pega solo estos dos campos</strong><small><b>Nombre:</b> YOL1<br /><b>URL:</b> {hasMcpUrl ? <code>{YOL1_MCP_URL}</code> : <b>URL MCP remota por validar</b>}<br />No agregues argumentos, environment ni working directory.</small></div><i className="guide-ui guide-connector" aria-hidden="true">＋</i></article>
@@ -630,7 +630,7 @@ function BuilderGuideScreen({ guide, onBack }: { guide: Exclude<BuilderGuide, nu
     </div>
     <button className="builder-copy-url" onClick={copyUrl} disabled={!hasMcpUrl}>{copyStatus === "url" ? "URL MCP copiada ✓" : hasMcpUrl ? "Copiar URL de YOL1" : "URL MCP aún no habilitada"}</button>
     <a className="builder-open-lab" href={`${YOL1_SITE_URL}/?product=builder`} target="_blank" rel="noreferrer">Abrir la vista del Lab ahora ↗</a>
-    <div className="builder-paste-box"><small>04 · PEGA ESTE MENSAJE Y SIGUE CON TU IDEA</small><p>{BUILDER_START_MESSAGE}</p></div>
+    <div className="builder-paste-box"><small>04 · REEMPLAZA EL CORCHETE POR TU IDEA</small><p>{BUILDER_START_MESSAGE}</p></div>
     <button className="builder-copy-template" onClick={copyPrompt} disabled={!hasMcpUrl}>{copyStatus === "prompt" ? "Mensaje de inicio copiado ✓" : hasMcpUrl ? "Copiar mensaje de inicio" : "Mensaje disponible cuando exista conexión"}</button>
     {copyStatus === "failed" && <small className="builder-copy-status" role="alert">No pudimos copiar. Selecciona el contenido correspondiente y cópialo manualmente.</small>}
     <small className="builder-install-note">No necesitas renombrar el conector ni instalar “v0.2”. YOL1 no lee tu conversación ni recibe cambios automáticamente. El Lab muestra solo una propuesta que decidas enviar a revisión.</small>

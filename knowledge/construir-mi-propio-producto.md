@@ -8,15 +8,15 @@ Permitir que un colaborador convierta una idea en una propuesta revisable sin da
 
 ## Flujo inicial
 
-1. La persona elige una guía para su propio ChatGPT o Claude, agrega la URL del MCP piloto y habilita el conector en un chat nuevo.
-2. Conversa e itera en su propia sesión sobre problema, persona, recorrido, datos, tecnología candidata y riesgos.
+1. La persona conecta YOL1 una sola vez en su propio ChatGPT o Claude.
+2. Escribe una idea en lenguaje cotidiano. La IA carga el contexto en silencio, muestra una primera propuesta y usa supuestos explícitos antes de pedir información adicional.
 3. Cuando la propuesta tiene forma, la IA pregunta si la persona quiere guardarla. Sólo una confirmación explícita permite ejecutar `yol1_save_project_draft`.
 4. El MCP guarda la propuesta estructurada y devuelve un enlace opaco para verla dentro de “Construir mi propio producto”; no copia la conversación completa.
 5. La propuesta sigue en estado borrador. Publicar, convertirla en pantalla real o llevarla a GitHub exige una decisión posterior y separada.
 
 ## Contexto que el paquete debe contener
 
-- Sistema visual: dark-first, roles semánticos de color y accesibilidad.
+- Sistema visual exacto: tokens, tipografías, assets, shell, navegación, componentes, roles semánticos y accesibilidad; no sólo una descripción del estilo.
 - Principios de producto: evidencia antes de promesa, siguiente paso reversible y límites visibles.
 - Arquitectura candidata: React Native y AWS; no es una decisión irreversible.
 - Datos: distinguir guardar, consultar y nunca almacenar.
@@ -34,10 +34,11 @@ Permitir que un colaborador convierta una idea en una propuesta revisable sin da
 
 ## Salida esperada de la IA colaboradora
 
-1. Problema y persona.
-2. Aha moment.
-3. Flujo de cinco a siete pantallas y CTAs.
-4. Datos a guardar, consultar y no almacenar.
-5. Servicios o módulos candidatos.
-6. Riesgos, dependencias y preguntas abiertas.
-7. Resumen corto listo para enviar a la bandeja.
+1. Una primera propuesta visible antes de formular preguntas.
+2. Problema, persona y aha moment; lo desconocido queda como supuesto.
+3. Flujo interactivo de cinco a siete pantallas con look & feel canónico.
+4. Ficha separada con datos, eventos, servicios, riesgos y dependencias.
+5. Una sola decisión sencilla para la siguiente iteración.
+6. Resumen corto listo para enviar a la bandeja.
+
+La respuesta no expone nombres de herramientas, versiones, trazas de edición ni trabajo interno. Tampoco presenta una capacidad financiera como real sin evidencia aprobada.

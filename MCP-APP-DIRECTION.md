@@ -6,8 +6,8 @@
 ## Promesa de experiencia
 
 1. La persona instala una sola conexión YOL1.
-2. En un chat nuevo pega un mensaje breve de bienvenida.
-3. El primer llamado abre un canvas interactivo dentro de la conversación.
+2. En un chat nuevo describe una idea en lenguaje cotidiano; no necesita conocer herramientas ni versiones.
+3. El primer llamado carga en silencio el contexto y abre un canvas interactivo dentro de la conversación.
 4. Chat y canvas trabajan juntos: las preguntas refinan el producto y la vista refleja sólo los cambios que la persona decide incorporar.
 5. Guardar crea un borrador revisable. Publicar, editar el core o crear una rama siguen siendo acciones separadas.
 
@@ -54,11 +54,12 @@ La herramienta inicial declara un recurso `ui://` y devuelve datos estructurados
 
 El mensaje inicial debe pedir:
 
-1. Sólo `yol1_start_builder`, que abre el Lab y carga las reglas vigentes.
-2. Una pregunta por vez para problema, usuario, momento, valor y restricciones.
-3. Actualizaciones incrementales del borrador, no una propuesta cerrada de golpe.
-4. Confirmación explícita antes de guardar, cuando esa acción esté disponible.
-5. Entrega del brief en el chat cuando el cliente no exponga guardado, sin detener el trabajo ni afirmar que se guardó.
+1. Una idea escrita con palabras normales; el cliente decide internamente llamar `yol1_start_builder`.
+2. Una primera propuesta antes de preguntar, usando supuestos explícitos cuando falte contexto.
+3. Como máximo una pregunta sencilla al final de cada iteración.
+4. Actualizaciones incrementales del borrador con el UI kit canónico, no interpretaciones libres del estilo.
+5. Confirmación explícita antes de guardar, cuando esa acción esté disponible.
+6. Entrega del brief en el chat cuando el cliente no exponga guardado, sin detener el trabajo ni afirmar que se guardó.
 
 ## Criterios de aceptación
 
@@ -68,6 +69,9 @@ El mensaje inicial debe pedir:
 - Una versión desactualizada se detecta y muestra una instrucción de recuperación clara.
 - Ningún flujo afirma sincronizar la conversación completa, publicar producto o editar otras pantallas automáticamente.
 - Sin soporte de UI, todas las herramientas siguen funcionando en modo texto y devuelven un enlace al Lab.
+- Una persona no técnica puede iniciar, iterar y recibir una propuesta sin ver diagnósticos, nombres de herramientas, versiones ni trazas de edición.
+- Un prototipo generado usa los tokens, tipografías, assets, shell y navegación exactos; los controles declarados interactivos funcionan realmente.
+- Ninguna pantalla presenta saldo, pago, folio, KYC, banco o beneficio como real sin evidencia y capability aprobadas.
 
 ## Métricas del piloto
 
