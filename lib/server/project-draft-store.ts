@@ -28,11 +28,13 @@ async function ensureSchema() {
           assumptions jsonb NOT NULL DEFAULT '[]'::jsonb,
           open_questions jsonb NOT NULL DEFAULT '[]'::jsonb,
           reference_links jsonb NOT NULL DEFAULT '[]'::jsonb,
+          product_sheet jsonb NOT NULL DEFAULT '{}'::jsonb,
           status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft')),
           created_at timestamptz NOT NULL DEFAULT now(),
           expires_at timestamptz NOT NULL DEFAULT (now() + interval '90 days')
         )
       `);
+      await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS product_sheet jsonb NOT NULL DEFAULT '{}'::jsonb`);
       await sql.query(`CREATE INDEX IF NOT EXISTS yol1_project_drafts_creator_idx ON yol1_project_drafts (creator_hash, created_at DESC)`);
     })();
   }
@@ -50,6 +52,7 @@ type ProjectDraftRow = {
   assumptions: unknown;
   open_questions: unknown;
   reference_links: unknown;
+  product_sheet: unknown;
   status: "draft";
   created_at: string | Date;
   expires_at: string | Date;
@@ -57,6 +60,19 @@ type ProjectDraftRow = {
 
 function stringList(value: unknown) {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function productSheet(value: unknown): ProjectDraftInput["productSheet"] {
+  const sheet = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  return {
+    knownFacts: stringList(sheet.known_facts),
+    userContributions: stringList(sheet.user_contributions),
+    dataNeeds: stringList(sheet.data_needs),
+    keyConditions: stringList(sheet.key_conditions),
+    technologyFit: stringList(sheet.technology_fit),
+    continuityLinks: stringList(sheet.continuity_links),
+    pendingDecisions: stringList(sheet.pending_decisions),
+  };
 }
 
 function toDraft(row: ProjectDraftRow): SharedProjectDraft {
@@ -70,6 +86,7 @@ function toDraft(row: ProjectDraftRow): SharedProjectDraft {
     assumptions: stringList(row.assumptions),
     openQuestions: stringList(row.open_questions),
     references: stringList(row.reference_links),
+    productSheet: productSheet(row.product_sheet),
     status: row.status,
     createdAt: new Date(row.created_at).toISOString(),
     expiresAt: new Date(row.expires_at).toISOString(),
@@ -107,7 +124,7 @@ export async function findProjectDraftBySubmission(submissionId: string, creator
   const hash = idempotencyHash(submissionId, creatorHash);
   const rows = await sql`
     SELECT id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, status, created_at, expires_at
+      assumptions, open_questions, reference_links, product_sheet, status, created_at, expires_at
     FROM yol1_project_drafts
     WHERE idempotency_hash = ${hash} AND expires_at > now()
     LIMIT 1
@@ -122,17 +139,25 @@ export async function saveProjectDraft(input: ProjectDraftInput, creatorHash: st
   const rows = await sql`
     INSERT INTO yol1_project_drafts (
       id, idempotency_hash, creator_hash, title, idea, problem, audience,
-      value_proposition, assumptions, open_questions, reference_links
+      value_proposition, assumptions, open_questions, reference_links, product_sheet
     ) VALUES (
       ${id}, ${submissionHash}, ${creatorHash}, ${input.title}, ${input.idea},
       ${input.problem}, ${input.audience}, ${input.valueProposition},
       ${JSON.stringify(input.assumptions)}::jsonb, ${JSON.stringify(input.openQuestions)}::jsonb,
-      ${JSON.stringify(input.references)}::jsonb
+      ${JSON.stringify(input.references)}::jsonb, ${JSON.stringify({
+        known_facts: input.productSheet.knownFacts,
+        user_contributions: input.productSheet.userContributions,
+        data_needs: input.productSheet.dataNeeds,
+        key_conditions: input.productSheet.keyConditions,
+        technology_fit: input.productSheet.technologyFit,
+        continuity_links: input.productSheet.continuityLinks,
+        pending_decisions: input.productSheet.pendingDecisions,
+      })}::jsonb
     )
     ON CONFLICT (idempotency_hash) DO UPDATE
       SET idempotency_hash = EXCLUDED.idempotency_hash
     RETURNING id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, status, created_at, expires_at
+      assumptions, open_questions, reference_links, product_sheet, status, created_at, expires_at
   ` as ProjectDraftRow[];
   return toDraft(rows[0]);
 }
@@ -141,7 +166,7 @@ export async function getProjectDraft(id: string) {
   const sql = await ensureSchema();
   const rows = await sql`
     SELECT id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, status, created_at, expires_at
+      assumptions, open_questions, reference_links, product_sheet, status, created_at, expires_at
     FROM yol1_project_drafts
     WHERE id = ${id} AND expires_at > now()
     LIMIT 1

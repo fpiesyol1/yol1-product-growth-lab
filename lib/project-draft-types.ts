@@ -1,3 +1,13 @@
+export type ProjectProductSheet = {
+  knownFacts: string[];
+  userContributions: string[];
+  dataNeeds: string[];
+  keyConditions: string[];
+  technologyFit: string[];
+  continuityLinks: string[];
+  pendingDecisions: string[];
+};
+
 export type ProjectDraftInput = {
   submissionId: string;
   title: string;
@@ -8,6 +18,7 @@ export type ProjectDraftInput = {
   assumptions: string[];
   openQuestions: string[];
   references: string[];
+  productSheet: ProjectProductSheet;
 };
 
 export type SharedProjectDraft = Omit<ProjectDraftInput, "submissionId"> & {

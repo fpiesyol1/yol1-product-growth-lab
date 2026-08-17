@@ -1,7 +1,7 @@
 # Dirección MCP App YOL1
 
 **Estado:** piloto público reversible; canvas embebido e identidad siguen pendientes.
-**Objetivo:** que una persona empiece en ChatGPT o Claude y sienta que diseña dentro del mismo Product Growth Lab.
+**Objetivo:** que una persona empiece en ChatGPT, Claude o Codex y sienta que diseña dentro del mismo Product Growth Lab.
 
 ## Promesa de experiencia
 
@@ -21,7 +21,7 @@ La guía vive en las instrucciones del servidor, en la herramienta inicial y en 
 
 - Antes de construir: orientación simple, ejemplos, entregables, QA y límites; sin ficha técnica como protagonista.
 - Después de la primera idea: propuesta visual primero, supuestos visibles y una decisión siguiente.
-- Después de la propuesta: ficha técnica progresiva con datos, eventos, arquitectura, dependencias, gates y riesgos.
+- Después de la propuesta: ficha progresiva con lo que la persona sabe, datos, condiciones clave, cruce tecnológico, continuidad, eventos, dependencias, gates y riesgos. La IA adapta el lenguaje a cada respuesta, no pregunta el “nivel técnico” ni bloquea por campos desconocidos.
 - Después de una confirmación explícita: borrador revisable, nunca publicación o sincronización implícita.
 
 El catálogo de habilidades pertenece al host. El MCP puede pedir que se use una habilidad relevante sólo cuando el cliente la exponga de forma verificable. No puede instalarla, distribuirla, enumerar un catálogo privado ni garantizar que otro colaborador tenga las mismas habilidades.
@@ -38,7 +38,7 @@ La web pública y la MCP App no mantienen diseños paralelos. Comparten:
 - copy de estados, límites y confirmaciones;
 - fixtures y pruebas visuales.
 
-Los recursos viven en la infraestructura de YOL1. La persona no sube un design system ni instala artefactos en su ChatGPT o Claude.
+Los recursos viven en la infraestructura de YOL1. La persona no sube un design system ni instala artefactos en su ChatGPT, Claude o Codex.
 
 ## Arquitectura objetivo
 
@@ -63,6 +63,8 @@ La herramienta inicial declara un recurso `ui://` y devuelve datos estructurados
 - Cada respuesta declara `server_version`, `context_version`, `ui_version` y `schema_version`.
 - La UI usa recursos versionados para evitar mezclar HTML nuevo con datos antiguos.
 - Una sesión ya abierta puede conservar el catálogo de herramientas. El flujo legacy debe seguir completo con `yol1_start_builder`, que carga el contexto y el contrato vigentes en su propia respuesta; las herramientas nuevas son mejoras opcionales y nunca un bloqueo.
+- `yol1_start_builder` es la entrada canónica y puede recibir la idea y aportes ya conocidos. `yol1_create_project_brief` permanece como alias legacy; no se llaman ambas para la misma idea.
+- El contexto se divide en `core`, `product_sheet`, `technology`, `data_analytics` y `continuity`. Sin selector, `get_context` conserva la respuesta completa compatible; el inicio usa sólo la capa necesaria para llegar más rápido a la primera propuesta.
 - La persona no revisa versiones ni cuenta herramientas. Si el cliente conserva el catálogo anterior, el asistente continúa en modo texto y sólo omite el guardado compartido que no esté disponible.
 
 ## Primer recorrido
@@ -96,4 +98,4 @@ El mensaje inicial debe pedir:
 - iteraciones realizadas dentro del canvas;
 - guardados confirmados / propuestas iniciadas;
 - errores por versión o caché;
-- continuidad visual aprobada en QA ChatGPT, Claude y web.
+- continuidad visual aprobada en QA ChatGPT, Claude, Codex y web.

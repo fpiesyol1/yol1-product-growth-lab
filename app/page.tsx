@@ -582,6 +582,16 @@ function ProjectBuilderScreen({ guide, onGuide, project, projectState }: { guide
 }
 
 function ProjectDraftPreview({ project, onHow }: { project: SharedProjectDraft; onHow: () => void }) {
+  const sheetSections = [
+    ["HECHOS CONOCIDOS", project.productSheet.knownFacts],
+    ["APORTES DE LA PERSONA", project.productSheet.userContributions],
+    ["DATOS NECESARIOS", project.productSheet.dataNeeds],
+    ["CONDICIONES CLAVE", project.productSheet.keyConditions],
+    ["ENCAJE TECNOLÓGICO", project.productSheet.technologyFit],
+    ["CONTINUIDAD YOL1", project.productSheet.continuityLinks],
+    ["DECISIONES PENDIENTES", project.productSheet.pendingDecisions],
+  ] as const;
+  const hasProductSheet = sheetSections.some(([, items]) => items.length > 0);
   return <section className="builder-project-preview" aria-label={`Borrador ${project.title}`}>
     <div className="builder-project-status"><span>PROPUESTA TRAÍDA AL LAB</span><b>En borrador</b></div>
     <p className="kicker">CONSTRUIR MI PROPIO PRODUCTO</p>
@@ -596,6 +606,7 @@ function ProjectDraftPreview({ project, onHow }: { project: SharedProjectDraft; 
       {project.assumptions.length > 0 && <article><small>SUPUESTOS</small><ul>{project.assumptions.map((item) => <li key={item}>{item}</li>)}</ul></article>}
       {project.openQuestions.length > 0 && <article><small>PREGUNTAS ABIERTAS</small><ul>{project.openQuestions.map((item) => <li key={item}>{item}</li>)}</ul></article>}
     </div>}
+    {hasProductSheet && <details className="builder-product-sheet"><summary><span>FICHA DE PRODUCTO</span><b>Ver lo aprendido +</b></summary><div>{sheetSections.filter(([, items]) => items.length > 0).map(([title, items]) => <article key={title}><small>{title}</small><ul>{items.map((item) => <li key={item}>{item}</li>)}</ul></article>)}</div></details>}
     <button className="builder-how-button" onClick={onHow}>Cómo seguir mejorándola <span>→</span></button>
     <a className="builder-technical-link" href="#builder-technical-panel">Ver decisiones y base técnica <span>↓</span></a>
     <button type="button" className="builder-project-new" onClick={() => window.location.assign("/?product=builder")}>Empezar otra idea</button>

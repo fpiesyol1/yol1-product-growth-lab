@@ -23,7 +23,8 @@ La persona no debería copiar un prompt largo para obtener una buena experiencia
 2. En cuanto aparece una idea, entrega primero una propuesta visual e interactiva y usa supuestos explícitos para no bloquear el avance.
 3. Revisa silenciosamente fidelidad YOL1, honestidad, estados alternativos y claridad de la siguiente decisión.
 4. Datos, eventos, arquitectura y gates aparecen después como una segunda capa para quien quiera profundizar.
-5. Guardar exige confirmación y conserva sólo un resumen estructurado en estado borrador.
+5. Esa segunda capa es una ficha viva: rescata hechos y aportes parciales, pregunta de a una decisión, acepta “no sé” y adapta el lenguaje al conocimiento demostrado por la persona.
+6. Guardar exige confirmación y conserva sólo un resumen estructurado en estado borrador.
 
 Las habilidades son una capacidad del cliente donde corre el chat, no del MCP. YOL1 usa sólo habilidades que ChatGPT, Claude u otro host exponga de forma verificable; no inventa habilidades, no las instala y no afirma que puede revisar un catálogo privado.
 
@@ -41,7 +42,8 @@ Una instalación sólo se declara lista después de comprobar el transporte espe
 
 - Sistema visual exacto: tokens, tipografías, assets, shell, navegación, componentes, roles semánticos y accesibilidad; no sólo una descripción del estilo.
 - Principios de producto: evidencia antes de promesa, siguiente paso reversible y límites visibles.
-- Arquitectura candidata: React Native y AWS; no es una decisión irreversible.
+- Arquitectura candidata: React Native + Expo, BFF versionado y AWS; Cognito, API Gateway, Lambda/contenedores y DynamoDB/Aurora se cruzan por capacidad y siguen como candidatos hasta decisión de ingeniería.
+- Continuidad: cada propuesta debe declarar qué reutiliza, extiende, contradice o deja nuevo respecto de navegación, componentes, datos, identidad, eventos y gates de los demás productos YOL1.
 - Datos: distinguir guardar, consultar y nunca almacenar.
 - Chile: KYC, partners y licencias se marcan `Por validar` hasta tener evidencia aprobada.
 
