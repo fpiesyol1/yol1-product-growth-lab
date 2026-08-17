@@ -4,7 +4,7 @@ import { FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, use
 import { localFeedbackIntake, type FeedbackKind } from "../lib/feedback-intake";
 import { localChatFeedbackIntake, type ChatFeedbackRating } from "../lib/chat-feedback";
 import { submitChatResponse, submitGeneralFeedback } from "../lib/shared-feedback-client";
-import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, maturityLabel, simpleEventName, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
+import { EMPTY_STATE_LIBRARY, PORTFOLIO_PRODUCTS, eventMetadata, getLivingSpec, maturityLabel, simpleEventName, type LivingSpec, type ProductDefinition, type ProductId } from "../lib/product-portfolio";
 import { ONBOARDING_STAGE_META, transitionOnboarding, type OnboardingStage, type OnboardingTransition } from "../lib/onboarding-state-machine";
 import { buildOnboardingDemoSnapshot, ONBOARDING_DEMO_STORAGE_KEY, parseOnboardingDemoSnapshot, type OnboardingDemoSnapshot } from "../lib/onboarding-demo-storage";
 import { buildAccessLedger } from "../lib/onboarding-access-ledger";
@@ -364,24 +364,48 @@ function ProductSpecPanel({ product, screen, inspectedAction }: { product: Produ
     analytics: "CDP / warehouse por definir · enviar sólo evento allowlisted, IDs pseudónimos y consentimiento",
     observability: "Logs estructurados + correlation_id · sin PII, OTP, credenciales ni payloads financieros crudos",
   };
+  const implementationReadiness = [
+    ["Historia", `Como persona usuaria, puedo abrir ${screen} y entender qué muestra, qué está pendiente y cuál es la siguiente acción sin que la pantalla prometa una operación real.`],
+    ["Contrato de pantalla", "El BFF devuelve un read model versionado, limitado a esta vista; la app nunca compone autorizaciones, reglas de riesgo ni fuentes financieras por su cuenta."],
+    ["Comando", "Toda escritura usa un endpoint idempotente, con actor, intención, policy_version y correlation_id. Un reintento nunca duplica una solicitud o decisión."],
+    ["Observabilidad", `Instrumentar ${spec.event} con IDs pseudónimos, consent_analytics y schema_version. Errores operativos van a logs estructurados; datos sensibles quedan fuera.`],
+    ["Definition of ready", `Owner asignado: ${spec.governance.owner}. Fuente y gate confirmados, estados vacío/carga/error/reintento definidos, y rollback o feature flag disponible antes de habilitar acciones materiales.`],
+  ];
   const architectureGuide = [
     "React Native: componentes reutilizables, navegación tipada, estado de carga/error/vacío y accesibilidad desde el componente.",
     "BFF / API: contrato versionado por pantalla; valida autorización y devuelve sólo el read model que necesita la vista.",
     "AWS: API Gateway → Lambda por dominio candidato; DynamoDB/RDS según patrón de acceso y auditoría; EventBridge para eventos asíncronos sólo cuando exista una integración aprobada.",
     "Operación: feature flag por capability, trazabilidad con correlation_id, observabilidad y rollback antes de habilitar una acción material.",
   ];
-  const flowAnalysis = spec.flowAnalysis ? <div className="team-spec-flow-analysis">{spec.flowAnalysis.map((item) => <article key={item.step}><header><span>{item.step}</span><strong>{item.purpose}</strong></header><p><b>Funciona cuando:</b> {item.good}</p><p><b>Se cae cuando:</b> {item.failure}</p><p><b>Dato / estado:</b> {item.persist}</p></article>)}</div> : null;
   const sections = [
     { title: "Evento y metadata", content: <><p className="team-spec-inspector"><span>{inspectedAction ? "INSPECCIONANDO ACCIÓN" : "EVENTO BASE DE ESTA PANTALLA"}</span><strong>{inspectedAction?.label ?? simpleEventName(spec.event, product, screen)}</strong></p><p className="team-spec-event">{hasEvent ? simpleEventName(inspectedEvent, product, screen) : "Sin evento definido"}</p><code>{hasEvent ? inspectedEvent : "instrumentación pendiente"}</code>{!hasEvent && inspectedAction && <p className="team-spec-warning">Esta acción aún no tiene <code>data-event-id</code>. La ficha no inventa un evento: queda como deuda de instrumentación.</p>}<dl>{metadata.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>{inspectedAction?.parameters.length ? <><p className="team-spec-parameters-label">Parámetros de esta interacción</p><dl>{inspectedAction.parameters.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></> : null}</> },
-    { title: "Contrato de datos", content: <div className="team-spec-contract"><p><b>Read model · consulta la pantalla:</b> {dataContract.readModel.join(" · ")}</p><p><b>Write model · genera o modifica:</b> {dataContract.writeModel.join(" · ")}</p><p><b>System of record · fuentes:</b> {dataContract.sourceOfTruth.join(" · ")}</p><p><b>BD operacional:</b> {dataContract.operationalRecord}</p><p><b>Analítica / CDP / warehouse:</b> {dataContract.analytics}</p><p><b>Observabilidad:</b> {dataContract.observability}</p><p className="team-spec-note">{spec.data.handling}</p></div> },
-    { title: "Arquitectura candidata", content: <><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><div className="team-spec-architecture-guide">{architectureGuide.map((item) => <p key={item}>{item}</p>)}</div></> },
-    ...(flowAnalysis ? [{ title: "Análisis crudo del flujo", content: <>{flowAnalysis}<div className="team-spec-references"><b>Referencias para esta decisión</b>{spec.references?.map((reference) => <p key={reference}>{reference}</p>)}</div></> }] : []),
+    { title: "Contrato de datos", content: <div className="team-spec-contract"><p><b>Read model · consulta la pantalla:</b> {dataContract.readModel.join(" · ")}</p><p><b>Write model · genera o modifica:</b> {dataContract.writeModel.join(" · ")}</p><p><b>System of record · fuentes:</b> {dataContract.sourceOfTruth.join(" · ")}</p><p><b>BD operacional:</b> {dataContract.operationalRecord}</p><p><b>Analítica / CDP / warehouse:</b> {dataContract.analytics}</p><p><b>Observabilidad:</b> {dataContract.observability}</p><div className="team-spec-contract-rule"><strong>Regla de implementación</strong><span>El modelo de lectura, el registro operacional y el evento analítico son contratos distintos. No se replica la fuente completa en la app, ni se usa analítica como fuente de verdad.</span></div><p className="team-spec-note">{spec.data.handling}</p></div> },
+    { title: "Arquitectura candidata", content: <><ul>{spec.architecture.map((item) => <li key={item}>{item}</li>)}</ul><div className="team-spec-architecture-guide">{architectureGuide.map((item) => <p key={item}>{item}</p>)}</div><div className="team-spec-readiness"><p className="team-spec-parameters-label">Historia de construcción · para ingeniería</p>{implementationReadiness.map(([label, value]) => <article key={label}><strong>{label}</strong><span>{value}</span></article>)}</div></> },
     { title: "Experiencia, gates y Error capa 8", content: <><ExperienceInputs product={product.name} screen={screen} kyc={`${spec.kyc.state}: ${spec.kyc.reason}`} licenses={`${spec.licenses.state}: ${spec.licenses.reason}`} risks={spec.risks} /><DecisionCapture product={product.name} screen={screen} questions={spec.questions} /></> },
   ];
   return <section className="team-spec" aria-label={`Ficha técnica de ${screen}`}>
     <header><div><p className="eyebrow">FICHA DE PRODUCTO · PARA DESARROLLO</p><h2>{screen}</h2><p>De decisión técnica a experiencia: contrato de datos, arquitectura candidata, instrumentación y QA para que el equipo pueda construir sin adivinar.</p></div><aside><small>OWNER</small><strong>{spec.governance.owner}</strong><small>REVISAR</small><span>{spec.governance.reviewBy}</span></aside></header>
-    <div className="team-spec-accordion">{sections.map((section, index) => <details key={section.title} open={index === 0}><summary>{section.title}<span>+</span></summary><div>{section.content}</div></details>)}</div>
+    <div className="team-spec-accordion">{sections.slice(0, 1).map((section) => <details key={section.title} open><summary>{section.title}<span>+</span></summary><div>{section.content}</div></details>)}</div>
+    {spec.technicalFlow && <OnboardingTechnicalDeck flow={spec.technicalFlow} />}
+    <div className="team-spec-accordion">{sections.slice(1).map((section) => <details key={section.title}><summary>{section.title}<span>+</span></summary><div>{section.content}</div></details>)}</div>
   </section>;
+}
+
+type OnboardingTechnicalScreen = NonNullable<LivingSpec["technicalFlow"]>[number];
+
+function OnboardingTechnicalDeck({ flow }: { flow: OnboardingTechnicalScreen[] }) {
+  const [selected, setSelected] = useState(0);
+  const current = flow[selected];
+  const navigate = (direction: -1 | 1) => setSelected((value) => Math.min(flow.length - 1, Math.max(0, value + direction)));
+  return <section className="onboarding-technical-deck" aria-label="Ficha de flujo pantalla por pantalla">
+    <header><div><p className="eyebrow">FICHA DE FLUJO · ONBOARDING V2</p><h3>Pantallas, bifurcaciones y contrato técnico.</h3><p>Selecciona una pantalla: abajo queda la historia de usuario que un equipo de ingeniería necesita para construirla.</p></div><div className="flow-deck-controls"><button type="button" onClick={() => navigate(-1)} disabled={selected === 0} aria-label="Pantalla anterior">←</button><strong>{String(selected + 1).padStart(2, "0")} / {String(flow.length).padStart(2, "0")}</strong><button type="button" onClick={() => navigate(1)} disabled={selected === flow.length - 1} aria-label="Pantalla siguiente">→</button></div></header>
+    <div className="flow-deck-rail" role="tablist" aria-label="Pantallas del onboarding">{flow.map((item, index) => <button key={item.screen} role="tab" aria-selected={selected === index} className={selected === index ? "selected" : ""} onClick={() => setSelected(index)}><span>{item.screen}</span><strong>{item.ui}</strong><small>{item.next}</small></button>)}</div>
+    <article className="flow-deck-detail" aria-live="polite"><header><div><p className="eyebrow">{current.screen}</p><h3>{current.ui}</h3><p><b>Bifurcación:</b> {current.next}</p></div><code>{current.command}</code></header><div className="flow-deck-detail-grid"><FlowDetail label="Microservicios / componentes" values={current.services} /><FlowDetail label="Lee" values={current.reads} /><FlowDetail label="Escribe" values={current.writes} /><FlowDetail label="Tablas / colecciones" values={current.records} /><FlowDetail label="Eventos" values={current.events} /></div><div className="flow-deck-qa"><p><b>Error y recuperación:</b> {current.failure}</p><p><b>Definition of done:</b> {current.acceptance}</p></div></article>
+  </section>;
+}
+
+function FlowDetail({ label, values }: { label: string; values: string[] }) {
+  return <section><p>{label}</p><ul>{values.map((value) => <li key={value}>{value}</li>)}</ul></section>;
 }
 
 function DecisionCapture({ product, screen, questions }: { product: string; screen: string; questions: string[] }) {
