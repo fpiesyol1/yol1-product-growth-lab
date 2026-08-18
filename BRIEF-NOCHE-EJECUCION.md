@@ -2540,3 +2540,25 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 ### Preguntas abiertas nuevas
 
 - Ninguna. Continúan vigentes las decisiones abiertas de la pasada 93; esta corrección no define la primera capacidad material, proveedores, partners ni política de identidad.
+
+## 96. Revisión nocturna incremental — 18 de agosto de 2026, 10:52 CLT
+
+**Alcance ejecutado:** revisión del delta posterior al cierre 09:47 CLT sobre la nueva bandeja de aprendizaje, el intake local de prototipos, el exportador de conocimiento y la referencia legada del sistema visual. Se preservó el trabajo concurrente y la referencia visual sin reescribirla; no hubo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Se cerró un **P1 de alcance**: los ejemplos nuevos volvían a proponer Remesas en feedback, prototipos y copy del exportador, pese a que la decisión verbal vigente la mantiene fuera de investigación, diseño y prototipado. Los ejemplos ahora usan Acompañante/Cartola y recuperación de Onboarding/OTP.
+- Se cerraron dos **P1 de gobernanza de Reviews** introducidos por el nuevo Kanban: la bandeja dejó de mostrar las contradicciones que requieren decisión de Felipe y perdió la indicación visible de estado compartido/local. Se restauraron `DecisionInbox` y el indicador permanente `BANDEJA COMPARTIDA / CONECTANDO / MODO LOCAL · AÚN NO COMPARTIDO` sin retirar las tres bandejas nuevas.
+- Se cerró un **P1 de aislamiento técnico**: la copia legada guardada como referencia en `design-system/reference/` entraba en TypeScript y rompía el build por dependencias incompletas. `tsconfig.json` ahora excluye sólo ese árbol de referencia; el código de producto y el crosswalk siguen intactos.
+- Se añadieron guardrails para impedir que regresen los ejemplos de Remesas, desaparezcan las decisiones o el modo de bandeja, o la referencia visual vuelva a compilarse como producto.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; ocho rutas generadas.
+- Suite completa final: **76/76 PASS**, 0 fallidos.
+- `git diff --check`: **PASS**.
+- El primer build detectó correctamente la dependencia faltante dentro de la referencia legada; después del aislamiento acotado, la compilación pasó sin instalar paquetes ni modificar la referencia.
+
+### Pregunta abierta nueva
+
+- **Personalidad del sistema visual:** confirmar oscuro petróleo como expresión principal y decidir si vidrio/transparencia queda reservado a una tarjeta protagonista o sale del sistema base. Hasta esa decisión, el material legado permanece sólo como referencia no aprobada.

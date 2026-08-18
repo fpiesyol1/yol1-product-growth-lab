@@ -1,6 +1,6 @@
 // Estados editoriales. Los cuatro primeros ordenan feedback de personas; `wrong`
 // queda reservado para correcciones de una respuesta de IA.
-export type SharedFeedbackStatus = "new" | "reviewing" | "later" | "resolved" | "ignored" | "wrong";
+export type SharedFeedbackStatus = "new" | "reviewing" | "later" | "resolved" | "learning_ready" | "ignored" | "wrong";
 export type ChatReviewRating = "unrated" | "useful" | "improve";
 
 export type SharedFeedbackInput = {

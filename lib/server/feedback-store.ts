@@ -28,7 +28,7 @@ async function ensureSchema() {
           rating text,
           knowledge_version text,
           prototype_version text NOT NULL DEFAULT 'lab-2026-08-13',
-          status text NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'reviewing', 'later', 'resolved', 'ignored', 'wrong')),
+          status text NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'reviewing', 'later', 'resolved', 'learning_ready', 'ignored', 'wrong')),
           review_note text NOT NULL DEFAULT '',
           created_at timestamptz NOT NULL DEFAULT now(),
           reviewed_at timestamptz
@@ -40,7 +40,7 @@ async function ensureSchema() {
       // migración conserva esos registros y evita que el producto pierda feedback.
       await sql.query(`ALTER TABLE yol1_feedback_items DROP CONSTRAINT IF EXISTS yol1_feedback_items_status_check`);
       await sql.query(`UPDATE yol1_feedback_items SET status = CASE status WHEN 'approve' THEN 'reviewing' WHEN 'discard' THEN 'ignored' ELSE status END`);
-      await sql.query(`ALTER TABLE yol1_feedback_items ADD CONSTRAINT yol1_feedback_items_status_check CHECK (status IN ('new', 'reviewing', 'later', 'resolved', 'ignored', 'wrong'))`);
+      await sql.query(`ALTER TABLE yol1_feedback_items ADD CONSTRAINT yol1_feedback_items_status_check CHECK (status IN ('new', 'reviewing', 'later', 'resolved', 'learning_ready', 'ignored', 'wrong'))`);
     })();
   }
   await schemaReady;

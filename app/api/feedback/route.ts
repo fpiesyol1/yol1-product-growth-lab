@@ -9,7 +9,7 @@ const screens = new Set(["Inicio", "Mis finanzas", "Cartola", "Cobrar y pagar", 
 const products = new Set(["Acompañante financiero", "Onboarding y KYC progresivo", "Home Banking", "Tarjetas", "Remesas", "Construir mi propio producto"]);
 const kinds = new Set(["like", "improve", "idea"]);
 const ratings = new Set<ChatReviewRating>(["unrated", "useful", "improve"]);
-const statuses = new Set<SharedFeedbackStatus>(["new", "reviewing", "later", "resolved", "ignored", "wrong"]);
+const statuses = new Set<SharedFeedbackStatus>(["new", "reviewing", "later", "resolved", "learning_ready", "ignored", "wrong"]);
 
 function clean(value: unknown, max: number) {
   return typeof value === "string" ? value.trim().slice(0, max) : "";

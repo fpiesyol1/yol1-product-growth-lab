@@ -86,16 +86,23 @@ test("feedback y respuestas llegan a una bandeja editorial con fallback local", 
   assert.match(page, /localChatFeedbackIntake\.submit/);
   assert.match(page, /submitChatResponse/);
   assert.match(review, /Bandeja de aprendizaje/);
-  assert.match(review, /Feedback que dejó la gente/);
-  assert.match(review, /En revisión/);
-  assert.match(review, /Para después/);
-  assert.match(review, /Resuelto/);
-  assert.match(review, /Marcar resuelto/);
+  assert.match(review, /Feedbacks e ideas/);
+  assert.match(review, /Propuestas que toman forma/);
+  assert.match(review, /Entrenamiento IA/);
+  assert.match(review, /Por evaluar/);
+  assert.match(review, /Listos para aprender/);
+  assert.match(review, /Priorizar/);
+  assert.match(review, /Backlog/);
+  assert.match(review, /Archivar/);
   assert.doesNotMatch(review, /Convertido en mejora, guía o proyecto/);
   assert.match(readme, /Para después, Resuelto o Ignorado/);
   assert.doesNotMatch(readme, /Para después, Convertido o Ignorado/);
-  assert.match(review, /Hallazgos para interpretar/);
-  assert.match(review, /¿Qué debe cambiar\?/);
+  assert.match(review, /Respuestas que pueden mejorar el criterio del equipo/);
+  assert.match(review, /Nota para el equipo/);
+  assert.match(review, /MODO LOCAL · AÚN NO COMPARTIDO/);
+  assert.match(review, /<DecisionInbox \/>/);
+  assert.doesNotMatch(review, /example:(?:feedback|prototype):remesas/);
+  assert.doesNotMatch(review, /feedback sobre remesas/i);
   assert.match(review, /window\.localStorage\.setItem\("yol1-lab-theme", next\)/);
   assert.match(review, /button onClick=\{chooseTheme\}/);
   assert.match(adapter, /localStorage/);
@@ -599,4 +606,9 @@ test("bandeja de decisiones resuelve contradicciones solo en estado local", asyn
   assert.match(decisions, /localStorage/);
   assert.match(decisions, /Decisión verbal de Felipe/);
   assert.doesNotMatch(decisions, /fetch\(|github|OPENAI_API_KEY/i);
+});
+
+test("la referencia visual legada queda aislada del código ejecutable", async () => {
+  const tsconfig = await source("tsconfig.json");
+  assert.match(tsconfig, /design-system\/reference\/\*\*/);
 });

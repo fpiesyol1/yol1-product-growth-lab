@@ -7,13 +7,19 @@ export type LearningItem = SharedFeedbackItem;
 
 const TRIAGE_KEY = "yol1-lab-learning-triage-v1";
 
+type LocalTriageRecord = { status: LearningStatus; reviewNote: string; reviewedAt: string | null };
+
 function readTriage() {
-  if (typeof window === "undefined") return {} as Record<string, LearningStatus>;
+  if (typeof window === "undefined") return {} as Record<string, LocalTriageRecord>;
   try {
-    const parsed = JSON.parse(window.localStorage.getItem(TRIAGE_KEY) ?? "{}") as Record<string, LearningStatus | "consider" | "approve" | "discard">;
-    return Object.fromEntries(Object.entries(parsed).map(([key, value]) => [key, value === "consider" || value === "approve" ? "reviewing" : value === "discard" ? "ignored" : value])) as Record<string, LearningStatus>;
+    const parsed = JSON.parse(window.localStorage.getItem(TRIAGE_KEY) ?? "{}") as Record<string, LocalTriageRecord | LearningStatus | "consider" | "approve" | "discard">;
+    return Object.fromEntries(Object.entries(parsed).map(([key, value]) => {
+      const legacyStatus = typeof value === "string" ? value : value.status;
+      const status = legacyStatus === "consider" || legacyStatus === "approve" ? "reviewing" : legacyStatus === "discard" ? "ignored" : legacyStatus;
+      return [key, { status, reviewNote: typeof value === "string" ? "" : value.reviewNote ?? "", reviewedAt: typeof value === "string" ? null : value.reviewedAt ?? null }];
+    })) as Record<string, LocalTriageRecord>;
   } catch {
-    return {} as Record<string, LearningStatus>;
+    return {} as Record<string, LocalTriageRecord>;
   }
 }
 
@@ -27,9 +33,9 @@ export function listLearningItems(): LearningItem[] {
     title: item.message || "Feedback rápido sin comentario",
     body: item.topics ? `Temas: ${item.topics}` : "Sin temas adicionales.",
     createdAt: item.createdAt,
-    status: triage[`feedback:${item.id}`] ?? "new",
-    reviewNote: "",
-    reviewedAt: null,
+    status: triage[`feedback:${item.id}`]?.status ?? "new",
+    reviewNote: triage[`feedback:${item.id}`]?.reviewNote ?? "",
+    reviewedAt: triage[`feedback:${item.id}`]?.reviewedAt ?? null,
   }));
   const chat: LearningItem[] = localChatFeedbackIntake.list().map((item) => ({
     id: `chat:${item.id}`,
@@ -39,14 +45,14 @@ export function listLearningItems(): LearningItem[] {
     title: item.question,
     body: item.answer,
     createdAt: item.createdAt,
-    status: triage[`chat:${item.id}`] ?? "new",
-    reviewNote: "",
-    reviewedAt: null,
+    status: triage[`chat:${item.id}`]?.status ?? "new",
+    reviewNote: triage[`chat:${item.id}`]?.reviewNote ?? "",
+    reviewedAt: triage[`chat:${item.id}`]?.reviewedAt ?? null,
   }));
   return [...feedback, ...chat].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export function setLearningStatus(id: string, status: LearningStatus) {
-  const triage = { ...readTriage(), [id]: status };
+export function setLearningStatus(id: string, status: LearningStatus, reviewNote = "") {
+  const triage = { ...readTriage(), [id]: { status, reviewNote, reviewedAt: new Date().toISOString() } };
   window.localStorage.setItem(TRIAGE_KEY, JSON.stringify(triage));
 }
