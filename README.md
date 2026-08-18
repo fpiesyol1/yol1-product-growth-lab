@@ -71,6 +71,7 @@ npm test
 - `lib/feedback-intake.ts`: contrato y adapter local del intake.
 - `lib/ai/`: conocimiento, instrucciones y fallback de conversación.
 - `knowledge/`: fichas Markdown por dominio, índice y guía de dictado por voz.
+- `product-knowledge/`: fichas enriquecidas por producto, decisiones, comentarios y protocolo de exportaciones de Notion. Es conocimiento interno; no alimenta respuestas públicas sin revisión.
 - `lib/ai/knowledge-catalog.ts`: representación runtime vinculada a cada ficha Markdown.
 - `lib/ai/knowledge-router.ts`: reglas y matching local antes de cualquier llamada de IA.
 - `app/api/chat/route.ts`: proxy server-side hacia Responses API con validación, consentimiento y `store: false`.
@@ -104,3 +105,5 @@ La navegación permite probar comprensión y usabilidad. No demuestra demanda, p
 - Los eventos propuestos, arquitectura, fuentes, KYC, licencias, riesgos y preguntas abiertas son material de equipo. No se envían a analytics ni constituyen una decisión legal o técnica.
 - `/review#decisions` contiene conflictos de ejemplo, no sensibles. La resolución se guarda en `localStorage` y no modifica archivos ni GitHub.
 - Jerarquía aplicada cuando las fuentes chocan: decisión verbal de Felipe → decisión aprobada → reunión reciente → Notion/Second Brain → Jira → estrategia/contexto.
+- Notion es el centro humano para contexto, notas y reglas vivas. Hasta contar con una conexión directa, sus exportaciones se incorporan como fuentes fechadas mediante `product-knowledge/imports/notion/`; primero se comparan y revisan, luego se actualizan las fichas Markdown.
+- Cada producto tiene una ficha enriquecida en `product-knowledge/products/` que coordina negocio, UX, reglas, requisitos, tecnología, datos, privacidad, normativa, partners, operación, GTM, QA y aprendizaje. Los vacíos permanecen visibles como `por_validar`.

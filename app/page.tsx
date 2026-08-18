@@ -10,7 +10,7 @@ import { buildOnboardingDemoSnapshot, ONBOARDING_DEMO_STORAGE_KEY, parseOnboardi
 import { buildAccessLedger } from "../lib/onboarding-access-ledger";
 import { validateAccessContact, type AccessMethod } from "../lib/onboarding-validation";
 import { normalizeKycState, type NormalizedKycState } from "../lib/onboarding-safety";
-import type { SharedProjectDraft } from "../lib/project-draft-types";
+import type { PublicProjectDraft } from "../lib/project-draft-types";
 import { ProgressiveOnboardingFlow } from "./onboarding-progressive";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
@@ -104,7 +104,7 @@ export default function Home() {
   const [projectSubmitOpen, setProjectSubmitOpen] = useState(false);
   const [builderGuide, setBuilderGuide] = useState<BuilderGuide>(null);
   const [sharedProjectId, setSharedProjectId] = useState<string | null>(null);
-  const [sharedProject, setSharedProject] = useState<SharedProjectDraft | null>(null);
+  const [sharedProject, setSharedProject] = useState<PublicProjectDraft | null>(null);
   const [sharedProjectState, setSharedProjectState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [inspectedAction, setInspectedAction] = useState<InspectedAction | null>(null);
   const appContentRef = useRef<HTMLDivElement>(null);
@@ -135,7 +135,7 @@ export default function Home() {
     let active = true;
     fetch(`/api/projects/${encodeURIComponent(sharedProjectId)}`, { cache: "no-store" })
       .then(async (response) => {
-        const payload = await response.json() as { project?: SharedProjectDraft };
+        const payload = await response.json() as { project?: PublicProjectDraft };
         if (!response.ok || !payload.project) throw new Error("PROJECT_NOT_AVAILABLE");
         if (active) { setSharedProject(payload.project); setSharedProjectState("ready"); }
       })
@@ -595,7 +595,7 @@ function ProfileMenu({ snapshot, onClose, onOnboarding, onBank, onClearDemo }: {
   return <aside className="profile-menu" aria-label="Menú de perfil"><div className="profile-menu-head"><div><small>TU PERFIL</small><strong>Accesos y permisos</strong></div><button onClick={onClose} aria-label="Cerrar menú">×</button></div><p>Este ledger muestra sólo el estado local; no necesitas completar datos por adelantado.</p><div className="profile-checklist">{rows.map((row) => { const content = <><span>{row.mark}</span><div><strong>{row.label}</strong><small>{row.status}</small></div></>; return row.action ? <button key={row.key} className={`ledger-row state-${row.mark === "✓" ? "ready" : "pending"}`} data-event-id={row.action === "clear_demo" ? "preregistration_demo_deleted" : undefined} onClick={() => act(row.action)}>{content}</button> : <div key={row.key} className="ledger-row state-empty">{content}</div>; })}</div></aside>;
 }
 
-function ProjectBuilderScreen({ guide, onGuide, project, projectState }: { guide: BuilderGuide; onGuide: (guide: BuilderGuide) => void; project: SharedProjectDraft | null; projectState: "idle" | "loading" | "ready" | "error" }) {
+function ProjectBuilderScreen({ guide, onGuide, project, projectState }: { guide: BuilderGuide; onGuide: (guide: BuilderGuide) => void; project: PublicProjectDraft | null; projectState: "idle" | "loading" | "ready" | "error" }) {
   if (guide) return <BuilderGuideScreen guide={guide} onBack={() => onGuide(null)} />;
   if (projectState === "loading") return <section className="builder-project-state" aria-live="polite"><span>✦</span><p className="kicker">ABRIENDO BORRADOR</p><h2>Trayendo tu propuesta al Lab…</h2><p>No estamos leyendo tu conversación; sólo el borrador que decidiste guardar.</p></section>;
   if (projectState === "error") return <section className="builder-project-state is-error" role="alert"><span>!</span><p className="kicker">BORRADOR NO DISPONIBLE</p><h2>No pudimos abrir esta propuesta.</h2><p>El enlace puede estar incompleto, haber expirado o la bandeja compartida puede estar temporalmente fuera de servicio.</p><button type="button" className="builder-project-new" onClick={() => window.location.assign("/?product=builder")}>Volver a Construir mi propio producto</button></section>;
@@ -617,7 +617,7 @@ function ProjectBuilderScreen({ guide, onGuide, project, projectState }: { guide
   </section>;
 }
 
-function ProjectDraftPreview({ project, onHow }: { project: SharedProjectDraft; onHow: () => void }) {
+function ProjectDraftPreview({ project, onHow }: { project: PublicProjectDraft; onHow: () => void }) {
   const sheetSections = [
     ["HECHOS CONOCIDOS", project.productSheet.knownFacts],
     ["APORTES DE LA PERSONA", project.productSheet.userContributions],

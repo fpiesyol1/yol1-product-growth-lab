@@ -1,6 +1,6 @@
 # Dirección canónica de producto — Felipe
 
-_Actualizada: 14 de agosto de 2026. Esta guía prevalece sobre research, referencias o decisiones anteriores cuando exista conflicto._
+_Actualizada: 18 de agosto de 2026. Esta guía prevalece sobre research, referencias o decisiones anteriores cuando exista conflicto._
 
 ## Reglas transversales
 
@@ -9,6 +9,10 @@ _Actualizada: 14 de agosto de 2026. Esta guía prevalece sobre research, referen
 - El sistema debe ser consistente: mismo nombre para la misma cosa, acciones breves y eventos canónicos útiles para producto/analytics. En la ficha, el evento es breve; sus parámetros van separados.
 - La ficha técnica debe poder alimentar un PRD: arquitectura sugerida React Native + AWS, servicios/candidatos, fuentes de datos, almacenamiento/consulta, eventos, KYC/licencias Chile, riesgos y decisiones por validar. No mostrar detalles internos confusos al público.
 - Feedback de personas, decisiones de fuentes e insights de IA son bandejas distintas. Nada cambia el producto automáticamente.
+- Cada producto mantiene una ficha enriquecida viva que coordina negocio, reglas, experiencia, requisitos funcionales y técnicos, datos, normativa, partners, operación, GTM, riesgos, QA, comentarios y aprendizajes. Un frente sin evidencia se marca `por_validar`; no se omite ni se completa por intuición.
+- Notion es el centro humano principal para notas, reuniones, reglas de negocio, estrategia y repositorios. Mientras no exista conexión directa, las exportaciones completas entregadas por Felipe se conservan con fecha y se comparan antes de proponer cambios.
+- Los archivos Markdown son el espejo legible y versionado que pueden consumir el Lab, los PRDs y los agentes. Una importación, comentario o respuesta de IA nunca sobrescribe una decisión: propone un diff, deja fuente y espera revisión humana.
+- S3 puede incorporarse más adelante como archivo durable de exportaciones y decisiones relevantes. No reemplaza Notion como centro de contexto ni el registro de decisiones como autoridad.
 - Remesas: no prototipar ni investigar en este ciclo.
 
 ## 1. Onboarding y KYC progresivo

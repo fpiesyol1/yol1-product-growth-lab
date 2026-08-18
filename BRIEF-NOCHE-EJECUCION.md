@@ -2589,3 +2589,95 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 2. **RUT progresivo:** decidir si es obligatorio antes de entrar al Acompañante o si se pide sólo ante una personalización concreta que lo justifique.
 3. **Entrada al producto:** definir qué productos demo aparecen después del perfil declarado y en qué orden.
 4. **Verificación completa:** decidir si se ofrece proactivamente después del perfil o sólo al iniciar una capability que realmente la requiera.
+
+## 98. Revisión nocturna incremental — 18 de agosto de 2026, 12:59 CLT
+
+**Alcance ejecutado:** revisión del delta posterior al cierre 11:55 CLT. El commit `18ca8c4` incorporó el sistema visual candidato, el onboarding por historias y sus vistas de QA; durante el cierre, el commit concurrente `f9f37f1` versionó exactamente las correcciones locales descritas abajo. Esta pasada no hizo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- Se cerró un **P1 de entrada móvil**: al abrir Onboarding desde la tarjeta inferior de Bienvenida, la página conservaba el desplazamiento anterior y dejaba el mockup completamente fuera del viewport. La selección de producto ahora restablece el scroll de la ventana antes de mostrar la ficha.
+- Se cerró un **P1 responsive de Reviews**: en 320 px, el encabezado y las pestañas forzaban 15 px de overflow horizontal del documento. Las columnas y botones ahora pueden contraerse sin alterar el desplazamiento horizontal intencional del Kanban dentro de su propio contenedor.
+- Se corrigió una contradicción de gobernanza: el crosswalk decía que la capa visual estaba pendiente de revisión “antes de commit”, aunque ya estaba versionada. Ahora declara que es un candidato implementado y versionado, pendiente de aprobación visual de Felipe antes de convertirse en sistema oficial o biblioteca compartida.
+- Se añadieron guardrails para el reinicio de scroll, el carácter reversible/candidato de la capa v2 y sus reglas responsive críticas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; nueve rutas.
+- Suite completa final: **86/86 PASS**, 0 fallidos.
+- QA interactivo final: **0 overflow horizontal** en Bienvenida/Onboarding a 390 y 320 px, y en `/review` y `/design-preview` a 320 px. La apertura de Onboarding desde la tarjeta inferior termina en `scrollY = 0`, con el teléfono visible desde el inicio. Encabezado y pestañas de Reviews terminan sin overflow; consola sin warnings ni errores.
+- `git diff --check`: **PASS**. El servidor temporal del puerto 3021 se detuvo al terminar.
+
+### Decisión abierta modificada
+
+- **Personalidad del sistema visual candidato:** aprobar, ajustar o descartar la combinación aplicada —oscuro petróleo como expresión principal, Light/Mist completo, sin vidrio en la base y profundidad reservada a momentos puntuales— antes de declararla oficial o extraer una biblioteca compartida. Esta puerta reemplaza la formulación provisional de la pasada 96; las preguntas de Onboarding de la pasada 97 continúan vigentes sin cambios.
+
+## 99. Revisión nocturna incremental — 18 de agosto de 2026, 14:08 CLT
+
+**Alcance ejecutado:** revisión del delta local posterior al cierre 12:59 CLT sobre el acceso de Reviews y la detección del modo compartido. Se preservó el nuevo handshake cliente/servidor y no se modificaron secretos ni integraciones. Esta pasada no hizo commit, push ni despliegue.
+
+### Resultado de producto / PRD / consistencia
+
+- El nuevo flujo valida la clave antes de intentar listar feedback y distingue correctamente tres estados: acceso no configurado, clave inválida y almacenamiento compartido no configurado. Cuando no hay Postgres, conserva el fallback local visible en vez de presentar una falsa bandeja compartida.
+- Se cerró un **P1 de acceso**: la clave conocida `Yol1` había quedado como fallback incondicional del servidor y, por tanto, también podía proteger una bandeja desplegada sin `YOL1_REVIEW_TOKEN`. Esto contradecía README, arquitectura, guía de Postgres y QA, que reservan las claves simples para pruebas locales y exigen una clave larga privada en producción.
+- La clave liviana ahora existe sólo cuando `NODE_ENV === "development"`. En producción, `/review` usa exclusivamente `YOL1_REVIEW_TOKEN`; si falta, la API no declara revisión configurada ni permite leer o clasificar feedback compartido. El copy de acceso explicita la separación entre desarrollo local y espacio compartido.
+- El guardrail de intake ahora bloquea tanto un fallback público incondicional como un estado de revisión que ignore la configuración real del servidor.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; nueve rutas.
+- Suite completa final: **86/86 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- No se atribuye una comprobación visual nueva: el entorno de esta ejecución no permitió abrir un listener local. El cambio visual está limitado al texto de acceso; el contrato responsive de Reviews no cambió.
+
+### Preguntas abiertas nuevas
+
+- Ninguna. La identidad individual, roles, rotación y auditoría de revisores continúan como evolución posterior ya registrada; esta corrección no los redefine.
+
+## 100. Revisión nocturna incremental — 18 de agosto de 2026, 14:58 CLT
+
+**Alcance ejecutado:** revisión del delta local posterior al cierre 14:08 CLT. El trabajo concurrente añadió propuestas MCP a Reviews, una API autenticada para listarlas/clasificarlas, enlaces cruzados Lab/Reviews y campos editoriales persistentes. Se preservó esa dirección sin configurar Postgres, credenciales ni integraciones. Esta pasada no hizo commit, push ni despliegue.
+
+### Resultado de producto / PRD / consistencia
+
+- El contrato `project-draft/0.3` mantiene el guardado explícito, la expiración de 90 días, el ID opaco y la exclusión de la conversación completa. Reviews puede mostrar el resumen elegido, referencias y pendientes, dejar nota y mover la propuesta por el Kanban sin publicar ni modificar pantallas.
+- Se cerró un **P1 de privacidad**: al agregar `review_status` y `review_note` al objeto persistido, el endpoint opaco público `/api/projects/[id]` empezó a devolver también esos campos internos. Ahora existe un tipo público separado y el enlace del Lab devuelve sólo el borrador; estado y nota editorial quedan exclusivamente en la API autenticada de Reviews.
+- Se cerró un **P1 de resiliencia**: Reviews cargaba feedback y propuestas con una operación indivisible. Si la API nueva de proyectos fallaba, bloqueaba también el feedback disponible y podía presentar el problema como si la clave fuera incorrecta. Ambas fuentes ahora degradan por separado, mantienen el acceso autenticado y explican cuál contenido no está disponible.
+- Los guardrails cubren la separación público/privado, la autenticación de listar/clasificar propuestas y la degradación parcial de las dos bandejas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; diez rutas, incluida la nueva `/api/projects`.
+- Suite completa final: **86/86 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- No se conectó Postgres ni se creó/cambió una clave, por lo que no se atribuye una prueba compartida real. El flujo sin esas integraciones conserva el fallback local; la verificación completa entre navegadores sigue pendiente de credenciales operativas administradas.
+
+### Preguntas abiertas nuevas
+
+- Ninguna. Continúa vigente la definición pendiente de identidad individual, roles, owner, SLA y permisos para una bandeja con múltiples revisores; el token compartido actual sigue siendo sólo el control del piloto.
+
+## 101. Revisión nocturna incremental — 18 de agosto de 2026, 15:58 CLT
+
+**Alcance ejecutado:** revisión del delta documental posterior al cierre 14:58 CLT. El trabajo concurrente creó `product-knowledge/` como espejo Markdown interno de Notion, con índice, protocolo de importación/salida, plantillas y seis fichas semilla. Se preservaron la dirección de Notion como centro humano, el circuito manual sin conexión y la pausa explícita de Remesas. Esta pasada no hizo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- La capa distingue correctamente decisiones, evidencia, comentarios y aprendizaje; importar nunca sobrescribe una ficha, la IA no aprueba decisiones y `knowledge/` continúa siendo la única base sintética apta para respuestas públicas después de revisión editorial.
+- Se cerró un **P1 de procedencia**: las seis fichas declaraban `verified_through: 2026-08-18` y una exportación fuente, aunque el índice afirmaba que ninguna exportación de Notion había sido procesada. `verified_through` y `source_export_id` quedan ahora en `null`, y el índice muestra `pendiente` hasta completar inventario, comparación y revisión de una exportación real.
+- Se cerró un **P1 de esquema**: el contrato permitía sólo `decidido / candidato / por_validar / fuera_de_alcance`, pero las fichas usaban variantes libres como `decidido para prototipo`, `investigación` o `por_validar si se reactiva`. Los estados quedaron normalizados y sus matices se conservaron en la síntesis, sin cambiar decisiones sustantivas.
+- Remesas permanece pausado y fuera de investigación, diseño y prototipado. La ficha sólo conserva su estado editorial y exige una decisión explícita de Felipe para reactivarla.
+- Se añadió un guardrail transversal para las seis fichas semilla: procedencia nula hasta reconciliación, doce frentes, enum cerrado y pausa de Remesas.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; diez rutas.
+- Suite completa final: **87/87 PASS**, 0 fallidos.
+- Enlaces Markdown locales de `product-knowledge/`: **PASS**, sin destinos rotos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- No se repitió QA visual: este delta cambia conocimiento interno, plantillas y guardrails; no modifica UI, navegación ni layout posteriores al último corte.
+
+### Preguntas abiertas nuevas
+
+1. **Notion maestro:** definir la base o página que funcionará como índice humano de decisiones y fichas.
+2. **Primer corte verificable:** entregar una exportación completa posterior al 4 de agosto de 2026 y confirmar su alcance para reconciliar las seis fichas.
+3. **Owners funcionales:** asignar responsables de Ingeniería, Datos, Seguridad, Legal/Compliance y Operaciones antes de declarar una ficha `al_dia`.

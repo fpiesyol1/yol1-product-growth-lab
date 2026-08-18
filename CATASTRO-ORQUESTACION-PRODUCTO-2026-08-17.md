@@ -181,6 +181,8 @@ El Lab ya tiene la base para ser la superficie común. Para hacerlo consistente 
 
 ## 9. Ruta de implementación sin integrar sistemas prematuramente
 
+**Avance del 18 de agosto de 2026.** El Lote 1 comenzó en [`product-knowledge/`](product-knowledge/README.md): existe un índice transversal, una plantilla canónica, fichas semilla para los seis productos, registros de decisión/aprendizaje y un protocolo de exportaciones de Notion. Las fichas siguen en estado `semilla` hasta reconciliar una nueva exportación completa y asignar owners funcionales.
+
 ### Lote 1 — ordenar, sin credenciales
 
 - Crear índice de decisiones, evidencia, capacidades y productos con los IDs de esta propuesta.
