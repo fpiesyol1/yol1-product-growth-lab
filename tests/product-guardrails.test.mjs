@@ -168,11 +168,15 @@ test("el registro nocturno conserva secciones consecutivas en orden", async () =
 
 test("intake compartido protege Postgres y la revisión privada", async () => {
   const route = await source("app/api/feedback/route.ts");
+  const reviewAuth = await source("lib/server/review-auth.ts");
   const store = await source("lib/server/feedback-store.ts");
   const page = await source("app/page.tsx");
   const envExample = await source(".env.example");
-  assert.match(route, /YOL1_REVIEW_TOKEN/);
-  assert.match(route, /timingSafeEqual/);
+  assert.match(reviewAuth, /YOL1_REVIEW_TOKEN/);
+  assert.match(reviewAuth, /process\.env\.NODE_ENV === "development" \? "Yol1" : ""/);
+  assert.match(route, /reviewConfigured: isReviewConfigured\(\)/);
+  assert.doesNotMatch(reviewAuth, /YOL1_REVIEW_TOKEN \|\| "Yol1"/);
+  assert.match(reviewAuth, /timingSafeEqual/);
   assert.match(route, /sameOrigin/);
   assert.match(route, /containsSensitiveData/);
   assert.match(route, /countRecentFeedback\(sessionHash\) >= 20/);
@@ -532,6 +536,9 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   const route = await source("app/api/mcp/route.ts");
   const store = await source("lib/server/project-draft-store.ts");
   const projectApi = await source("app/api/projects/[id]/route.ts");
+  const projectsApi = await source("app/api/projects/route.ts");
+  const reviewApi = await source("app/api/review/route.ts");
+  const review = await source("app/review/page.tsx");
   assert.match(route, /export async function GET/);
   assert.match(route, /export async function POST/);
   assert.match(route, /public-pilot-explicit-write/);
@@ -587,6 +594,8 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(route, /sólo después de una petición explícita/i);
   assert.match(route, /readOnlyHint: false, destructiveHint: false, idempotentHint: true/);
   assert.match(route, /No está publicado · No modificó ninguna pantalla automáticamente/);
+  assert.match(route, /Verla en Reviews/);
+  assert.match(route, /review_url: reviewUrl/);
   assert.match(route, /Alcanzaste el límite temporal de cinco borradores por hora/);
   assert.match(route, /datos personales, credenciales, teléfonos o números de tarjeta/);
   assert.match(route, /access_\?token\|api_\?key\|auth\|authorization\|code\|credential\|jwt\|password\|secret\|signature\|token/);
@@ -594,6 +603,9 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.doesNotMatch(route, /DATABASE_URL|process\.env\.(?!NEXT_PUBLIC_(MCP_URL|SITE_URL))/);
   assert.match(store, /CREATE TABLE IF NOT EXISTS yol1_project_drafts/);
   assert.match(store, /ADD COLUMN IF NOT EXISTS product_sheet jsonb/);
+  assert.match(store, /review_status text NOT NULL DEFAULT 'new'/);
+  assert.match(store, /listProjectDrafts/);
+  assert.match(store, /updateProjectDraftReview/);
   assert.match(store, /technology_fit: input\.productSheet\.technologyFit/);
   assert.match(store, /randomBytes\(16\)/);
   assert.match(store, /expires_at[\s\S]*90 days/);
@@ -601,8 +613,22 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.doesNotMatch(store, /email|phone|rut|conversation/i);
   assert.match(projectApi, /X-Robots-Tag/);
   assert.match(projectApi, /private, no-store/);
+  assert.match(projectApi, /toPublicProjectDraft\(project\)/);
+  assert.match(projectApi, /PublicProjectDraft/);
+  assert.doesNotMatch(projectApi, /NextResponse\.json\(\{ project \}/);
+  assert.match(projectsApi, /isReviewAuthorized/);
+  assert.match(projectsApi, /export async function GET/);
+  assert.match(projectsApi, /export async function PATCH/);
+  assert.match(reviewApi, /Promise\.allSettled\(\[listFeedback\(\), listProjectDrafts\(\)\]\)/);
+  assert.match(reviewApi, /isReviewAuthorized/);
+  assert.match(review, /getReviewWorkspace/);
+  assert.match(review, /status\.projects/);
+  assert.match(review, /Abrimos el feedback, pero las propuestas compartidas no están disponibles/);
+  assert.match(review, /Resumen que decidió guardar/);
+  assert.match(review, /Abrir propuesta en el Lab/);
   const outputContract = await source("BUILDER-OUTPUT-CONTRACT.md");
   assert.match(outputContract, /project-draft\/0\.3/);
+  assert.match(outputContract, /enlace opaco[\s\S]*nunca devuelve esos campos\s+editoriales/i);
   assert.match(outputContract, /`project_id`[\s\S]*`submission_id`[\s\S]*`value_proposition`[\s\S]*`expires_at`/);
   assert.match(outputContract, /`product_sheet`/);
   assert.doesNotMatch(outputContract, /`proposer_name`|`proposal_version`/);
@@ -625,4 +651,32 @@ test("bandeja de decisiones resuelve contradicciones solo en estado local", asyn
 test("la referencia visual legada queda aislada del código ejecutable", async () => {
   const tsconfig = await source("tsconfig.json");
   assert.match(tsconfig, /design-system\/reference\/\*\*/);
+});
+
+test("las fichas semilla no inventan verificación ni estados de conocimiento", async () => {
+  const productFiles = [
+    "accompanante-financiero.md",
+    "onboarding.md",
+    "home-banking.md",
+    "tarjetas.md",
+    "remesas.md",
+    "construir-mi-propio-producto.md",
+  ];
+  const allowedStates = new Set(["decidido", "candidato", "por_validar", "fuera_de_alcance"]);
+  for (const file of productFiles) {
+    const sheet = await source(`product-knowledge/products/${file}`);
+    assert.match(sheet, /^knowledge_status: semilla$/m, file);
+    assert.match(sheet, /^verified_through: null$/m, file);
+    assert.match(sheet, /^source_export_id: null$/m, file);
+    const coverageStart = sheet.indexOf("## Cobertura de frentes");
+    const coverageEnd = sheet.indexOf("\n## ", coverageStart + 4);
+    const coverage = sheet.slice(coverageStart, coverageEnd === -1 ? undefined : coverageEnd);
+    const states = coverage.split("\n").filter((line) => line.startsWith("|") && !line.includes("|---") && !line.includes("| Frente ")).map((line) => line.split("|")[2]?.trim());
+    assert.equal(states.length, 12, file);
+    for (const state of states) assert.ok(allowedStates.has(state), `${file}: ${state}`);
+  }
+  const index = await source("product-knowledge/INDEX.md");
+  assert.equal((index.match(/\| pendiente \|/g) || []).length, 6);
+  const remittances = await source("product-knowledge/products/remesas.md");
+  assert.match(remittances, /No se investiga, diseña ni prototipa en el ciclo vigente/);
 });

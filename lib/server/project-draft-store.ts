@@ -30,11 +30,15 @@ async function ensureSchema() {
           reference_links jsonb NOT NULL DEFAULT '[]'::jsonb,
           product_sheet jsonb NOT NULL DEFAULT '{}'::jsonb,
           status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft')),
+          review_status text NOT NULL DEFAULT 'new' CHECK (review_status IN ('new', 'reviewing', 'later', 'resolved', 'learning_ready', 'ignored')),
+          review_note text NOT NULL DEFAULT '',
           created_at timestamptz NOT NULL DEFAULT now(),
           expires_at timestamptz NOT NULL DEFAULT (now() + interval '90 days')
         )
       `);
       await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS product_sheet jsonb NOT NULL DEFAULT '{}'::jsonb`);
+      await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS review_status text NOT NULL DEFAULT 'new'`);
+      await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS review_note text NOT NULL DEFAULT ''`);
       await sql.query(`CREATE INDEX IF NOT EXISTS yol1_project_drafts_creator_idx ON yol1_project_drafts (creator_hash, created_at DESC)`);
     })();
   }
@@ -54,6 +58,8 @@ type ProjectDraftRow = {
   reference_links: unknown;
   product_sheet: unknown;
   status: "draft";
+  review_status: SharedProjectDraft["reviewStatus"];
+  review_note: string;
   created_at: string | Date;
   expires_at: string | Date;
 };
@@ -88,6 +94,8 @@ function toDraft(row: ProjectDraftRow): SharedProjectDraft {
     references: stringList(row.reference_links),
     productSheet: productSheet(row.product_sheet),
     status: row.status,
+    reviewStatus: row.review_status ?? "new",
+    reviewNote: row.review_note ?? "",
     createdAt: new Date(row.created_at).toISOString(),
     expiresAt: new Date(row.expires_at).toISOString(),
   };
@@ -124,7 +132,7 @@ export async function findProjectDraftBySubmission(submissionId: string, creator
   const hash = idempotencyHash(submissionId, creatorHash);
   const rows = await sql`
     SELECT id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, product_sheet, status, created_at, expires_at
+      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
     FROM yol1_project_drafts
     WHERE idempotency_hash = ${hash} AND expires_at > now()
     LIMIT 1
@@ -157,7 +165,7 @@ export async function saveProjectDraft(input: ProjectDraftInput, creatorHash: st
     ON CONFLICT (idempotency_hash) DO UPDATE
       SET idempotency_hash = EXCLUDED.idempotency_hash
     RETURNING id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, product_sheet, status, created_at, expires_at
+      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
   ` as ProjectDraftRow[];
   return toDraft(rows[0]);
 }
@@ -166,10 +174,35 @@ export async function getProjectDraft(id: string) {
   const sql = await ensureSchema();
   const rows = await sql`
     SELECT id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, product_sheet, status, created_at, expires_at
+      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
     FROM yol1_project_drafts
     WHERE id = ${id} AND expires_at > now()
     LIMIT 1
+  ` as ProjectDraftRow[];
+  return rows[0] ? toDraft(rows[0]) : null;
+}
+
+export async function listProjectDrafts() {
+  const sql = await ensureSchema();
+  const rows = await sql`
+    SELECT id, title, idea, problem, audience, value_proposition,
+      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
+    FROM yol1_project_drafts
+    WHERE expires_at > now()
+    ORDER BY created_at DESC
+    LIMIT 100
+  ` as ProjectDraftRow[];
+  return rows.map(toDraft);
+}
+
+export async function updateProjectDraftReview(id: string, reviewStatus: SharedProjectDraft["reviewStatus"], reviewNote: string) {
+  const sql = await ensureSchema();
+  const rows = await sql`
+    UPDATE yol1_project_drafts
+    SET review_status = ${reviewStatus}, review_note = ${reviewNote}
+    WHERE id = ${id} AND expires_at > now()
+    RETURNING id, title, idea, problem, audience, value_proposition,
+      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
   ` as ProjectDraftRow[];
   return rows[0] ? toDraft(rows[0]) : null;
 }

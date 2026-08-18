@@ -28,6 +28,8 @@ borrador con una decisión de producto.
 | `product_sheet` | object | Ficha progresiva opcional: hechos, aportes, datos, condiciones, encaje tecnológico, continuidad y decisiones |
 | `created_at` | ISO-8601 | Hora asignada por el servidor |
 | `expires_at` | ISO-8601 | Expiración asignada por el servidor; hoy 90 días |
+| `review_status` | enum | Estado editorial visible en Reviews; no publica la propuesta |
+| `review_note` | string | Comentario del revisor sobre aprendizaje, decisión o pendiente |
 | `submission_mode` | enum conceptual | `local_only` para el formulario o `shared_draft` para el MCP; no se persiste en el objeto compartido |
 
 ## Objeto `screen_draft`
@@ -79,7 +81,18 @@ Mientras el prototipo use almacenamiento local, debe ofrecer una reversa inmedia
 `Borrar este borrador local`. No promete borrado remoto porque no existe envío remoto.
 
 Después de guardar desde el MCP debe devolver `project_id`, estado `draft`, fecha de
-expiración y un enlace al Lab. Debe repetir que no publicó ni modificó pantallas.
+expiración, un enlace al Lab y otro a Reviews. En Reviews, la tarjeta permite abrir el
+borrador, leer el resumen que la persona decidió guardar, ver referencias y pendientes,
+dejar comentario editorial y moverla por el Kanban. Debe repetir que no publicó ni
+modificó pantallas.
+
+El campo `idea` funciona como resumen revisable de lo que la persona quiso construir.
+La conversación completa de ChatGPT, Claude o Codex no se recibe ni se almacena: evita
+convertir el chat privado en una base de datos sin consentimiento explícito.
+
+`review_status` y `review_note` pertenecen sólo a la bandeja privada y a su API
+autenticada. El enlace opaco que abre el borrador en el Lab nunca devuelve esos campos
+editoriales.
 
 ## Criterios de aceptación
 

@@ -2,9 +2,10 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { listLearningItems, setLearningStatus, type LearningItem, type LearningStatus } from "../../lib/learning-review";
-import { getFeedbackServiceStatus, listSharedFeedback, updateSharedFeedback } from "../../lib/shared-feedback-client";
+import { getReviewWorkspace, updateSharedFeedback, updateSharedProjectDraft } from "../../lib/shared-feedback-client";
 import { DECISION_CONFLICTS, readDecisionResolutions, saveDecisionResolution, type DecisionChoice, type DecisionResolution } from "../../lib/decision-inbox";
 import { localPrototypeIntake, type ExternalPrototype } from "../../lib/prototype-intake";
+import type { SharedProjectDraft } from "../../lib/project-draft-types";
 
 const REVIEW_TOKEN_KEY = "yol1-review-token-session-v1";
 type InboxMode = "checking" | "local" | "locked" | "shared";
@@ -42,7 +43,7 @@ function DecisionInbox() {
 }
 
 type BoardId = "feedback" | "prototypes" | "training";
-type BoardItem = Pick<LearningItem, "id" | "label" | "context" | "title" | "body" | "status" | "reviewNote" | "createdAt"> & { source: "feedback" | "chat" | "prototype" };
+type BoardItem = Pick<LearningItem, "id" | "label" | "context" | "title" | "body" | "status" | "reviewNote" | "createdAt"> & { source: "feedback" | "chat" | "prototype"; reviewLink?: string; intentSummary?: string; references?: string[]; pendingQuestions?: string[] };
 
 const BOARD_COPY: Record<BoardId, { eyebrow: string; title: string; body: string; emptyTitle: string; emptyBody: string }> = {
   feedback: { eyebrow: "01 · FEEDBACKS E IDEAS", title: "Lo que las personas ven y proponen.", body: "Cada entrada conserva la pantalla y el tipo de feedback. Decide qué vale la pena investigar antes de cambiar producto o tecnología.", emptyTitle: "Aún no llega feedback.", emptyBody: "Cuando alguien deje una idea, mejora o comentario desde una pantalla, aterriza aquí con su contexto." },
@@ -75,6 +76,7 @@ function BoardCard({ item, onChange, selectable = false, selected = false, onTog
   return <article className={`board-card status-${item.status} ${selected ? "is-selected" : ""}`}>
     <header><span>{item.label}</span><small>{item.context}</small>{selectable && <button className="board-card-select" type="button" onClick={onToggle} aria-pressed={selected}>{selected ? "Seleccionada" : "Unir"}</button>}</header>
     <h3>{item.title}</h3><p>{item.body}</p>
+    {(item.reviewLink || item.intentSummary || item.references?.length || item.pendingQuestions?.length) && <details className="board-card-context"><summary>Ver contexto de la propuesta</summary><div>{item.reviewLink && <a href={item.reviewLink} target="_blank" rel="noreferrer">Abrir propuesta en el Lab ↗</a>}{item.intentSummary && <p><strong>Resumen que decidió guardar</strong>{item.intentSummary}</p>}{item.references?.length ? <p><strong>Referencias</strong>{item.references.join(" · ")}</p> : null}{item.pendingQuestions?.length ? <p><strong>Pendientes</strong>{item.pendingQuestions.join(" · ")}</p> : null}</div></details>}
     {item.reviewNote && item.reviewNote !== note && <blockquote>{item.reviewNote}</blockquote>}
     <label><span>Nota para el equipo</span><textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Qué aprendimos, qué falta validar o dónde debería aplicarse." maxLength={500} /></label>
     <div className="board-card-actions">{actions.map(([label, status]) => <button key={label} type="button" onClick={() => onChange(status, note)}>{label}</button>)}</div>
@@ -114,6 +116,7 @@ export default function ReviewPage() {
   const [exampleChanges, setExampleChanges] = useState<Record<string, Pick<BoardItem, "status" | "reviewNote">>>({});
   const [activeBoard, setActiveBoard] = useState<BoardId>("feedback");
   const [prototypes, setPrototypes] = useState<ExternalPrototype[]>([]);
+  const [sharedProjects, setSharedProjects] = useState<SharedProjectDraft[]>([]);
   const [prototypeTitle, setPrototypeTitle] = useState("");
   const [prototypeSummary, setPrototypeSummary] = useState("");
   const [prototypeReference, setPrototypeReference] = useState("");
@@ -128,29 +131,34 @@ export default function ReviewPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const board = new URLSearchParams(window.location.search).get("tab");
+    if (board === "prototypes" || board === "training") setActiveBoard(board);
     const stored = window.localStorage.getItem("yol1-lab-theme");
     setTheme(stored === "light" ? "light" : "dark");
     setPrototypes(localPrototypeIntake.list());
     const token = window.sessionStorage.getItem(REVIEW_TOKEN_KEY) || "";
     setReviewToken(token);
-    getFeedbackServiceStatus().then(async (status) => {
-      if (!status.storageConfigured || !status.reviewConfigured) {
+    getReviewWorkspace(token).then((status) => {
+      if (!status.reviewConfigured) {
         setItems(listLearningItems());
         setMode("local");
         return;
       }
-      if (!token) {
+      if (!token || !status.authorized) {
         setMode("locked");
         return;
       }
-      try {
-        const shared = await listSharedFeedback(token);
-        setItems(shared);
-        setMode("shared");
-      } catch {
-        window.sessionStorage.removeItem(REVIEW_TOKEN_KEY);
-        setMode("locked");
+      if (!status.storageConfigured) {
+        setItems(listLearningItems());
+        setMode("local");
+        return;
       }
+      setItems(status.items);
+      setSharedProjects(status.projects);
+      if (!status.feedbackAvailable && !status.projectsAvailable) setError("No pudimos abrir el contenido compartido.");
+      else if (!status.feedbackAvailable) setError("Abrimos las propuestas, pero el feedback compartido no está disponible.");
+      else if (!status.projectsAvailable) setError("Abrimos el feedback, pero las propuestas compartidas no están disponibles.");
+      setMode("shared");
     }).catch(() => {
       setItems(listLearningItems());
       setMode("local");
@@ -159,7 +167,7 @@ export default function ReviewPage() {
 
   const feedbackItems = items.filter((item) => item.source === "feedback");
   const aiItems = items.filter((item) => item.source === "chat");
-  const prototypeItems: BoardItem[] = prototypes.map((item) => ({ id: item.id, source: "prototype", label: "PROTOTIPO EXTERNO", context: item.reference || "Referencia por ordenar", title: item.title, body: item.summary, status: item.status, reviewNote: item.reviewNote, createdAt: item.createdAt }));
+  const prototypeItems: BoardItem[] = [...sharedProjects.map((item) => ({ id: item.id, source: "prototype" as const, label: "PROPUESTA COMPARTIDA", context: `${item.audience} · ${item.problem}`, title: item.title, body: item.valueProposition || item.idea, status: item.reviewStatus, reviewNote: item.reviewNote, createdAt: item.createdAt, reviewLink: `/?product=builder&draft=${item.id}`, intentSummary: item.idea, references: item.references, pendingQuestions: item.openQuestions })), ...prototypes.map((item) => ({ id: item.id, source: "prototype" as const, label: "PROTOTIPO EXTERNO", context: item.reference || "Referencia por ordenar", title: item.title, body: item.summary, status: item.status, reviewNote: item.reviewNote, createdAt: item.createdAt }))];
   const applyExampleChanges = (examples: BoardItem[]) => examples.map((item) => ({ ...item, ...exampleChanges[item.id] }));
   const feedbackBoardItems = (feedbackItems.length ? feedbackItems : applyExampleChanges(BOARD_EXAMPLES.feedback)) as BoardItem[];
   const trainingBoardItems = (aiItems.length ? aiItems : applyExampleChanges(BOARD_EXAMPLES.training)) as BoardItem[];
@@ -171,11 +179,21 @@ export default function ReviewPage() {
     if (!loginToken.trim()) return;
     setError("");
     try {
-      const shared = await listSharedFeedback(loginToken.trim());
+      const status = await getReviewWorkspace(loginToken.trim());
+      if (!status.authorized) throw new Error("Clave incorrecta.");
       window.sessionStorage.setItem(REVIEW_TOKEN_KEY, loginToken.trim());
       setReviewToken(loginToken.trim());
-      setItems(shared);
-      setMode("shared");
+      if (status.storageConfigured) {
+        setItems(status.items);
+        setSharedProjects(status.projects);
+        if (!status.feedbackAvailable && !status.projectsAvailable) setError("Clave correcta, pero no pudimos abrir el contenido compartido.");
+        else if (!status.feedbackAvailable) setError("Abrimos las propuestas, pero el feedback compartido no está disponible.");
+        else if (!status.projectsAvailable) setError("Abrimos el feedback, pero las propuestas compartidas no están disponibles.");
+        setMode("shared");
+      } else {
+        setItems(listLearningItems());
+        setMode("local");
+      }
       setLoginToken("");
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "Clave incorrecta.");
@@ -220,6 +238,10 @@ export default function ReviewPage() {
       return;
     }
     if (item.source === "prototype") {
+      if (item.id.startsWith("prj_") && mode === "shared") {
+        void updateSharedProjectDraft(reviewToken, item.id, status as SharedProjectDraft["reviewStatus"], note.trim()).then((project) => setSharedProjects((current) => current.map((value) => value.id === project.id ? project : value))).catch((updateError) => setError(updateError instanceof Error ? updateError.message : "No pudimos actualizar la propuesta."));
+        return;
+      }
       localPrototypeIntake.setStatus(item.id, status, note.trim());
       setPrototypes(localPrototypeIntake.list());
       return;
@@ -242,7 +264,7 @@ export default function ReviewPage() {
       <div className="review-header-actions"><button onClick={chooseTheme}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button>{mode === "shared" && <button onClick={logout}>Cerrar bandeja</button>}</div>
     </header>
 
-    {mode === "locked" && <section className="review-login"><span>↳</span><div><small>BANDEJA PRIVADA</small><h2>Entra con tu clave de revisión</h2><p>Esta clave es distinta de GitHub, Vercel y OpenAI. Vive como secreto del servidor.</p><form onSubmit={login}><input type="password" value={loginToken} onChange={(event) => setLoginToken(event.target.value)} placeholder="YOL1_REVIEW_TOKEN" aria-label="Clave privada de revisión" autoComplete="current-password" /><button type="submit">Abrir bandeja</button></form>{error && <p className="review-error" role="alert">{error}</p>}</div></section>}
+    {mode === "locked" && <section className="review-login"><span>↳</span><div><small>ACCESO AL LAB</small><h2>Entra a tu bandeja</h2><p>En desarrollo local puedes usar la clave liviana del Lab. El espacio compartido exige la clave privada configurada en el servidor.</p><form onSubmit={login}><input type="password" value={loginToken} onChange={(event) => setLoginToken(event.target.value)} placeholder="Clave de acceso" aria-label="Clave de acceso a revisión" autoComplete="current-password" /><button type="submit">Entrar</button></form>{error && <p className="review-error" role="alert">{error}</p>}</div></section>}
 
     {mode !== "locked" && <>
       <div className="review-mode"><span>{mode === "shared" ? "BANDEJA COMPARTIDA" : mode === "checking" ? "CONECTANDO…" : "MODO LOCAL · AÚN NO COMPARTIDO"}</span><strong>{mode === "shared" ? "Cada envío llega al equipo." : "Lo que ves no se comparte entre dispositivos todavía."}</strong></div>

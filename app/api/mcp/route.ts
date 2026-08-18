@@ -345,17 +345,23 @@ function projectViewUrl(id: string) {
   return `${LAB_VIEW_URL}/?product=builder&draft=${encodeURIComponent(id)}`;
 }
 
+function projectReviewUrl(id: string) {
+  return `${LAB_VIEW_URL}/review?tab=prototypes&project=${encodeURIComponent(id)}`;
+}
+
 function projectDraftResult(project: SharedProjectDraft, created = false) {
   const viewUrl = projectViewUrl(project.id);
+  const reviewUrl = projectReviewUrl(project.id);
   return {
     content: [{
       type: "text",
-      text: `# ${project.title}\n\n${created ? "Borrador guardado" : "Borrador encontrado"} para revisión.\n\n[Abrir esta propuesta en el Lab](${viewUrl})\n\nEstado: borrador · No está publicado · No modificó ninguna pantalla automáticamente.`,
+      text: `# ${project.title}\n\n${created ? "Borrador guardado" : "Borrador encontrado"} para revisión.\n\n[Abrir esta propuesta en el Lab](${viewUrl})\n[Verla en Reviews](${reviewUrl})\n\nEstado: borrador · No está publicado · No modificó ninguna pantalla automáticamente.`,
     }],
     structuredContent: {
       project_id: project.id,
       status: project.status,
       view_url: viewUrl,
+      review_url: reviewUrl,
       title: project.title,
       product_sheet: project.productSheet,
       created_at: project.createdAt,
@@ -460,7 +466,7 @@ export async function POST(request: Request) {
       },
       {
         name: "yol1_save_project_draft",
-        description: "Guarda una propuesta estructurada como borrador compartido y devuelve un enlace revisable en el Lab. Úsala sólo cuando la persona pida explícitamente guardar, enviar o traer la propuesta al Lab. Es una escritura externa: no publica, no edita otras pantallas y no sincroniza la conversación completa.",
+        description: "Guarda una propuesta estructurada como borrador compartido y devuelve enlaces para abrirla en el Lab y revisarla en Reviews. Úsala sólo cuando la persona pida explícitamente guardar, enviar o traer la propuesta al Lab. Es una escritura externa: no publica, no edita otras pantallas y no sincroniza la conversación completa.",
         inputSchema: {
           type: "object",
           properties: {

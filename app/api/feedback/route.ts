@@ -1,7 +1,8 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import type { ChatReviewRating, SharedFeedbackInput, SharedFeedbackStatus } from "../../../lib/feedback-types";
 import { countRecentFeedback, isFeedbackStorageConfigured, listFeedback, saveFeedback, updateFeedback } from "../../../lib/server/feedback-store";
+import { isReviewAuthorized, isReviewConfigured } from "../../../lib/server/review-auth";
 
 export const runtime = "nodejs";
 
@@ -28,15 +29,6 @@ function sameOrigin(request: Request) {
   if (!origin) return true;
   const allowed = (process.env.YOL1_FEEDBACK_ALLOWED_ORIGIN || "").split(",").map((item) => item.trim()).filter(Boolean);
   return origin === new URL(request.url).origin || allowed.includes(origin);
-}
-
-function authorized(request: Request) {
-  const expected = process.env.YOL1_REVIEW_TOKEN;
-  const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || "";
-  if (!expected || !provided) return false;
-  const expectedHash = createHash("sha256").update(expected).digest();
-  const providedHash = createHash("sha256").update(provided).digest();
-  return timingSafeEqual(expectedHash, providedHash);
 }
 
 function isKnownFeedbackContext(value: string) {
@@ -77,9 +69,9 @@ function normalizeInput(value: unknown): SharedFeedbackInput | null {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   if (url.searchParams.get("status") === "1") {
-    return NextResponse.json({ storageConfigured: isFeedbackStorageConfigured(), reviewConfigured: Boolean(process.env.YOL1_REVIEW_TOKEN) });
+    return NextResponse.json({ storageConfigured: isFeedbackStorageConfigured(), reviewConfigured: isReviewConfigured(), authorized: isReviewAuthorized(request) });
   }
-  if (!authorized(request)) return NextResponse.json({ error: "Acceso de revisión requerido." }, { status: 401 });
+  if (!isReviewAuthorized(request)) return NextResponse.json({ error: "Acceso de revisión requerido." }, { status: 401 });
   try {
     return NextResponse.json({ items: await listFeedback(), mode: "shared" }, { headers: { "Cache-Control": "no-store" } });
   } catch {
@@ -113,7 +105,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  if (!authorized(request)) return NextResponse.json({ error: "Acceso de revisión requerido." }, { status: 401 });
+  if (!isReviewAuthorized(request)) return NextResponse.json({ error: "Acceso de revisión requerido." }, { status: 401 });
   let body: unknown;
   try {
     body = await request.json();

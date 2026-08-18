@@ -24,6 +24,10 @@ export type ProjectDraftInput = {
 export type SharedProjectDraft = Omit<ProjectDraftInput, "submissionId"> & {
   id: string;
   status: "draft";
+  reviewStatus: "new" | "reviewing" | "later" | "resolved" | "learning_ready" | "ignored";
+  reviewNote: string;
   createdAt: string;
   expiresAt: string;
 };
+
+export type PublicProjectDraft = Omit<SharedProjectDraft, "reviewStatus" | "reviewNote">;
