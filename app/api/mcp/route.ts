@@ -17,7 +17,7 @@ const PROJECT_ID = /^prj_[a-f0-9]{32}$/;
 const LAB_VIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
 const CONTEXT_VERSION = "yol1-lab-context/0.6";
 const SERVER_VERSION = "0.7.0";
-const SCHEMA_VERSION = "project-draft/0.3";
+const SCHEMA_VERSION = "project-draft/0.4";
 const UI_VERSION = "lab-web/0.6";
 const CONTEXT_MODULES = ["core", "product_sheet", "technology", "data_analytics", "continuity"] as const;
 type ContextModule = typeof CONTEXT_MODULES[number];
@@ -177,7 +177,7 @@ function builderGuidanceText() {
 - Antes de que exista una idea o propuesta, orienta con lenguaje simple, ejemplos, qué recibirá la persona, cómo se revisará y cuáles son los límites. No abras con una ficha técnica, eventos, arquitectura ni diagnóstico del conector.
 - Cuando aparezca una idea, conviértela de inmediato en una primera propuesta visual e interactiva. Haz supuestos seguros, revisa silenciosamente la calidad y termina con una sola decisión sencilla.
 - Después de mostrar el producto, abre una ficha progresiva y ofrece la base técnica como segunda capa: rescata lo que la persona ya sabe, y estructura datos, eventos, encaje tecnológico, continuidad, dependencias, gates y riesgos. No dejes que esa información desplace al prototipo.
-- Sólo después de una petición explícita de guardar, resume exactamente qué se conservará y confirma que sigue siendo un borrador no publicado.
+- Sólo después de una petición explícita de guardar, resume exactamente qué se conservará y confirma que sigue siendo un borrador no publicado. Si ya existe un mockup navegable en una URL pública, inclúyela como prototype_url; si el mockup está sólo dentro del chat o en un archivo local, dilo con claridad y no inventes ni copies una ruta local.
 
 ## Habilidades del cliente
 - Las habilidades pertenecen al ChatGPT, Claude u otro cliente de cada persona; no se instalan ni se distribuyen dentro del MCP.
@@ -295,6 +295,20 @@ function cleanList(value: unknown, maxItems: number, maxLength: number) {
   return value.slice(0, maxItems).map((item) => clean(item, maxLength)).filter(Boolean);
 }
 
+function publicPrototypeUrl(value: unknown) {
+  const candidate = clean(value, 500);
+  if (!candidate) return "";
+  try {
+    const url = new URL(candidate);
+    const sensitiveKey = /^(?:access_?token|api_?key|auth|authorization|code|credential|jwt|password|secret|signature|token)$/i;
+    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    if (url.username || url.password || [...url.searchParams.keys()].some((key) => sensitiveKey.test(key))) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
 function normalizeProjectDraft(value: unknown): ProjectDraftInput | null {
   if (!value || typeof value !== "object") return null;
   const input = value as Record<string, unknown>;
@@ -309,6 +323,7 @@ function normalizeProjectDraft(value: unknown): ProjectDraftInput | null {
     assumptions: cleanList(input.assumptions, 8, 240),
     openQuestions: cleanList(input.open_questions, 8, 240),
     references: cleanList(input.references, 5, 300),
+    prototypeUrl: publicPrototypeUrl(input.prototype_url),
     productSheet: {
       knownFacts: cleanList(sheet.known_facts, 10, 300),
       userContributions: cleanList(sheet.user_contributions, 10, 300),
@@ -324,7 +339,7 @@ function normalizeProjectDraft(value: unknown): ProjectDraftInput | null {
 }
 
 function containsSensitiveData(project: ProjectDraftInput) {
-  const text = [project.title, project.idea, project.problem, project.audience, project.valueProposition, ...project.assumptions, ...project.openQuestions, ...project.references, ...Object.values(project.productSheet).flat()].join(" ");
+  const text = [project.title, project.idea, project.problem, project.audience, project.valueProposition, project.prototypeUrl, ...project.assumptions, ...project.openQuestions, ...project.references, ...Object.values(project.productSheet).flat()].join(" ");
   return /(?:^|\D)(?:\d[ -]?){13,19}(?:\D|$)/.test(text)
     || /\b\d{1,2}\.?\d{3}\.?\d{3}-[\dkK]\b/.test(text)
     || /\b(?:clave|contraseña|password|cvv|cvc|pin)\s*[:=]/i.test(text)
@@ -479,6 +494,7 @@ export async function POST(request: Request) {
             assumptions: { type: "array", maxItems: 8, items: { type: "string", maxLength: 240 } },
             open_questions: { type: "array", maxItems: 8, items: { type: "string", maxLength: 240 } },
             references: { type: "array", maxItems: 5, items: { type: "string", maxLength: 300 }, description: "Sólo referencias que la persona decidió incluir; nunca copies el chat completo ni credenciales." },
+            prototype_url: { type: "string", maxLength: 500, description: "URL pública http(s) del mockup ya creado. Omítela si sólo existe como archivo local o dentro de un chat: nunca inventes una URL ni envíes rutas C:\\ o file://." },
             product_sheet: {
               type: "object",
               description: "Ficha progresiva construida después de la propuesta. Guarda sólo conocimiento que la persona confirmó o decidió incluir; lo desconocido puede quedar vacío.",

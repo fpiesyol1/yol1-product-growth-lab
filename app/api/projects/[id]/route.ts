@@ -17,6 +17,7 @@ function toPublicProjectDraft(project: SharedProjectDraft): PublicProjectDraft {
     assumptions: project.assumptions,
     openQuestions: project.openQuestions,
     references: project.references,
+    prototypeUrl: project.prototypeUrl,
     productSheet: project.productSheet,
     status: project.status,
     createdAt: project.createdAt,

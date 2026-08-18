@@ -552,7 +552,10 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(route, /tools\/call/);
   assert.match(route, /SERVER_VERSION = "0\.7\.0"/);
   assert.match(route, /CONTEXT_VERSION = "yol1-lab-context\/0\.6"/);
-  assert.match(route, /SCHEMA_VERSION = "project-draft\/0\.3"/);
+  assert.match(route, /SCHEMA_VERSION = "project-draft\/0\.4"/);
+  assert.match(route, /prototype_url/);
+  assert.match(route, /rutas C:\\\\ o file:\/\//);
+  assert.match(route, /url\.username \|\| url\.password/);
   assert.match(route, /workflow_mode: "legacy-compatible"/);
   assert.match(route, /loaded: \["product_context", "delivery_contract", "lab_view"\]/);
   assert.match(route, /Continúa aunque el cliente sólo muestre las herramientas originales/i);
@@ -625,7 +628,7 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(review, /status\.projects/);
   assert.match(review, /Abrimos el feedback, pero las propuestas compartidas no están disponibles/);
   assert.match(review, /Qué quiso construir/);
-  assert.match(review, /Abrir prototipo/);
+  assert.match(review, /Revisar propuesta/);
   const outputContract = await source("BUILDER-OUTPUT-CONTRACT.md");
   assert.match(outputContract, /project-draft\/0\.3/);
   assert.match(outputContract, /enlace opaco[\s\S]*nunca devuelve esos campos\s+editoriales/i);

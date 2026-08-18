@@ -18,6 +18,7 @@ export type ProjectDraftInput = {
   assumptions: string[];
   openQuestions: string[];
   references: string[];
+  prototypeUrl: string;
   productSheet: ProjectProductSheet;
 };
 

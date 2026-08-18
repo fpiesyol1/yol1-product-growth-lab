@@ -28,6 +28,7 @@ async function ensureSchema() {
           assumptions jsonb NOT NULL DEFAULT '[]'::jsonb,
           open_questions jsonb NOT NULL DEFAULT '[]'::jsonb,
           reference_links jsonb NOT NULL DEFAULT '[]'::jsonb,
+          prototype_url text NOT NULL DEFAULT '',
           product_sheet jsonb NOT NULL DEFAULT '{}'::jsonb,
           status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft')),
           review_status text NOT NULL DEFAULT 'new' CHECK (review_status IN ('new', 'reviewing', 'later', 'resolved', 'learning_ready', 'ignored')),
@@ -37,6 +38,7 @@ async function ensureSchema() {
         )
       `);
       await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS product_sheet jsonb NOT NULL DEFAULT '{}'::jsonb`);
+      await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS prototype_url text NOT NULL DEFAULT ''`);
       await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS review_status text NOT NULL DEFAULT 'new'`);
       await sql.query(`ALTER TABLE yol1_project_drafts ADD COLUMN IF NOT EXISTS review_note text NOT NULL DEFAULT ''`);
       await sql.query(`CREATE INDEX IF NOT EXISTS yol1_project_drafts_creator_idx ON yol1_project_drafts (creator_hash, created_at DESC)`);
@@ -56,6 +58,7 @@ type ProjectDraftRow = {
   assumptions: unknown;
   open_questions: unknown;
   reference_links: unknown;
+  prototype_url: string;
   product_sheet: unknown;
   status: "draft";
   review_status: SharedProjectDraft["reviewStatus"];
@@ -92,6 +95,7 @@ function toDraft(row: ProjectDraftRow): SharedProjectDraft {
     assumptions: stringList(row.assumptions),
     openQuestions: stringList(row.open_questions),
     references: stringList(row.reference_links),
+    prototypeUrl: typeof row.prototype_url === "string" ? row.prototype_url : "",
     productSheet: productSheet(row.product_sheet),
     status: row.status,
     reviewStatus: row.review_status ?? "new",
@@ -132,7 +136,7 @@ export async function findProjectDraftBySubmission(submissionId: string, creator
   const hash = idempotencyHash(submissionId, creatorHash);
   const rows = await sql`
     SELECT id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
+      assumptions, open_questions, reference_links, prototype_url, product_sheet, status, review_status, review_note, created_at, expires_at
     FROM yol1_project_drafts
     WHERE idempotency_hash = ${hash} AND expires_at > now()
     LIMIT 1
@@ -147,12 +151,12 @@ export async function saveProjectDraft(input: ProjectDraftInput, creatorHash: st
   const rows = await sql`
     INSERT INTO yol1_project_drafts (
       id, idempotency_hash, creator_hash, title, idea, problem, audience,
-      value_proposition, assumptions, open_questions, reference_links, product_sheet
+      value_proposition, assumptions, open_questions, reference_links, prototype_url, product_sheet
     ) VALUES (
       ${id}, ${submissionHash}, ${creatorHash}, ${input.title}, ${input.idea},
       ${input.problem}, ${input.audience}, ${input.valueProposition},
       ${JSON.stringify(input.assumptions)}::jsonb, ${JSON.stringify(input.openQuestions)}::jsonb,
-      ${JSON.stringify(input.references)}::jsonb, ${JSON.stringify({
+      ${JSON.stringify(input.references)}::jsonb, ${input.prototypeUrl}, ${JSON.stringify({
         known_facts: input.productSheet.knownFacts,
         user_contributions: input.productSheet.userContributions,
         data_needs: input.productSheet.dataNeeds,
@@ -165,7 +169,7 @@ export async function saveProjectDraft(input: ProjectDraftInput, creatorHash: st
     ON CONFLICT (idempotency_hash) DO UPDATE
       SET idempotency_hash = EXCLUDED.idempotency_hash
     RETURNING id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
+      assumptions, open_questions, reference_links, prototype_url, product_sheet, status, review_status, review_note, created_at, expires_at
   ` as ProjectDraftRow[];
   return toDraft(rows[0]);
 }
@@ -174,7 +178,7 @@ export async function getProjectDraft(id: string) {
   const sql = await ensureSchema();
   const rows = await sql`
     SELECT id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
+      assumptions, open_questions, reference_links, prototype_url, product_sheet, status, review_status, review_note, created_at, expires_at
     FROM yol1_project_drafts
     WHERE id = ${id} AND expires_at > now()
     LIMIT 1
@@ -186,7 +190,7 @@ export async function listProjectDrafts() {
   const sql = await ensureSchema();
   const rows = await sql`
     SELECT id, title, idea, problem, audience, value_proposition,
-      assumptions, open_questions, reference_links, product_sheet, status, review_status, review_note, created_at, expires_at
+      assumptions, open_questions, reference_links, prototype_url, product_sheet, status, review_status, review_note, created_at, expires_at
     FROM yol1_project_drafts
     WHERE expires_at > now()
     ORDER BY created_at DESC
