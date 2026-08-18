@@ -91,14 +91,14 @@ test("feedback y respuestas llegan a una bandeja editorial con fallback local", 
   assert.match(review, /Entrenamiento IA/);
   assert.match(review, /Por evaluar/);
   assert.match(review, /Listos para aprender/);
-  assert.match(review, /Priorizar/);
-  assert.match(review, /Backlog/);
+  assert.match(review, /Evaluar/);
+  assert.match(review, /Después/);
   assert.match(review, /Archivar/);
   assert.doesNotMatch(review, /Convertido en mejora, guía o proyecto/);
   assert.match(readme, /Para después, Resuelto o Ignorado/);
   assert.doesNotMatch(readme, /Para después, Convertido o Ignorado/);
   assert.match(review, /Respuestas que pueden mejorar el criterio del equipo/);
-  assert.match(review, /Nota para el equipo/);
+  assert.match(review, /Tu lectura/);
   assert.match(review, /MODO LOCAL · AÚN NO COMPARTIDO/);
   assert.match(review, /<DecisionInbox \/>/);
   assert.doesNotMatch(review, /example:(?:feedback|prototype):remesas/);
@@ -624,8 +624,8 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(review, /getReviewWorkspace/);
   assert.match(review, /status\.projects/);
   assert.match(review, /Abrimos el feedback, pero las propuestas compartidas no están disponibles/);
-  assert.match(review, /Resumen que decidió guardar/);
-  assert.match(review, /Abrir propuesta en el Lab/);
+  assert.match(review, /Qué quiso construir/);
+  assert.match(review, /Abrir prototipo/);
   const outputContract = await source("BUILDER-OUTPUT-CONTRACT.md");
   assert.match(outputContract, /project-draft\/0\.3/);
   assert.match(outputContract, /enlace opaco[\s\S]*nunca devuelve esos campos\s+editoriales/i);
@@ -641,7 +641,8 @@ test("bandeja de decisiones resuelve contradicciones solo en estado local", asyn
   assert.match(review, /A manda/);
   assert.match(review, /B manda/);
   assert.match(review, /Necesito más contexto/);
-  assert.match(review, /Felipe manda · resolución local visible/);
+  assert.match(review, /Resolución archivada/);
+  assert.match(review, /Ver archivadas/);
   assert.doesNotMatch(review, /FEEDBACK RELACIONADO/);
   assert.match(decisions, /localStorage/);
   assert.match(decisions, /Decisión verbal de Felipe/);

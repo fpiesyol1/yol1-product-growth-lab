@@ -14,9 +14,20 @@ function DecisionInbox() {
   const [resolutions, setResolutions] = useState<Record<string, DecisionResolution>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [contextOpen, setContextOpen] = useState<string | null>(null);
+  const [showArchive, setShowArchive] = useState(false);
+  const [archivedIds, setArchivedIds] = useState<string[]>([]);
   useEffect(() => {
     setResolutions(readDecisionResolutions());
+    try {
+      const stored = JSON.parse(window.localStorage.getItem("yol1-lab-decisions-archived-v1") ?? "[]");
+      setArchivedIds(Array.isArray(stored) ? stored.filter((value): value is string => typeof value === "string") : []);
+    } catch { setArchivedIds([]); }
   }, []);
+
+  const saveArchive = (ids: string[]) => {
+    window.localStorage.setItem("yol1-lab-decisions-archived-v1", JSON.stringify(ids));
+    setArchivedIds(ids);
+  };
 
   const decide = (conflictId: string, choice: DecisionChoice) => {
     if (choice === "context" && contextOpen !== conflictId) {
@@ -26,19 +37,34 @@ function DecisionInbox() {
     const resolution: DecisionResolution = { conflictId, choice, comment: (comments[conflictId] ?? "").trim(), decidedAt: new Date().toISOString() };
     saveDecisionResolution(resolution);
     setResolutions((current) => ({ ...current, [conflictId]: resolution }));
+    if (!archivedIds.includes(conflictId)) saveArchive([...archivedIds, conflictId]);
     setContextOpen(null);
   };
 
+  const reopen = (conflictId: string) => {
+    setResolutions((current) => {
+      const next = { ...current };
+      delete next[conflictId];
+      window.localStorage.setItem("yol1-lab-decisions-v1", JSON.stringify(next));
+      return next;
+    });
+    saveArchive(archivedIds.filter((id) => id !== conflictId));
+  };
+
+  const visibleConflicts = showArchive
+    ? DECISION_CONFLICTS.filter((conflict) => archivedIds.includes(conflict.id) && resolutions[conflict.id])
+    : DECISION_CONFLICTS.filter((conflict) => !resolutions[conflict.id]);
+
   return <section className="decision-inbox" id="decisions" aria-label="Decisiones pendientes">
-    <header><div><small>02 · DECISIONES</small><h2>Cuando dos fuentes dicen cosas distintas.</h2></div><p>Elige la que manda o deja el caso abierto. Esta decisión guía el próximo diseño; no cambia ningún producto por sí sola.</p></header>
-    <div className="decision-grid">{DECISION_CONFLICTS.map((conflict) => {
+    <header><div><small>02 · DECISIONES</small><h2>{showArchive ? "Decisiones archivadas." : "Lo que todavía necesita tu criterio."}</h2></div><div><p>{showArchive ? "Resoluciones tomadas y guardadas fuera de la bandeja activa. Puedes reabrir una si cambia el contexto." : "Elige la fuente que manda o deja el caso abierto. Al tomarla se archiva, sin cambiar ningún producto por sí sola."}</p><button className="decision-archive-toggle" type="button" onClick={() => setShowArchive((current) => !current)}>{showArchive ? "Volver a pendientes" : `Ver archivadas · ${archivedIds.length}`}</button></div></header>
+    <div className="decision-grid">{visibleConflicts.length ? visibleConflicts.map((conflict) => {
       const resolution = resolutions[conflict.id];
       return <article className={resolution ? "resolved" : ""} key={conflict.id}>
         <div className="decision-topic"><small>{conflict.context} · DECISIÓN PENDIENTE</small><h3>{conflict.topic}</h3></div>
         <div className="decision-sources"><div><span>FUENTE A</span><strong>{conflict.sourceA.label}</strong><p>{conflict.sourceA.value}</p><small>{conflict.sourceA.date} · {conflict.sourceA.state}</small></div><div><span>FUENTE B</span><strong>{conflict.sourceB.label}</strong><p>{conflict.sourceB.value}</p><small>{conflict.sourceB.date} · {conflict.sourceB.state}</small></div></div>
-        {!resolution ? <><label>Comentario breve (opcional)<input value={comments[conflict.id] ?? ""} onChange={(event) => setComments((current) => ({ ...current, [conflict.id]: event.target.value }))} placeholder="Qué debe quedar registrado" maxLength={220} /></label><div className="decision-actions"><button onClick={() => decide(conflict.id, "a")}>A manda</button><button onClick={() => decide(conflict.id, "b")}>B manda</button><button className={contextOpen === conflict.id ? "selected" : ""} onClick={() => decide(conflict.id, "context")}>{contextOpen === conflict.id ? "Guardar contexto" : "Necesito más contexto"}</button></div></> : <div className="decision-result"><strong>✓ Felipe manda · resolución local visible</strong><span>{resolution.choice === "a" ? "A manda" : resolution.choice === "b" ? "B manda" : "Necesita más contexto"}{resolution.comment ? ` · ${resolution.comment}` : ""}</span><button onClick={() => setResolutions((current) => { const next = { ...current }; delete next[conflict.id]; window.localStorage.setItem("yol1-lab-decisions-v1", JSON.stringify(next)); return next; })}>Revisar decisión</button></div>}
+        {!resolution ? <><label>Comentario breve (opcional)<input value={comments[conflict.id] ?? ""} onChange={(event) => setComments((current) => ({ ...current, [conflict.id]: event.target.value }))} placeholder="Qué debe quedar registrado" maxLength={220} /></label><div className="decision-actions"><button onClick={() => decide(conflict.id, "a")}>A manda</button><button onClick={() => decide(conflict.id, "b")}>B manda</button><button className={contextOpen === conflict.id ? "selected" : ""} onClick={() => decide(conflict.id, "context")}>{contextOpen === conflict.id ? "Guardar contexto" : "Necesito más contexto"}</button></div></> : <div className="decision-result"><strong>✓ Resolución archivada</strong><span>{resolution.choice === "a" ? "A manda" : resolution.choice === "b" ? "B manda" : "Necesita más contexto"}{resolution.comment ? ` · ${resolution.comment}` : ""}</span><button onClick={() => reopen(conflict.id)}>Reabrir decisión</button></div>}
       </article>;
-    })}</div>
+    }) : <p className="decision-empty">{showArchive ? "Todavía no archivaste decisiones." : "No quedan decisiones activas. Las que tomes aparecerán en Archivadas."}</p>}</div>
   </section>;
 }
 
@@ -68,18 +94,20 @@ const BOARD_EXAMPLES: Record<BoardId, BoardItem[]> = {
 
 function BoardCard({ item, onChange, selectable = false, selected = false, onToggle }: { item: BoardItem; onChange: (status: LearningStatus, note: string) => void; selectable?: boolean; selected?: boolean; onToggle?: () => void }) {
   const [note, setNote] = useState(item.reviewNote);
-  const actions = item.status === "new" ? [["Priorizar", "reviewing"], ["Backlog", "later"], ["Archivar", "ignored"]] as const
-    : item.status === "reviewing" ? [["Evaluado", "resolved"], ["Backlog", "later"], ["Archivar", "ignored"]] as const
-      : item.status === "resolved" ? [["Listo para aprender", "learning_ready"], ["Volver a evaluar", "reviewing"]] as const
-        : item.status === "learning_ready" ? [["Volver a evaluar", "reviewing"], ["Archivar", "ignored"]] as const
-          : [["Recuperar", "reviewing"]] as const;
+  const [showNote, setShowNote] = useState(Boolean(item.reviewNote));
+  const [showContext, setShowContext] = useState(false);
+  const actions: Array<[string, LearningStatus, "primary" | "quiet" | "archive"]> = item.status === "new" ? [["Evaluar", "reviewing", "primary"], ["Después", "later", "quiet"], ["Archivar", "ignored", "archive"]]
+    : item.status === "reviewing" ? [["Marcar evaluada", "resolved", "primary"], ["Después", "later", "quiet"], ["Archivar", "ignored", "archive"]]
+      : item.status === "resolved" ? [["Preparar aprendizaje", "learning_ready", "primary"], ["Reabrir", "reviewing", "quiet"]]
+        : item.status === "learning_ready" ? [["Reabrir", "reviewing", "quiet"], ["Archivar", "ignored", "archive"]]
+          : [["Recuperar", "reviewing", "primary"]];
   return <article className={`board-card status-${item.status} ${selected ? "is-selected" : ""}`}>
-    <header><span>{item.label}</span><small>{item.context}</small>{selectable && <button className="board-card-select" type="button" onClick={onToggle} aria-pressed={selected}>{selected ? "Seleccionada" : "Unir"}</button>}</header>
-    <h3>{item.title}</h3><p>{item.body}</p>
-    {(item.reviewLink || item.intentSummary || item.references?.length || item.pendingQuestions?.length) && <details className="board-card-context"><summary>Ver contexto de la propuesta</summary><div>{item.reviewLink && <a href={item.reviewLink} target="_blank" rel="noreferrer">Abrir propuesta en el Lab ↗</a>}{item.intentSummary && <p><strong>Resumen que decidió guardar</strong>{item.intentSummary}</p>}{item.references?.length ? <p><strong>Referencias</strong>{item.references.join(" · ")}</p> : null}{item.pendingQuestions?.length ? <p><strong>Pendientes</strong>{item.pendingQuestions.join(" · ")}</p> : null}</div></details>}
-    {item.reviewNote && item.reviewNote !== note && <blockquote>{item.reviewNote}</blockquote>}
-    <label><span>Nota para el equipo</span><textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Qué aprendimos, qué falta validar o dónde debería aplicarse." maxLength={500} /></label>
-    <div className="board-card-actions">{actions.map(([label, status]) => <button key={label} type="button" onClick={() => onChange(status, note)}>{label}</button>)}</div>
+    <header><span>{item.label}</span><small title={item.context}>{item.context}</small>{selectable && <button className="board-card-select" type="button" onClick={onToggle} aria-pressed={selected}>{selected ? "Seleccionada" : "Unir"}</button>}</header>
+    <div className="board-card-copy"><h3>{item.title}</h3><p>{item.body}</p></div>
+    <div className="board-card-tools">{item.reviewLink && <a href={item.reviewLink} target="_blank" rel="noreferrer">Abrir prototipo ↗</a>}{(item.intentSummary || item.references?.length || item.pendingQuestions?.length) && <button type="button" onClick={() => setShowContext((current) => !current)}>{showContext ? "Cerrar detalle" : "Ver detalle"}</button>}<button type="button" onClick={() => setShowNote((current) => !current)}>{showNote ? "Ocultar nota" : "Añadir nota"}</button></div>
+    {showContext && <div className="board-card-context">{item.intentSummary && <p><strong>Qué quiso construir</strong>{item.intentSummary}</p>}{item.references?.length ? <p><strong>Referencias</strong>{item.references.join(" · ")}</p> : null}{item.pendingQuestions?.length ? <p><strong>Pendientes</strong>{item.pendingQuestions.join(" · ")}</p> : null}</div>}
+    {showNote && <label><span>Tu lectura</span><textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="Qué vale, qué falta validar o dónde aplicarlo." maxLength={500} /></label>}
+    <div className="board-card-actions">{actions.map(([label, status, tone]) => <button className={tone} key={label} type="button" onClick={() => onChange(status, note)}>{label}</button>)}</div>
   </article>;
 }
 
