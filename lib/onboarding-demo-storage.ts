@@ -3,7 +3,7 @@ import type { OnboardingStage } from "./onboarding-state-machine";
 export const ONBOARDING_DEMO_STORAGE_KEY = "yol1-onboarding-demo-v0.3";
 export const ONBOARDING_DEMO_SCHEMA_VERSION = "onboarding-demo-0.3";
 
-type StoredCapability = "financial_data_connect" | "receive_value";
+type StoredCapability = "none" | "financial_data_connect" | "receive_value";
 type StoredChannel = "teléfono" | "email";
 type ResumeStage = Extract<OnboardingStage, "preregistered_demo" | "consent_preview">;
 
@@ -38,7 +38,7 @@ export function parseOnboardingDemoSnapshot(raw: string | null): OnboardingDemoS
     const value = JSON.parse(raw) as Record<string, unknown>;
     if (value.schema_version !== ONBOARDING_DEMO_SCHEMA_VERSION) return null;
     if (value.preregistration_state !== "created_demo") return null;
-    if (value.selected_capability !== "financial_data_connect" && value.selected_capability !== "receive_value") return null;
+    if (value.selected_capability !== "none" && value.selected_capability !== "financial_data_connect" && value.selected_capability !== "receive_value") return null;
     if (value.channel_type !== "teléfono" && value.channel_type !== "email") return null;
     if (value.resume_stage !== "preregistered_demo" && value.resume_stage !== "consent_preview") return null;
 

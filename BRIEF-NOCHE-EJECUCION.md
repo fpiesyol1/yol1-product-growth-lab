@@ -2562,3 +2562,30 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 ### Pregunta abierta nueva
 
 - **Personalidad del sistema visual:** confirmar oscuro petróleo como expresión principal y decidir si vidrio/transparencia queda reservado a una tarjeta protagonista o sale del sistema base. Hasta esa decisión, el material legado permanece sólo como referencia no aprobada.
+
+## 97. Revisión nocturna incremental — 18 de agosto de 2026, 11:55 CLT
+
+**Alcance ejecutado:** revisión del delta posterior al cierre 10:52 CLT. Un commit concurrente incorporó la bandeja de aprendizaje ya revisada y apareció un pivote local posterior de Onboarding solicitado por Felipe: carrusel de valor → acceso/OTP → perfil declarado con nombre y RUT → Acompañante → verificación opcional/contextual. Se preservaron el pivote, la vista de diseño y sus mockups concurrentes. Esta pasada no hizo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- El pivote posterior queda tratado como variante activa y reversible; el journey anterior de `objetivo → gate → acceso` permanece como rollback. El PRD ahora explicita qué secuencia manda cuando ambas difieren.
+- Se cerró un **P1 de inferencia de capacidad**: completar nombre y RUT guardaba automáticamente `financial_data_connect`, aunque la persona no había elegido conectar datos. El snapshot del perfil declarado ahora usa una capacidad neutral `none`; el ledger muestra acceso preparado, `Datos financieros · Sin permiso` y `Solicitud de recibir dinero · No iniciada`.
+- La restauración de la variante anterior ignora correctamente ese perfil neutral en vez de convertirlo en la capacidad por defecto. Nombre, RUT, contacto y OTP continúan fuera del snapshot local y analytics.
+- Se cerró un **P1 de consistencia pública**: el mockup mostraba el pivote nuevo, pero la ficha de producto seguía describiendo `Elegir objetivo` antes del acceso. Análisis, pantallas, datos, errores y aceptación de la ficha ahora cubren carrusel, acceso, OTP, perfil declarado, entrada al producto y verificación contextual, sin presentar KYC como habilitador de dinero.
+- Se añadió un guardrail transversal que exige que runtime, PRD y ficha pública describan el mismo pivote y que el perfil declarado no infiera una capability.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; nueve rutas, incluida la nueva `/design-preview`.
+- Suite completa final: **85/85 PASS**, 0 fallidos.
+- QA interactivo: **PASS** para carrusel completo → acceso → OTP demo → perfil declarado → entrada al producto. El ledger visible confirmó acceso sin permiso de datos ni intención de recibir dinero.
+- Responsive: **0 overflow horizontal** en `1512 px` y `390×844`; consola sin warnings ni errores. La ficha visible muestra ocho pantallas del pivote y ya no muestra `02 · Elegir objetivo`.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre. El servidor temporal `localhost:3020` se detuvo al terminar.
+
+### Preguntas abiertas nuevas
+
+1. **Promesa del carrusel:** confirmar `Úsala bien` o elegir una formulación más natural.
+2. **RUT progresivo:** decidir si es obligatorio antes de entrar al Acompañante o si se pide sólo ante una personalización concreta que lo justifique.
+3. **Entrada al producto:** definir qué productos demo aparecen después del perfil declarado y en qué orden.
+4. **Verificación completa:** decidir si se ofrece proactivamente después del perfil o sólo al iniciar una capability que realmente la requiera.

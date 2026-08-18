@@ -114,11 +114,35 @@ Cada recurso tendrá dos etiquetas independientes:
 - El legado documenta una base de UI más completa de la que realmente llegó en los archivos compartidos.
 - Sin estados de madurez, un recurso antiguo puede confundirse con una decisión vigente.
 
-## Primera decisión pendiente
+## Implementación candidata en el Product Lab
+
+La propuesta ya está aplicada localmente como una capa reversible en `app/design-system.css`, cargada después de los estilos existentes. Esta arquitectura permite evaluar el sistema completo sin reescribir los flujos ni convertir decisiones visuales candidatas en una aprobación oficial.
+
+La migración cubre:
+
+- Portada del Lab y selector de productos.
+- Onboarding y KYC progresivo.
+- Inicio, Finanzas, Cartola, Cobrar/pagar, Ahorrar, Ganar y Mi banco.
+- Estados honestos de investigación de Home Banking, Tarjetas y Remesas.
+- Constructor de productos, fichas técnicas, bandeja de aprendizaje y base de conocimiento.
+- Modo claro y oscuro, escritorio, tablet y móvil.
+
+Reglas ya incorporadas:
+
+- Dark petróleo como expresión principal; Light/Mist como experiencia completa, no como inversión automática.
+- Acid para acción y progreso; Aqua para interacción; Pink para relaciones; Violet para aprendizaje; Coral sólo para riesgo o revisión.
+- Tintas oscuras derivadas de los acentos en modo claro para mantener contraste sin perder el rol semántico.
+- Piso de 44 px para controles táctiles relevantes y foco visible de teclado.
+- Recursos heredados sólo cuando ayudan a explicar una idea; no se fuerza glassmorphism, ilustración ni decoración genérica.
+- `prefers-reduced-motion` respetado.
+
+Estado de gobierno: **candidato implementado y validado localmente; pendiente de revisión visual de Felipe antes de commit**.
+
+## Decisión de personalidad aplicada como candidata
 
 Definir la personalidad base del producto:
 
 - **Recomendación:** oscuro petróleo como expresión principal, con experiencia clara completa; Acid como sello Yol1, Aqua para interacción y Pink/Violet sólo por contexto.
-- Confirmar si el vidrio/transparencia queda reservado a una tarjeta protagonista o se elimina del sistema base.
+- El vidrio/transparencia queda reservado a profundidad puntual; no forma parte de la superficie base.
 
-Después de esta decisión se puede cerrar tipografía, radios, superficies y la primera familia de componentes.
+La siguiente decisión, después de revisar el localhost, es aprobar, ajustar o descartar esta personalidad antes de convertirla en sistema oficial y extraer una biblioteca de componentes.

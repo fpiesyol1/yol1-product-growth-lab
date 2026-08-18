@@ -57,7 +57,7 @@ export function buildAccessLedger(snapshot: OnboardingDemoSnapshot | null): Acce
       key: "demo_data",
       label: "Datos de la demo",
       status: hasPreregistration
-        ? "Guardados localmente · sin contacto ni OTP"
+        ? "Guardados localmente · sin contacto, OTP, nombre ni RUT"
         : "Vacíos",
       mark: hasPreregistration ? "→" : "○",
       action: hasPreregistration ? "clear_demo" : null,

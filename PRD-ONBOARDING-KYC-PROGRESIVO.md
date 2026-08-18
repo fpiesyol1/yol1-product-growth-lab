@@ -2,6 +2,14 @@
 
 **Estado:** candidato de producto y tecnología; alineado a dirección canónica el 14-ago-2026; no es una definición legal ni un compromiso operativo.  
 **Prioridad de fuentes:** `DIRECCION-PRODUCTOS-FELIPE.md` → decisión verbal posterior de Felipe → decisión aprobada → material Yol1/Notion → referencias externas.  
+
+## Pivote conversacional activo · 18-ago-2026
+
+Felipe pidió probar localmente una nueva secuencia: historias de valor con swipe → email/teléfono + OTP → nombre y RUT declarados → entrada al Acompañante → verificación completa opcional/contextual. Se implementa como variante reversible y se documenta en `PIVOTE-ONBOARDING-PROGRESIVO-CHILE-2026-08-18.md`.
+
+En esta variante, nombre + RUT crean un **perfil declarado, no una identidad verificada**. Sólo habilitan navegación y personalización de superficies demo; no cuenta, saldo, conexión bancaria ni capacidades de dinero. La ruta completa de documento/biometría permanece simulada y termina en revisión.
+
+Cuando esta sección difiera del journey base documentado más abajo —que elige y explica una acción material antes del OTP—, manda el pivote activo sólo para esta prueba local. El journey base se conserva como rollback y sus `capability_key` no se asignan al perfil declarado por defecto.
 **Jurisdicción base:** Chile.  
 **Tesis:** entregar una primera utilidad antes de pedir identidad; solicitar cada dato solo frente a una capacidad aprobada que realmente lo necesite.
 

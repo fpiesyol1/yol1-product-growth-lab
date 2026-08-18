@@ -11,6 +11,7 @@ import { buildAccessLedger } from "../lib/onboarding-access-ledger";
 import { validateAccessContact, type AccessMethod } from "../lib/onboarding-validation";
 import { normalizeKycState, type NormalizedKycState } from "../lib/onboarding-safety";
 import type { SharedProjectDraft } from "../lib/project-draft-types";
+import { ProgressiveOnboardingFlow } from "./onboarding-progressive";
 
 type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
 type Theme = "dark" | "light";
@@ -71,6 +72,7 @@ enabled = true
 url = "${YOL1_MCP_URL}"`;
 const CODEX_MCP_REPAIR = `codex mcp remove yol1
 codex mcp add yol1 --url ${YOL1_MCP_URL}`;
+const ONBOARDING_PROGRESSIVE_PIVOT = true;
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
@@ -280,7 +282,9 @@ export default function Home() {
           </header>
           <div ref={appContentRef} className={`app-content app-${productId === "companion" ? tab : productId === "kyc" ? "onboarding" : "builder"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
             <>
-              {productId === "kyc" && <OnboardingFlow key={onboardingResetKey} stage={onboardingStage} setStage={setOnboardingStage} onSnapshotChange={setDemoSnapshot} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Ya puedes explorar tu acompañante financiero."); }} onOpenBank={() => { setBankCapability("receive_value"); setProductId("companion"); go("banco", "Handoff demo: revisa los requisitos posibles sin entregar identidad."); }} />}
+              {productId === "kyc" && (ONBOARDING_PROGRESSIVE_PIVOT
+                ? <ProgressiveOnboardingFlow key={`pivot-${onboardingResetKey}`} onSnapshotChange={setDemoSnapshot} onStepChange={resetAppContentScroll} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Ya puedes explorar tu acompañante financiero."); }} />
+                : <OnboardingFlow key={onboardingResetKey} stage={onboardingStage} setStage={setOnboardingStage} onSnapshotChange={setDemoSnapshot} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Ya puedes explorar tu acompañante financiero."); }} onOpenBank={() => { setBankCapability("receive_value"); setProductId("companion"); go("banco", "Handoff demo: revisa los requisitos posibles sin entregar identidad."); }} />)}
               {productId === "builder" && <ProjectBuilderScreen guide={builderGuide} onGuide={setBuilderGuide} project={sharedProject} projectState={sharedProjectState} />}
               {productId === "companion" && tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
               {productId === "companion" && tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
@@ -512,7 +516,7 @@ function OnboardingFlow({ stage, setStage, onSnapshotChange, onEnterAdvisor, onO
   };
   useEffect(() => {
     const restored = parseOnboardingDemoSnapshot(window.localStorage.getItem(ONBOARDING_DEMO_STORAGE_KEY));
-    if (restored) {
+    if (restored && restored.selected_capability !== "none") {
       setCapability(restored.selected_capability);
       setMethod(restored.channel_type);
       setStage(restored.resume_stage);

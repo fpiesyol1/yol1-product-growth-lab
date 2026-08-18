@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validateAccessContact } from "../lib/onboarding-validation.ts";
+import { validateAccessContact, validateChileanRut, validateDeclaredProfile } from "../lib/onboarding-validation.ts";
 
 test("email exige una forma mínima completa", () => {
   assert.equal(validateAccessContact("email", "persona@example.com").valid, true);
@@ -24,4 +24,20 @@ test("los errores indican cómo corregir sin afirmar existencia de cuenta", () =
   assert.match(email.error, /formato/i);
   assert.match(phone.error, /8 y 15 dígitos/i);
   assert.doesNotMatch(`${email.error} ${phone.error}`, /cuenta|registrad|existe/i);
+});
+
+test("RUT valida formato y dígito verificador sin afirmar KYC", () => {
+  for (const value of ["11.111.111-1", "12.345.678-5", "7.654.321-6"]) {
+    assert.equal(validateChileanRut(value).valid, true, value);
+  }
+  for (const value of ["", "123", "11.111.111-2", "12.345.678-9"]) {
+    assert.equal(validateChileanRut(value).valid, false, value);
+  }
+  assert.doesNotMatch(validateChileanRut("11.111.111-2").error, /identidad verificada|KYC aprobado/i);
+});
+
+test("perfil declarado exige nombre y RUT válidos", () => {
+  assert.equal(validateDeclaredProfile("Persona demo", "11.111.111-1").valid, true);
+  assert.equal(validateDeclaredProfile("", "11.111.111-1").valid, false);
+  assert.equal(validateDeclaredProfile("Persona demo", "11.111.111-2").valid, false);
 });

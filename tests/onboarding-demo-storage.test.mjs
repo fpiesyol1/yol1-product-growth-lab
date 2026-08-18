@@ -35,6 +35,19 @@ test("receive_value nunca restaura una vista de consentimiento incompatible", ()
   assert.equal(snapshot.consent_preview_seen, false);
 });
 
+test("perfil declarado no inventa una intención material", () => {
+  const snapshot = buildOnboardingDemoSnapshot({
+    capability: "none",
+    channel: "email",
+    stage: "preregistered_demo",
+  });
+
+  assert.equal(snapshot.selected_capability, "none");
+  assert.equal(snapshot.resume_stage, "preregistered_demo");
+  assert.equal(snapshot.consent_preview_seen, false);
+  assert.deepEqual(parseOnboardingDemoSnapshot(JSON.stringify(snapshot)), snapshot);
+});
+
 test("parser rechaza schema antiguo, estados incompletos y JSON inválido", () => {
   assert.equal(parseOnboardingDemoSnapshot("not-json"), null);
   assert.equal(parseOnboardingDemoSnapshot(JSON.stringify({ schema_version: "onboarding-demo-0.2" })), null);

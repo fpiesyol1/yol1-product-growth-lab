@@ -50,6 +50,20 @@ test("ledger de recepción conserva intención pero no infiere KYC ni dinero", (
   assert.doesNotMatch(JSON.stringify(rows), /identidad verificada|KYC aprobado|dinero habilitado/i);
 });
 
+test("perfil declarado conserva acceso sin inferir una capacidad", () => {
+  const snapshot = buildOnboardingDemoSnapshot({
+    capability: "none",
+    channel: "email",
+    stage: "preregistered_demo",
+  });
+  const rows = buildAccessLedger(snapshot);
+
+  assert.equal(rows.find((row) => row.key === "access")?.status, "Pre-registro demo · email");
+  assert.equal(rows.find((row) => row.key === "financial_data")?.status, "Sin permiso");
+  assert.equal(rows.find((row) => row.key === "receive_value")?.status, "No iniciada");
+  assert.match(rows.find((row) => row.key === "demo_data")?.status ?? "", /sin contacto, OTP, nombre ni RUT/i);
+});
+
 test("perfil deriva el ledger del snapshot y permite borrarlo sin PII", async () => {
   const source = await readFile(new URL("app/page.tsx", root), "utf8");
   const section = source.split("function ProfileMenu")[1]?.split("function ProjectBuilderScreen")[0] ?? "";
