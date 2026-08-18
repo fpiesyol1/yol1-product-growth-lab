@@ -232,6 +232,7 @@ export default function Home() {
     setLabGuideOpen(false);
     setProductId(next);
     setInspectedAction(null);
+    window.scrollTo({ top: 0, behavior: "auto" });
     const index = PORTFOLIO_PRODUCTS.findIndex((product) => product.id === next);
     setEmptyStateIndex(next === "builder" ? 1 : Math.max(0, index * 2));
     setFeedbackOpen(false);

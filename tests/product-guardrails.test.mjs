@@ -350,10 +350,24 @@ test("portfolio mantiene seis productos y tres prototipos explorables", async ()
   assert.match(portfolio, /Un robot está ordenando los post-its/i);
   assert.ok((portfolio.match(/gesture: "/g) ?? []).length >= 12);
   assert.doesNotMatch(portfolio, /eyebrow: "NO PUBLICADO"/);
+  assert.match(page, /window\.scrollTo\(\{ top: 0, behavior: "auto" \}\)/);
   assert.match(css, /@keyframes dog-tail-wag/);
   assert.match(css, /@keyframes cat-type/);
   assert.match(css, /@keyframes robot-note-shuffle/);
   assert.doesNotMatch(page, /MCP conectado|banco conectado|KYC aprobado|remesa enviada/i);
+});
+
+test("la capa visual v2 permanece reversible y candidata", async () => {
+  const layout = await source("app/layout.tsx");
+  const css = await source("app/design-system.css");
+  const crosswalk = await source("design-system/DESIGN-SYSTEM-CROSSWALK.md");
+  assert.ok(layout.indexOf('import "./globals.css"') < layout.indexOf('import "./design-system.css"'));
+  assert.match(layout, /<body className="yol1-system-v2">/);
+  assert.match(crosswalk, /candidato implementado y versionado en el Product Lab/i);
+  assert.match(crosswalk, /pendiente de aprobación visual de Felipe/i);
+  assert.doesNotMatch(crosswalk, /pendiente de revisión visual de Felipe antes de commit/i);
+  assert.match(css, /@media \(max-width: 390px\)[\s\S]*\.yol1-system-v2 \.review-header \{[\s\S]*grid-template-columns: 72px minmax\(0, 1fr\)/);
+  assert.match(css, /\.yol1-system-v2 \.review-board-tabs button :where\(small, strong\)[\s\S]*overflow-wrap: anywhere/);
 });
 
 test("los contratos de producto se montan solo en productos explorables", async () => {

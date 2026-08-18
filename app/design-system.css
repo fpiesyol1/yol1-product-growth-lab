@@ -1961,6 +1961,37 @@
   .yol1-system-v2 .lab-welcome-products > div {
     grid-template-columns: 1fr;
   }
+
+  .yol1-system-v2 .review-header {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .yol1-system-v2 .review-header > a {
+    min-width: 0;
+    min-height: 50px;
+    padding: 8px;
+  }
+
+  .yol1-system-v2 .review-header img {
+    width: 52px;
+  }
+
+  .yol1-system-v2 .review-header > div,
+  .yol1-system-v2 .review-header-actions,
+  .yol1-system-v2 .review-board-tabs,
+  .yol1-system-v2 .review-board-tabs button {
+    min-width: 0;
+  }
+
+  .yol1-system-v2 .review-board-tabs button {
+    padding-inline: 8px;
+  }
+
+  .yol1-system-v2 .review-board-tabs button :where(small, strong) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

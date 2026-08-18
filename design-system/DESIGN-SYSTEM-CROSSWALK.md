@@ -136,7 +136,7 @@ Reglas ya incorporadas:
 - Recursos heredados sólo cuando ayudan a explicar una idea; no se fuerza glassmorphism, ilustración ni decoración genérica.
 - `prefers-reduced-motion` respetado.
 
-Estado de gobierno: **candidato implementado y validado localmente; pendiente de revisión visual de Felipe antes de commit**.
+Estado de gobierno: **candidato implementado y versionado en el Product Lab; pendiente de aprobación visual de Felipe antes de tratarlo como sistema oficial o extraer una biblioteca compartida**.
 
 ## Decisión de personalidad aplicada como candidata
 
