@@ -1,0 +1,13 @@
+[mcp_servers.pomelo_api_reference]
+url = "https://api-reference-mcp.pomelo.la/mcp"
+enabled = true
+required = false
+tool_timeout_sec = 30
+default_tools_approval_mode = "approve"
+enabled_tools = [
+  "search_endpoints",
+  "get_endpoint",
+  "generate_request_example",
+  "list_endpoints_by_topic",
+  "list_topics",
+]

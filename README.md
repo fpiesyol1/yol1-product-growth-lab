@@ -57,6 +57,12 @@ Para verificar build y guardrails:
 npm test
 ```
 
+## Research documental con Pomelo
+
+Este proyecto incluye una conexión opcional y sin credenciales al MCP público de referencia de Pomelo en `.codex/config.toml`. Al abrir una tarea nueva de Codex dentro de este repositorio, `pomelo_api_reference` permite buscar y leer documentación de endpoints; no ejecuta APIs financieras ni demuestra acceso comercial.
+
+El método, la matriz inicial de encaje y los estados de evidencia están documentados en [`POMELO-MCP-FIT-RESEARCH.md`](POMELO-MCP-FIT-RESEARCH.md). Todo hallazgo parte como `documentado` o `fit_candidato`; sólo una validación separada de Ingeniería, Seguridad, Datos, Riesgo, Legal/Compliance, Operaciones y negocio puede promoverlo a capacidad aprobada.
+
 ## Organización
 
 - `app/page.tsx`: navegación, estado de sesión, temas, datos de demostración e interacciones.
