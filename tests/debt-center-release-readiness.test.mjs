@@ -6,7 +6,7 @@ import test from "node:test";
 const workspace = new URL("..", import.meta.url).pathname;
 const script = new URL("../scripts/check-debt-center-release.mjs", import.meta.url).pathname;
 const smokeScript = new URL("../scripts/smoke-debt-center-release.mjs", import.meta.url).pathname;
-const previewMigrationScript = new URL("../scripts/migrate-debt-center-preview.mjs", import.meta.url).pathname;
+const deploymentMigrationScript = new URL("../scripts/migrate-debt-center-deployment.mjs", import.meta.url).pathname;
 
 function run(args = [], env = process.env) {
   return spawnSync(process.execPath, [script, ...args], {
@@ -28,28 +28,44 @@ test("release:check valida contratos locales sin conectarse a Neon ni Vercel", a
   assert.equal(packageJson.scripts["release:check"], "node scripts/check-debt-center-release.mjs");
   assert.equal(packageJson.scripts["release:check:env"], "node scripts/check-debt-center-release.mjs --deployment-env");
   assert.equal(packageJson.scripts["release:smoke"], "node scripts/smoke-debt-center-release.mjs");
-  assert.equal(packageJson.scripts["db:migrate:preview"], "node scripts/migrate-debt-center-preview.mjs");
+  assert.equal(packageJson.scripts["db:migrate:deployment"], "node scripts/migrate-debt-center-deployment.mjs");
 });
 
-test("migración de Preview omite producción y falla cerrada antes de abrir Neon", () => {
-  const production = spawnSync(process.execPath, [previewMigrationScript], {
+test("migración de deployment falla cerrada en Preview y Producción antes de abrir Neon", () => {
+  const local = spawnSync(process.execPath, [deploymentMigrationScript], {
     cwd: workspace,
     encoding: "utf8",
-    env: { ...process.env, VERCEL_ENV: "production" },
+    env: { ...process.env, VERCEL_ENV: "development" },
   });
-  assert.equal(production.status, 0, production.stderr);
-  assert.match(production.stdout, /PREVIEW_MIGRATION_SKIPPED/);
+  assert.equal(local.status, 0, local.stderr);
+  assert.match(local.stdout, /DEPLOYMENT_MIGRATION_SKIPPED/);
 
-  const missingOptIn = spawnSync(process.execPath, [previewMigrationScript], {
+  const missingPreviewOptIn = spawnSync(process.execPath, [deploymentMigrationScript], {
     cwd: workspace,
     encoding: "utf8",
     env: { ...process.env, VERCEL_ENV: "preview", DATABASE_URL: "postgresql://user:secret@example.neon.tech/db" },
   });
-  assert.equal(missingOptIn.status, 1);
-  assert.match(missingOptIn.stderr, /PREVIEW_MIGRATION_BLOCKED/);
-  assert.doesNotMatch(missingOptIn.stdout + missingOptIn.stderr, /secret/);
+  assert.equal(missingPreviewOptIn.status, 1);
+  assert.match(missingPreviewOptIn.stderr, /DEPLOYMENT_MIGRATION_BLOCKED/);
+  assert.doesNotMatch(missingPreviewOptIn.stdout + missingPreviewOptIn.stderr, /secret/);
 
-  const wrongProvider = spawnSync(process.execPath, [previewMigrationScript], {
+  const missingProductionPlan = spawnSync(process.execPath, [deploymentMigrationScript], {
+    cwd: workspace,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      VERCEL_ENV: "production",
+      VERCEL_TARGET_ENV: "production",
+      VERCEL_GIT_COMMIT_REF: "main",
+      ALLOW_PRODUCTION_DB_MIGRATIONS: "true",
+      DATABASE_URL: "postgresql://user:secret@example.neon.tech/db",
+    },
+  });
+  assert.equal(missingProductionPlan.status, 1);
+  assert.match(missingProductionPlan.stderr, /plan aditivo/);
+  assert.doesNotMatch(missingProductionPlan.stdout + missingProductionPlan.stderr, /secret/);
+
+  const wrongProvider = spawnSync(process.execPath, [deploymentMigrationScript], {
     cwd: workspace,
     encoding: "utf8",
     env: {

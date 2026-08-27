@@ -39,12 +39,12 @@ const packageJsonSource = read("package.json");
 const packageJson = packageJsonSource ? JSON.parse(packageJsonSource) : { scripts: {}, engines: {} };
 check("Node mínimo declarado", /^>=22\.13\.0$/.test(packageJson.engines?.node ?? ""), "package.json debe mantener Node >=22.13.0.");
 check("migración explícita declarada", packageJson.scripts?.["db:migrate"] === "drizzle-kit migrate --config=drizzle.debt-center.config.ts", "El script db:migrate debe usar drizzle.debt-center.config.ts.");
-check("migración Preview fail-closed declarada", packageJson.scripts?.["db:migrate:preview"] === "node scripts/migrate-debt-center-preview.mjs", "El script db:migrate:preview debe usar su guardrail dedicado.");
+check("migración de deployment fail-closed declarada", packageJson.scripts?.["db:migrate:deployment"] === "node scripts/migrate-debt-center-deployment.mjs", "El script db:migrate:deployment debe usar su guardrail dedicado.");
 
-const previewMigration = read("scripts/migrate-debt-center-preview.mjs");
+const deploymentMigration = read("scripts/migrate-debt-center-deployment.mjs");
 const vercelConfiguration = read("vercel.json");
-check("Preview migra antes del build", vercelConfiguration.includes("pnpm run db:migrate:preview && pnpm run build"), "vercel.json debe ejecutar la migración protegida antes del build.");
-check("migración limitada a Preview y Neon", previewMigration.includes('environment !== "preview"') && previewMigration.includes('VERCEL_TARGET_ENV !== "preview"') && previewMigration.includes('ALLOW_PREVIEW_DB_MIGRATIONS !== "true"') && previewMigration.includes('.endsWith(".neon.tech")') && previewMigration.includes('gitRef === "main"'), "La migración Preview debe fallar cerrada fuera de Vercel Preview, sin opt-in, fuera de Neon o sobre main.");
+check("deployment migra antes del build", vercelConfiguration.includes("pnpm run db:migrate:deployment && pnpm run build"), "vercel.json debe ejecutar la migración protegida antes del build.");
+check("migración limitada por entorno, target, rama, plan y Neon", deploymentMigration.includes('environment !== "preview" && environment !== "production"') && deploymentMigration.includes('targetEnvironment !== "preview"') && deploymentMigration.includes('targetEnvironment !== "production"') && deploymentMigration.includes('ALLOW_PREVIEW_DB_MIGRATIONS !== "true"') && deploymentMigration.includes('ALLOW_PRODUCTION_DB_MIGRATIONS !== "true"') && deploymentMigration.includes('PRODUCTION_DB_MIGRATION_PLAN !== "debt-center-0000-0001"') && deploymentMigration.includes('.endsWith(".neon.tech")') && deploymentMigration.includes('gitRef !== "main"'), "La migración debe fallar cerrada sin entorno, target, rama, plan, opt-in o endpoint Neon correctos.");
 
 const migrationDirectory = resolve(root, "drizzle/debt-center");
 const migrationFiles = existsSync(migrationDirectory)
@@ -84,7 +84,7 @@ check("webhook real cerrado", webhookRoute.includes('error: "FLOID_NETWORK_DISAB
 check("rutas financieras no cacheables", [mainRoute, publicRoute, simulateRoute, webhookRoute].every((source) => source.includes("noStoreHeaders")), "Las rutas financieras deben usar noStoreHeaders.");
 
 const envExample = read(".env.example");
-check("contrato de entorno documentado", ["DATABASE_URL=", "NEXT_PUBLIC_SITE_URL=", "DEBT_CENTER_SIMULATOR_ENABLED=false", "ALLOW_PREVIEW_DB_MIGRATIONS=false"].every((entry) => envExample.includes(entry)), ".env.example debe documentar Neon, el origen exacto y los opt-in del simulador y las migraciones Preview.");
+check("contrato de entorno documentado", ["DATABASE_URL=", "NEXT_PUBLIC_SITE_URL=", "DEBT_CENTER_SIMULATOR_ENABLED=false", "ALLOW_PREVIEW_DB_MIGRATIONS=false", "ALLOW_PRODUCTION_DB_MIGRATIONS=false", "PRODUCTION_DB_MIGRATION_PLAN="].every((entry) => envExample.includes(entry)), ".env.example debe documentar Neon, el origen exacto y los opt-in de simulador y migraciones.");
 
 if (process.argv.includes("--deployment-env")) requiredDeploymentEnvironment();
 
