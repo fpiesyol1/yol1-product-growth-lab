@@ -42,7 +42,7 @@ Para recibir feedback de otros navegadores y conservar links de Cuentas Claras e
 
 El primer preview debe permanecer protegido por acceso de Vercel. Todavía no es un demo público abierto: antes de quitar esa protección hay que limitar de forma durable la creación de sesiones anónimas y las búsquedas fallidas de links de pago, para evitar crecimiento no controlado de Neon y consultas costosas por bots.
 
-Las migraciones versionadas de Cuentas Claras viven en `drizzle/debt-center`. `pnpm run db:generate` actualiza el SQL desde el esquema Drizzle y `pnpm run db:migrate` lo aplica a la base indicada por `DATABASE_URL`. La migración debe ejecutarse explícitamente antes de publicar; el Lab no depende de crear tablas durante una visita.
+Las migraciones versionadas de Cuentas Claras viven en `drizzle/debt-center`. `pnpm run db:generate` actualiza el SQL desde el esquema Drizzle y `pnpm run db:migrate` lo aplica a la base indicada por `DATABASE_URL`. En Vercel, `pnpm run db:migrate:preview` permite hacerlo únicamente durante un Preview con opt-in explícito y endpoint Neon; producción omite esa acción. El Lab no depende de crear tablas durante una visita.
 
 Abre `http://localhost:3017`. Recorridos sugeridos:
 

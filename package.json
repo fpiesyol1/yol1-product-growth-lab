@@ -13,6 +13,7 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate --config=drizzle.debt-center.config.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.debt-center.config.ts",
+    "db:migrate:preview": "node scripts/migrate-debt-center-preview.mjs",
     "release:check": "node scripts/check-debt-center-release.mjs",
     "release:check:env": "node scripts/check-debt-center-release.mjs --deployment-env",
     "release:smoke": "node scripts/smoke-debt-center-release.mjs"

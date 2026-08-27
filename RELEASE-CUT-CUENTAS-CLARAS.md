@@ -23,7 +23,7 @@ Estado: corte local validado y comprometido en `codex/cuentas-claras-lab-2026-08
 
 - [ ] Felipe revisa el módulo en `http://localhost:3017/?product=clear_accounts`.
 - [x] Confirmar la integración Neon existente y la disponibilidad de `DATABASE_URL` para Preview.
-- [ ] Ejecutar `pnpm run db:migrate` antes de abrir el preview.
+- [ ] Ejecutar `pnpm run db:migrate:preview` durante el build protegido; sólo funciona con `VERCEL_ENV=preview`, opt-in explícito y un endpoint Neon.
 - [ ] Definir `NEXT_PUBLIC_SITE_URL` con el dominio exacto del preview cuando exista la URL.
 - [x] Definir `DEBT_CENTER_SIMULATOR_ENABLED=true` exclusivamente para Preview.
 - [x] Confirmar Vercel Standard Deployment Protection con login obligatorio para Preview. No abrirlo públicamente hasta contar con un límite durable de creación de sesiones y de búsquedas fallidas de tokens públicos.
@@ -38,7 +38,7 @@ Estado: corte local validado y comprometido en `codex/cuentas-claras-lab-2026-08
 ## Evidencia del corte local
 
 - Build de producción: aprobado, 17 páginas.
-- Suite: 192/192 pruebas aprobadas.
+- Suite: 193/193 pruebas aprobadas.
 - Lint: 0 errores.
 - `git diff --check`: aprobado.
 - QA navegador: 440×956, 390×844 y breakpoint compacto verificados; foco seguro en la confirmación, modales anclados al viewport, posición restaurada y demo devuelta al caso inicial.

@@ -6,6 +6,7 @@ import test from "node:test";
 const workspace = new URL("..", import.meta.url).pathname;
 const script = new URL("../scripts/check-debt-center-release.mjs", import.meta.url).pathname;
 const smokeScript = new URL("../scripts/smoke-debt-center-release.mjs", import.meta.url).pathname;
+const previewMigrationScript = new URL("../scripts/migrate-debt-center-preview.mjs", import.meta.url).pathname;
 
 function run(args = [], env = process.env) {
   return spawnSync(process.execPath, [script, ...args], {
@@ -27,6 +28,41 @@ test("release:check valida contratos locales sin conectarse a Neon ni Vercel", a
   assert.equal(packageJson.scripts["release:check"], "node scripts/check-debt-center-release.mjs");
   assert.equal(packageJson.scripts["release:check:env"], "node scripts/check-debt-center-release.mjs --deployment-env");
   assert.equal(packageJson.scripts["release:smoke"], "node scripts/smoke-debt-center-release.mjs");
+  assert.equal(packageJson.scripts["db:migrate:preview"], "node scripts/migrate-debt-center-preview.mjs");
+});
+
+test("migración de Preview omite producción y falla cerrada antes de abrir Neon", () => {
+  const production = spawnSync(process.execPath, [previewMigrationScript], {
+    cwd: workspace,
+    encoding: "utf8",
+    env: { ...process.env, VERCEL_ENV: "production" },
+  });
+  assert.equal(production.status, 0, production.stderr);
+  assert.match(production.stdout, /PREVIEW_MIGRATION_SKIPPED/);
+
+  const missingOptIn = spawnSync(process.execPath, [previewMigrationScript], {
+    cwd: workspace,
+    encoding: "utf8",
+    env: { ...process.env, VERCEL_ENV: "preview", DATABASE_URL: "postgresql://user:secret@example.neon.tech/db" },
+  });
+  assert.equal(missingOptIn.status, 1);
+  assert.match(missingOptIn.stderr, /PREVIEW_MIGRATION_BLOCKED/);
+  assert.doesNotMatch(missingOptIn.stdout + missingOptIn.stderr, /secret/);
+
+  const wrongProvider = spawnSync(process.execPath, [previewMigrationScript], {
+    cwd: workspace,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      VERCEL_ENV: "preview",
+      VERCEL_TARGET_ENV: "preview",
+      ALLOW_PREVIEW_DB_MIGRATIONS: "true",
+      DATABASE_URL: "postgresql://user:sentinel@database.invalid/db",
+    },
+  });
+  assert.equal(wrongProvider.status, 1);
+  assert.match(wrongProvider.stderr, /no pertenece a Neon/);
+  assert.doesNotMatch(wrongProvider.stdout + wrongProvider.stderr, /sentinel/);
 });
 
 test("smoke documenta el bypass protegido sin imprimir ni persistir el secreto", () => {
