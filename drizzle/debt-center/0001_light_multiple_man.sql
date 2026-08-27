@@ -1,0 +1,1 @@
+CREATE INDEX "yol1_debt_center_states_updated_at_idx" ON "yol1_debt_center_states" USING btree ("updated_at");

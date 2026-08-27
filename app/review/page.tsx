@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { listLearningItems, setLearningStatus, type LearningItem, type LearningStatus } from "../../lib/learning-review";
 import { getReviewWorkspace, updateSharedFeedback, updateSharedProjectDraft } from "../../lib/shared-feedback-client";
@@ -17,11 +19,16 @@ function DecisionInbox() {
   const [showArchive, setShowArchive] = useState(false);
   const [archivedIds, setArchivedIds] = useState<string[]>([]);
   useEffect(() => {
-    setResolutions(readDecisionResolutions());
-    try {
-      const stored = JSON.parse(window.localStorage.getItem("yol1-lab-decisions-archived-v1") ?? "[]");
-      setArchivedIds(Array.isArray(stored) ? stored.filter((value): value is string => typeof value === "string") : []);
-    } catch { setArchivedIds([]); }
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setResolutions(readDecisionResolutions());
+      try {
+        const stored = JSON.parse(window.localStorage.getItem("yol1-lab-decisions-archived-v1") ?? "[]");
+        setArchivedIds(Array.isArray(stored) ? stored.filter((value): value is string => typeof value === "string") : []);
+      } catch { setArchivedIds([]); }
+    });
+    return () => { active = false; };
   }, []);
 
   const saveArchive = (ids: string[]) => {
@@ -153,20 +160,22 @@ export default function ReviewPage() {
   const [reviewToken, setReviewToken] = useState("");
   const [loginToken, setLoginToken] = useState("");
   const [error, setError] = useState("");
-  const [wrongOpen, setWrongOpen] = useState<string | null>(null);
-  const [wrongNotes, setWrongNotes] = useState<Record<string, string>>({});
-  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
-  const [savingId, setSavingId] = useState<string | null>(null);
+  const [, setWrongOpen] = useState<string | null>(null);
+  const [, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const board = new URLSearchParams(window.location.search).get("tab");
-    if (board === "prototypes" || board === "training") setActiveBoard(board);
-    const stored = window.localStorage.getItem("yol1-lab-theme");
-    setTheme(stored === "light" ? "light" : "dark");
-    setPrototypes(localPrototypeIntake.list());
-    const token = window.sessionStorage.getItem(REVIEW_TOKEN_KEY) || "";
-    setReviewToken(token);
-    getReviewWorkspace(token).then((status) => {
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const board = new URLSearchParams(window.location.search).get("tab");
+      if (board === "prototypes" || board === "training") setActiveBoard(board);
+      const stored = window.localStorage.getItem("yol1-lab-theme");
+      setTheme(stored === "light" ? "light" : "dark");
+      setPrototypes(localPrototypeIntake.list());
+      const token = window.sessionStorage.getItem(REVIEW_TOKEN_KEY) || "";
+      setReviewToken(token);
+      getReviewWorkspace(token).then((status) => {
+      if (!active) return;
       if (!status.reviewConfigured) {
         setItems(listLearningItems());
         setMode("local");
@@ -188,9 +197,12 @@ export default function ReviewPage() {
       else if (!status.projectsAvailable) setError("Abrimos el feedback, pero las propuestas compartidas no están disponibles.");
       setMode("shared");
     }).catch(() => {
+      if (!active) return;
       setItems(listLearningItems());
       setMode("local");
     });
+    });
+    return () => { active = false; };
   }, []);
 
   const feedbackItems = items.filter((item) => item.source === "feedback");
@@ -287,7 +299,7 @@ export default function ReviewPage() {
 
   return <main className="review-shell" data-theme={theme}>
     <header className="review-header">
-      <a href="/" aria-label="Volver al Product Growth Lab"><img src="/yol1-wordmark-dark.png" alt="YOL1" /></a>
+      <Link href="/" aria-label="Volver al Product Growth Lab"><Image src="/yol1-wordmark-dark.png" alt="YOL1" width={150} height={54} priority /></Link>
       <div><small>PRODUCT GROWTH LAB · INTERNO</small><h1>Bandeja de aprendizaje</h1></div>
       <div className="review-header-actions"><button onClick={chooseTheme}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button>{mode === "shared" && <button onClick={logout}>Cerrar bandeja</button>}</div>
     </header>

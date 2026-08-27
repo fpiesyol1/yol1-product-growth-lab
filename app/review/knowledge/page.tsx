@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { knowledgeCatalog, YOL1_KNOWLEDGE_VERSION } from "../../../lib/ai/knowledge-catalog";
 
@@ -13,8 +15,13 @@ export default function KnowledgeReviewPage() {
   const [marked, setMarked] = useState<string[]>([]);
 
   useEffect(() => {
-    setTheme(window.localStorage.getItem("yol1-lab-theme") === "light" ? "light" : "dark");
-    try { setMarked(JSON.parse(window.localStorage.getItem(IMPROVE_KEY) || "[]")); } catch { setMarked([]); }
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setTheme(window.localStorage.getItem("yol1-lab-theme") === "light" ? "light" : "dark");
+      try { setMarked(JSON.parse(window.localStorage.getItem(IMPROVE_KEY) || "[]")); } catch { setMarked([]); }
+    });
+    return () => { active = false; };
   }, []);
 
   const visible = useMemo(() => knowledgeCatalog.filter((card) => {
@@ -36,9 +43,9 @@ export default function KnowledgeReviewPage() {
 
   return <main className="review-shell knowledge-review-shell" data-theme={theme}>
     <header className="review-header knowledge-review-header">
-      <a href="/" aria-label="Volver al Product Growth Lab"><img src="/yol1-wordmark-dark.png" alt="YOL1" /></a>
+      <Link href="/" aria-label="Volver al Product Growth Lab"><Image src="/yol1-wordmark-dark.png" alt="YOL1" width={150} height={54} priority /></Link>
       <div><small>PRODUCT GROWTH LAB · INTERNO</small><h1>Conocimiento del Lab</h1><p>Preguntas aprobadas, variantes y límites que usa el ejemplo. Leer o marcar aquí no modifica el chat ni los archivos.</p></div>
-      <div className="review-header-actions"><a href="/review">← Bandeja</a><button onClick={chooseTheme}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button></div>
+      <div className="review-header-actions"><Link href="/review">← Bandeja</Link><button onClick={chooseTheme}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</button></div>
     </header>
 
     <section className="knowledge-overview">
@@ -50,7 +57,7 @@ export default function KnowledgeReviewPage() {
 
     <section className="knowledge-toolbar" aria-label="Buscar conocimiento">
       <label><span>Buscar pregunta o variante</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ej.: Disney, quién me debe, beneficio…" /></label>
-      <label><span>Dominio</span><select value={domain} onChange={(event) => setDomain(event.target.value)}><option value="all">Todos</option><option value="finanzas">Finanzas</option><option value="cartola">Cartola</option><option value="cobrar-y-pagar">Cobrar y pagar</option><option value="ahorrar">Ahorrar</option></select></label>
+      <label><span>Dominio</span><select value={domain} onChange={(event) => setDomain(event.target.value)}><option value="all">Todos</option><option value="finanzas">Finanzas</option><option value="cartola">Cartola</option><option value="cuentas-claras">Cuentas Claras</option><option value="deudas">Deudas</option><option value="ahorrar">Ahorrar</option></select></label>
     </section>
 
     <p className="knowledge-disclosure">Solo datos ficticios · contenido editorial versionado · sin edición automática</p>

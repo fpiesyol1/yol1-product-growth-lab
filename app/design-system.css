@@ -26,6 +26,163 @@
   outline-offset: 3px;
 }
 
+.yol1-system-v2 .cc-app,
+.yol1-system-v2 .cc-workspace {
+  background: #08242e !important;
+  color: #fff9ef;
+  font-family: var(--sans) !important;
+}
+
+.yol1-system-v2 .cc-app {
+  grid-template-rows: minmax(0, 1fr) 76px;
+}
+
+.yol1-system-v2 .cc-topbar,
+.yol1-system-v2 .cc-nav {
+  border-color: rgba(181, 218, 216, 0.18) !important;
+  background: rgba(8, 36, 46, 0.98) !important;
+  color: #fff9ef !important;
+}
+
+.yol1-system-v2 .cc-actionbar {
+  height: 50px;
+  min-height: 50px !important;
+  padding: 3px 12px !important;
+  border-radius: 0;
+  box-shadow: 0 1px 0 rgba(181, 218, 216, 0.12);
+}
+
+.yol1-system-v2 .cc-simulation-pill {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid rgba(113, 215, 200, 0.28);
+  border-radius: 999px;
+  color: var(--aqua);
+  font: 800 8px/1 var(--mono);
+  letter-spacing: 0.06em;
+}
+
+.yol1-system-v2 .cc-app .cc-nav {
+  height: 76px;
+  min-height: 76px;
+  padding: 8px 9px 10px !important;
+  border-radius: 0 0 34px 34px;
+}
+
+.yol1-system-v2 .cc-nav button {
+  border-radius: 16px !important;
+  font: 750 11px/1 var(--sans) !important;
+}
+
+.yol1-system-v2 .cc-nav button span {
+  width: max-content;
+  min-width: 32px;
+  height: 24px;
+  margin: 0 auto 4px !important;
+  display: grid !important;
+  place-items: center;
+  border-radius: 999px;
+}
+
+.yol1-system-v2 .cc-nav button[class*="navActive"] span {
+  background: var(--acid);
+  color: var(--brand-night);
+}
+
+.yol1-system-v2 .cc-nav button[class*="navActive"] {
+  background: transparent !important;
+  color: var(--text) !important;
+}
+
+.yol1-system-v2 .cc-workspace {
+  scrollbar-width: none;
+}
+
+.yol1-system-v2 .cc-workspace::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Las tareas enfocadas siguen siendo parte de YOL1. WhatsApp conserva su
+   lenguaje propio de forma deliberada, pero los sheets del producto no vuelven
+   a crear una lámina crema dentro del teléfono. */
+.yol1-system-v2 .app-clear_accounts :where(
+  [class*="_sheet__"],
+  [class*="_composer__"],
+  [class*="_confirmDialog__"]
+) {
+  border: 1px solid rgba(181, 218, 216, 0.2) !important;
+  background: #102f3a !important;
+  color: var(--text) !important;
+  font-family: var(--sans) !important;
+}
+
+.yol1-system-v2 .app-clear_accounts :where(
+  [class*="_sheet__"],
+  [class*="_composer__"]
+) > header button {
+  width: 44px !important;
+  height: 44px !important;
+  border-color: rgba(181, 218, 216, 0.24) !important;
+  color: var(--text) !important;
+}
+
+.yol1-system-v2 .app-clear_accounts [class*="_composer__"] > footer {
+  border-color: rgba(181, 218, 216, 0.16) !important;
+  background: #0b2a35 !important;
+}
+
+.yol1-system-v2 .app-clear_accounts :where(
+  [class*="_field__"] input,
+  [class*="_field__"] select,
+  [class*="_moneyInput__"],
+  [class*="_peopleChoices__"] label,
+  [class*="_splitEditor__"] input,
+  [class*="_segmented__"]
+) {
+  border-color: rgba(181, 218, 216, 0.22) !important;
+  background: #08242e !important;
+  color: var(--text) !important;
+}
+
+.yol1-system-v2 .app-clear_accounts :where(
+  [class*="_receiptButton__"],
+  [class*="_receiptSelected__"],
+  [class*="_guardrail__"],
+  [class*="_sheetHistory__"] article
+) {
+  border-color: rgba(113, 215, 200, 0.3) !important;
+  background: #0b2a35 !important;
+  color: var(--text) !important;
+}
+
+.yol1-system-v2 .app-clear_accounts :where(
+  [class*="_safetyCopy__"],
+  [class*="_field__"],
+  [class*="_guardrail__"] p,
+  [class*="_sheetHistory__"] p,
+  [class*="_progressDetail__"]
+) {
+  color: var(--muted) !important;
+}
+
+.yol1-system-v2 .app-clear_accounts [class*="_overlay__"] {
+  background: rgba(3, 18, 24, 0.72) !important;
+}
+
+.yol1-system-v2 .cc-center-state {
+  min-height: 100%;
+  background: var(--app-bg) !important;
+  color: var(--text) !important;
+  font-family: var(--sans) !important;
+}
+
+.yol1-system-v2 .cc-center-state p {
+  color: var(--muted) !important;
+}
+
 .yol1-system-v2 :where(.lab-shell, .review-shell)[data-theme="dark"] {
   --page-bg: #061b24;
   --stage-text: #faeddc;
@@ -337,9 +494,11 @@
 
 .yol1-system-v2 .phone,
 .yol1-system-v2 .research-phone {
-  width: min(480px, 100%);
-  height: min(880px, calc(100vh - 116px));
-  min-height: 740px;
+  width: auto;
+  max-width: 100%;
+  height: clamp(740px, calc(100vh - 116px), 956px);
+  min-height: 0;
+  aspect-ratio: 440 / 956;
   padding: 8px;
   border: 1px solid color-mix(in srgb, var(--aqua) 38%, var(--line));
   border-radius: 42px;
@@ -349,6 +508,10 @@
 
 .yol1-system-v2 .phone {
   grid-template-rows: 68px minmax(0, 1fr) 76px;
+}
+
+.yol1-system-v2 .phone.phone-clear_accounts {
+  grid-template-rows: 68px minmax(0, 1fr);
 }
 
 .yol1-system-v2 .phone.phone-kyc,
@@ -401,6 +564,17 @@
   background:
     radial-gradient(circle at 100% 0%, rgba(113, 215, 200, 0.05), transparent 19rem),
     var(--app-bg);
+}
+
+.yol1-system-v2 .app-content.app-clear_accounts {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(113, 215, 200, 0.05), transparent 19rem),
+    var(--app-bg);
+  color: var(--text);
 }
 
 .yol1-system-v2 .bottom-nav {
@@ -1804,6 +1978,10 @@
 
   .yol1-system-v2 .phone.phone-kyc,
   .yol1-system-v2 .phone.phone-builder {
+    grid-template-rows: 66px minmax(0, 1fr);
+  }
+
+  .yol1-system-v2 .phone.phone-clear_accounts {
     grid-template-rows: 66px minmax(0, 1fr);
   }
 

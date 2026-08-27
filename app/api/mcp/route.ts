@@ -15,8 +15,8 @@ const PROTOCOL_VERSION = "2025-03-26";
 const MAX_IDEA_LENGTH = 1_200;
 const PROJECT_ID = /^prj_[a-f0-9]{32}$/;
 const LAB_VIEW_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
-const CONTEXT_VERSION = "yol1-lab-context/0.6";
-const SERVER_VERSION = "0.7.0";
+const CONTEXT_VERSION = "yol1-lab-context/0.7";
+const SERVER_VERSION = "0.8.0";
 const SCHEMA_VERSION = "project-draft/0.4";
 const UI_VERSION = "lab-web/0.6";
 const CONTEXT_MODULES = ["core", "product_sheet", "technology", "data_analytics", "continuity"] as const;
@@ -77,13 +77,19 @@ function designSystemManifest() {
       focus: "#71d7c8",
     },
     phone_shell: {
-      width_px: 430,
+      width_px: 440,
+      height_px: 956,
       min_height_px: 720,
-      radius_px: 48,
-      header_height_px: 62,
-      bottom_navigation_height_px: 66,
+      radius_px: 55,
+      header_height_px: 64,
+      bottom_navigation_height_px: 64,
     },
-    companion_navigation: ["Inicio", "Finanzas", "Cobrar/pagar", "Ahorrar", "Ganar", "Mi banco"],
+    companion_navigation: {
+      primary: ["Inicio", "Finanzas", "Ahorrar", "Deudas", "Mi banco"],
+      secondary: [{ label: "Cartola", parent: "Finanzas" }],
+      screen_titles: { Deudas: "Tu plan de deuda" },
+    },
+    complementary_product: { name: "Cuentas Claras", route: "/?product=clear_accounts", boundary: "Acompañante detecta y explica; Cuentas Claras registra, divide y simula cobros, pagos y conciliación sin mover dinero." },
     component_rules: {
       primary_action: "acid sobre brand_night, borde marcado, sombra corta y alto táctil mínimo de 44px",
       explanatory_action: "aqua sobre brand_night",
@@ -155,7 +161,7 @@ function technologyBaselineManifest() {
     edge_and_bff: ["versioned_BFF", "API_Gateway_candidate", "server_side_authorization", "domain_read_models"],
     identity: ["Amazon_Cognito_User_Pools_candidate", "YOL1_person_id_separate_from_login_identity", "KYC_is_not_authentication"],
     services: ["Lambda_or_containers_by_domain", "Step_Functions_only_for_approved_orchestration", "EventBridge_or_SQS_only_for_approved_async_work"],
-    data: ["DynamoDB_for_access_patterns_and_state_candidate", "Aurora_PostgreSQL_for_relational_or_audit_needs_candidate", "Neon_Postgres_only_for_the_current_Lab_review_surface"],
+    data: ["DynamoDB_for_access_patterns_and_state_candidate", "Aurora_PostgreSQL_for_relational_or_audit_needs_candidate", "Neon_Postgres_for_the_current_Lab_review_and_Cuentas_Claras_state"],
     operations: ["feature_flag_per_capability", "idempotency", "correlation_id", "structured_logs", "observability", "rollback", "consent_before_analytics"],
     unresolved: ["CDP_CEP", "financial_data_provider", "KYC_partner", "payment_rails", "benefit_catalog_owner", "DynamoDB_vs_Aurora_by_access_pattern"],
     crosswalk_fields: ["required_capability", "existing_candidate", "fit", "gap", "evidence_state", "decision", "owner"],
@@ -165,7 +171,7 @@ function technologyBaselineManifest() {
 function continuityManifest() {
   return {
     compare_against: ["YOL1_companion_navigation", "existing_product_specs", "shared_components", "shared_read_models", "events", "capability_gates", "copy_and_evidence_states"],
-    current_product_spaces: ["Onboarding_and_KYC", "Financial_companion", "Home_Banking", "Cards", "Remittances_paused", "Product_builder"],
+    current_product_spaces: ["Onboarding_and_KYC", "Financial_companion", "Clear_Accounts", "Home_Banking", "Cards", "Remittances_paused", "Product_builder"],
     required_output: ["reuse", "extension", "new_gap", "conflict", "decision_owner"],
     rules: ["reuse_before_creating_a_parallel_pattern", "never_reactivate_a_paused_product_implicitly", "do_not_duplicate_navigation_or_identity_or_consent_models", "label_candidate_and_unknown_states_locally"],
   };
@@ -211,7 +217,7 @@ function artifactContractText() {
 - Si el cliente ofrece Artefactos, Cowork, Canvas o vista previa de código, crea y abre en este mismo turno un único artefacto HTML interactivo. No esperes a que la persona diga “haz un mockup” y no preguntes si quiere verlo antes de mostrar una primera versión.
 - El artefacto vive en la cuenta y el chat de esa persona. El MCP no instala ni comparte automáticamente artefactos anteriores. Cada colaborador genera su propia vista con el mismo contexto YOL1; sólo un guardado explícito crea un borrador compartido en el Lab.
 - Si el cliente no permite artefactos, entrega el mismo flujo completo en el chat y, cuando pueda crear archivos, ofrece un HTML autocontenido descargable. No presentes la falta de canvas como un error ni pidas configuración técnica.
-- Diseña para panel lateral de media pantalla y para vista expandida: tablero responsive, lectura clara y mockups móviles de 430px que puedan desplazarse sin cortarse.
+- Diseña para panel lateral de media pantalla y vista expandida: tablero responsive y mockups mobile-only de 440 × 956 px inspirados en iPhone 17 Pro Max, con safe areas, scroll único y controles de al menos 44 × 44 px.
 - Usa el wordmark e ícono YOL1 alojados por el Lab. No reemplaces el logo por texto y no introduzcas marcas de terceros dentro de la interfaz YOL1 salvo que la persona las haya entregado como referencia explícita.
 - Antes de mostrar el artefacto haz una revisión silenciosa. Debe fallar y corregirse si cambia la navegación canónica, usa colores aproximados, incluye controles decorativos, o presenta como real un pago, saldo, ahorro, descuento, comercio, mapa, automatización o beneficio no confirmado.
 - Un disclaimer general al pie no corrige una afirmación engañosa dentro de una pantalla. La etiqueta “Ejemplo” o “Por validar” debe aparecer junto al dato, beneficio o acción correspondiente; usa “Simular” en lugar de “Pagar”, “Activar” o “Confirmar” cuando la capability no esté aprobada.
@@ -219,7 +225,7 @@ function artifactContractText() {
 }
 
 function contextCoreText() {
-  return `# Contexto esencial de construcción YOL1 · ${CONTEXT_VERSION}\n\n## Experiencia para cualquier persona\n- La persona describe una idea en lenguaje cotidiano. No le hables de MCP, herramientas, catálogos, contratos ni versiones salvo que lo pregunte.\n- Entrega primero una propuesta útil. Si falta información, avanza con un supuesto explícito y formula como máximo una pregunta simple después de mostrar progreso.\n- No muestres trazas de edición como “Now update…”, razonamiento interno ni nombres de eventos dentro del mockup. No digas que seguirás trabajando mientras esperas: no existe trabajo en segundo plano.\n\n## Regla principal\nNo inventes capacidades. Distingue siempre: hecho aprobado, propuesta candidata y pregunta por resolver. Esta conversación genera un borrador; nunca modifica el Lab ni publica producto automáticamente.\n\n## Sistema visual exacto vigente\nNo inventes hex, tipografías, navegación ni estructura. Reutiliza literalmente:\n- Marca: night #112e3c; night-deep #071f29; cream #faeddc; mist #eef3f1.\n- Acentos: acid #80ef0c para acción principal; aqua #71d7c8 para explicación/evidencia; violet-soft #b9a7ff para colaboración/inputs; coral #ff6847 para riesgo; pink #ff8fb4 sólo social.\n- Dark UI: page #061b24; app #0a232d; surface #102f3a; raised #173b46; soft #0d2933; text #f9eee2; muted #9bb0b5.\n- Tipografía: Söhne para lectura y Söhne Mono para metadata, estados y controles.\n- Shell móvil: 430px de ancho, mínimo 720px de alto, radio 48px, header 62px y navegación inferior 66px. Usa los assets ${LAB_VIEW_URL}/yol1-icon.png y ${LAB_VIEW_URL}/yol1-wordmark-dark.png; no escribas “yol1” como reemplazo del logo.\n- Navegación del Acompañante: Inicio, Finanzas, Cobrar/pagar, Ahorrar, Ganar, Mi banco. No inventes otra navegación ni dupliques ítems.\n- Los controles interactivos deben ser button/input reales, no divs decorativos; foco aqua de 3px y área táctil mínima de 44px.\n- El producto aparece primero. Changelog, eventos, arquitectura y decisiones van en una ficha separada, nunca dentro de la pantalla del usuario.\n\n## Producto y honestidad financiera\n- Chile es jurisdicción base. KYC, licencias, partners, pagos, crédito, bancos, QR, NFC, beneficios y recompensas se marcan “Por validar” hasta tener evidencia, owner y capability aprobada.\n- Sin esa evidencia, usa “Simular” o “Demo”: no presentes saldo real, pago confirmado, folio real, procesamiento real ni actualización instantánea como hechos.\n- Todo flujo propone un momento de uso, usuario, problema, aha moment, 5–7 pantallas, estados vacío/carga/error, CTA, evidencia y salida.\n- Para acciones materiales incluye revisión antes de confirmar y estados de resultado incierto, interrupción, duplicado/reintento seguro, ya realizado y recuperación.\n\n## Revisión obligatoria\nAntes de entregar, verifica: fidelidad a tokens y shell, controles realmente interactivos, datos y capacidades no inventadas, dependencias, gates, riesgos de experiencia, Error capa 8, preguntas por validar y fuera de alcance.`;
+  return `# Contexto esencial de construcción YOL1 · ${CONTEXT_VERSION}\n\n## Sistema visual vigente\n- Marca YOL1 y tokens del designSystemManifest son canónicos.\n- Toda app del Lab es mobile-only dentro de un shell 440 × 956 px inspirado en iPhone 17 Pro Max; respeta safe areas, scroll único, cuerpo de 15–17 px y controles de al menos 44 × 44 px.\n- La navegación primaria del Acompañante es Inicio, Finanzas, Ahorrar, Deudas y Mi banco. Cartola se abre desde Finanzas y la pantalla Deudas se titula “Tu plan de deuda”. Detecta y explica; no crea, divide, cobra, paga ni resuelve el ledger social.\n- Cuentas Claras es un producto complementario top-level. Es dueño de grupos, gastos, repartos y deudas sociales; sólo simula cobros, pagos y conciliación.\n- Onboarding crea acceso mínimo para guardar o retomar una tarea concreta. El código OTP ficticio recorre el control de canal, pero no verifica un canal real, identidad, KYC ni una capacidad financiera.\n- Toda acción de mensajería muestra primero un borrador visual estilo WhatsApp con la etiqueta “no enviado”; nunca simula entrega o lectura.\n\n## Honestidad financiera\n- Chile es jurisdicción base. Datos bancarios, KYC, pagos, crédito y partners permanecen “Por validar” hasta contar con evidencia, owner y capability aprobada.\n- Cuentas Claras usa siempre MockFloid local: no acepta credenciales, no llama servicios externos y no puede mover dinero.\n- Dentro de una simulación rotulada, “Pagar” puede describir la tarea; la transición y el resultado deben decir demo o simulado y nunca implicar una transferencia real.\n- El pagador público completa la tarea sin cuenta YOL1; los gates de registro o recepción real son sólo contratos futuros (Prop.).\n\n## Revisión obligatoria\nProducto primero y ficha técnica debajo. Verifica accesibilidad, estados vacío/carga/error, revisión antes de una acción material, reintento idempotente, resultado incierto, trazabilidad y salida clara.`;
 }
 
 function productSheetText() {
@@ -227,7 +233,7 @@ function productSheetText() {
 }
 
 function technologyContextText() {
-  return `# Tecnología YOL1 · base candidata\n- Cliente: React Native + Expo, navegación tipada, design system compartido, accesibilidad y estados carga/vacío/error explícitos.\n- Acceso: Amazon Cognito User Pools es candidato para login, OTP y federación. El identificador de acceso no reemplaza el person_id de YOL1 y autenticación no equivale a KYC.\n- Backend: BFF/API versionado por dominio; API Gateway como candidato; autorización, validación e idempotencia viven en servidor; la app recibe read models de pantalla.\n- Servicios: Lambda o contenedores por dominio. Step Functions, EventBridge y SQS se proponen sólo cuando exista una integración asíncrona aprobada que lo justifique.\n- Datos: DynamoDB y Aurora PostgreSQL son alternativas candidatas según patrón de acceso, consistencia, relaciones, auditoría y operación. Neon/Postgres pertenece hoy sólo a feedback y revisión del Lab; no es por defecto el core financiero.\n- Operación: feature flag por capability, correlation_id, logs estructurados, observabilidad, rollback y consentimiento antes de analytics.\n- Siguen abiertos: CDP/CEP, proveedor de datos financieros, partner KYC, rails/pagos, owner del catálogo de beneficios y elección de almacén por dominio.\n\nPara cada capacidad del producto entrega un cruce corto con: capacidad requerida, candidato YOL1 existente, encaje, brecha, evidencia (hecho/candidato/por validar), decisión pendiente y owner. Reutiliza antes de proponer un stack paralelo y nunca presentes esta base como arquitectura aprobada.`;
+  return `# Tecnología YOL1 · base candidata\n- Prototipo actual: Next.js en el Lab, con navegación y design system compartidos. Cuentas Claras usa un repository adapter y puede persistir el estado demo en Neon/Postgres con Drizzle; MockFloid es siempre local.\n- Objetivo móvil (Prop.): React Native + Expo, navegación tipada, accesibilidad y estados carga/vacío/error explícitos.\n- Acceso (Prop.): Amazon Cognito User Pools es candidato para login, OTP y federación. El identificador de acceso no reemplaza el person_id de YOL1 y autenticación no equivale a KYC.\n- Backend (Prop.): BFF/API versionado por dominio; autorización, validación e idempotencia viven en servidor y la app recibe read models de pantalla.\n- Datos: Neon/Postgres sirve hoy feedback, revisión y el estado del simulador Cuentas Claras. DynamoDB y Aurora PostgreSQL permanecen alternativas futuras según patrón de acceso, consistencia, relaciones, auditoría y operación.\n- Operación (Prop.): feature flag por capability, correlation_id, logs estructurados, observabilidad, rollback y consentimiento antes de analytics.\n- Siguen abiertos: aislamiento productivo, CDP/CEP, proveedor de datos financieros, partner KYC, rails/pagos y elección de almacén por dominio.\n\nPara cada capacidad del producto entrega un cruce corto con: capacidad requerida, candidato YOL1 existente, encaje, brecha, evidencia (hecho/candidato/por validar), decisión pendiente y owner. Reutiliza antes de proponer un stack paralelo y nunca presentes esta base como arquitectura aprobada.`;
 }
 
 function dataAnalyticsContextText() {
@@ -235,7 +241,7 @@ function dataAnalyticsContextText() {
 }
 
 function continuityContextText() {
-  return `# Continuidad con el resto de YOL1\n- Cruza la propuesta con Onboarding/KYC, Acompañante financiero, Home Banking, Tarjetas, Remesas pausado y Construir mi propio producto.\n- Revisa navegación, componentes, read models, eventos, identidad, consentimiento, gates y lenguaje de evidencia existentes antes de crear un patrón nuevo.\n- Declara cada hallazgo como reutilización, extensión, brecha nueva, conflicto o decisión con owner. No reactives Remesas ni una capability pausada de manera implícita.\n- La interfaz de producto sigue siendo simple. Este cruce aparece en la ficha progresiva, no dentro de las pantallas de la persona.`;
+  return `# Continuidad con el resto de YOL1\n- Cruza la propuesta con Onboarding/KYC, Acompañante financiero, Cuentas Claras, Home Banking, Tarjetas, Remesas pausado y Construir mi propio producto.\n- Revisa navegación, componentes, read models, eventos, identidad, consentimiento, gates y lenguaje de evidencia existentes antes de crear un patrón nuevo.\n- Declara cada hallazgo como reutilización, extensión, brecha nueva, conflicto o decisión con owner. No reactives Remesas ni una capability pausada de manera implícita.\n- La interfaz de producto sigue siendo simple. Este cruce aparece en la ficha progresiva, no dentro de las pantallas de la persona.`;
 }
 
 function contextText() {
@@ -295,13 +301,29 @@ function cleanList(value: unknown, maxItems: number, maxLength: number) {
   return value.slice(0, maxItems).map((item) => clean(item, maxLength)).filter(Boolean);
 }
 
+function isLocalPrototypeHost(hostname: string) {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return true;
+  if (host.includes(":")) return true;
+  const octets = host.split(".").map(Number);
+  if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) return false;
+  const [first, second] = octets;
+  return first === 0
+    || first === 10
+    || first === 127
+    || (first === 169 && second === 254)
+    || (first === 172 && second >= 16 && second <= 31)
+    || (first === 192 && second === 168)
+    || first >= 224;
+}
+
 function publicPrototypeUrl(value: unknown) {
   const candidate = clean(value, 500);
   if (!candidate) return "";
   try {
     const url = new URL(candidate);
     const sensitiveKey = /^(?:access_?token|api_?key|auth|authorization|code|credential|jwt|password|secret|signature|token)$/i;
-    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
+    if (url.protocol !== "https:" || isLocalPrototypeHost(url.hostname)) return "";
     if (url.username || url.password || [...url.searchParams.keys()].some((key) => sensitiveKey.test(key))) return "";
     return url.toString();
   } catch {
@@ -494,7 +516,7 @@ export async function POST(request: Request) {
             assumptions: { type: "array", maxItems: 8, items: { type: "string", maxLength: 240 } },
             open_questions: { type: "array", maxItems: 8, items: { type: "string", maxLength: 240 } },
             references: { type: "array", maxItems: 5, items: { type: "string", maxLength: 300 }, description: "Sólo referencias que la persona decidió incluir; nunca copies el chat completo ni credenciales." },
-            prototype_url: { type: "string", maxLength: 500, description: "URL pública http(s) del mockup ya creado. Omítela si sólo existe como archivo local o dentro de un chat: nunca inventes una URL ni envíes rutas C:\\ o file://." },
+            prototype_url: { type: "string", maxLength: 500, description: "URL pública HTTPS del mockup ya creado. Omítela si sólo existe como archivo local o dentro de un chat: nunca inventes una URL ni envíes rutas C:\\ o file://." },
             product_sheet: {
               type: "object",
               description: "Ficha progresiva construida después de la propuesta. Guarda sólo conocimiento que la persona confirmó o decidió incluir; lo desconocido puede quedar vacío.",

@@ -15,7 +15,7 @@ La entrada deja de ser una pantalla plana con tres botones. Se convierte en tres
 
 Después de las historias, la hipótesis de recorrido es:
 
-`valor` → `correo/teléfono` → `OTP` → `nombre + RUT declarados` → `Acompañante financiero` → `verificación completa opcional/contextual`.
+`valor o tarea concreta` → `correo/teléfono` → `OTP demo` → `nombre visible` → `retorno exacto a la tarea`.
 
 Este pivote modifica la secuencia anterior: ya no exige elegir una acción material antes de crear acceso. Para conservar el principio “valor antes de datos”, las historias deben ser útiles, entendibles y recorribles antes del registro.
 
@@ -27,9 +27,9 @@ Este pivote modifica la secuencia anterior: ya no exige elegir una acción mater
 - Para una relación permanente, el sujeto obligado debe obtener la información definida por la Circular y tomar medidas razonables o adecuadas para verificarla.
 - La Circular permite DDC simplificada en productos, servicios, operaciones o canales calificados como bajo riesgo mediante una política documentada.
 - Entre las medidas simplificadas está completar datos con fuentes terceras y postergar la verificación de identificación hasta superar un umbral definido.
-- Esto **no** significa que escribir nombre y RUT produzca KYC aprobado. En el prototipo, ambos son `declared_profile`, no `verified_identity`.
+- Esto **no** significa que confirmar un canal o declarar un nombre produzca KYC aprobado. En el prototipo son acceso demo y `declared_profile`, no `verified_identity`.
 
-**Traducción UX:** nombre + RUT pueden preparar una experiencia local y permitir navegación no transaccional. Para abrir u operar una capacidad financiera deben resolverse el producto, el sujeto obligado, la política de riesgo, la información DDC completa, la verificación y los controles aplicables.
+**Traducción UX:** canal confirmado + nombre visible permiten guardar y retomar una experiencia local no transaccional. RUT, documento o biometría sólo se pedirían frente a una capability aprobada que realmente los requiera.
 
 Fuente primaria: [Circular UAF N°62](https://www.uaf.cl/media/documentos/Circular_N62.pdf), especialmente sección F.
 
@@ -53,7 +53,7 @@ Fuente primaria: [NCG 569 — CMF](https://www.cmfchile.cl/portal/normativa/624/
 | --- | --- | --- | --- | --- |
 | E0 · Valor | Nada | Visitante | Recorrer historias y entender la propuesta | Guardar acceso, conectar datos, mover dinero |
 | E1 · Acceso | Correo o teléfono + OTP | Canal confirmado | Recuperar una relación de acceso | Afirmar identidad, KYC o cuenta financiera |
-| E2 · Perfil básico | Nombre + RUT declarados | Perfil declarado, no verificado | Entrar al Acompañante y navegar productos demo | Conectar bancos, abrir cuenta, recibir o transferir dinero |
+| E2 · Perfil básico | Nombre visible | Perfil declarado, no verificado | Guardar/retomar la tarea demo y navegar | Conectar bancos, abrir cuenta, recibir o transferir dinero |
 | E3 · Intención material | Capability específica | Requisitos explicados | Entender qué falta y decidir continuar | Asumir que KYC por sí solo habilita la capability |
 | E4 · Verificación | Documento, screening y biometría si aplica | Caso en progreso/revisión/verificado | Satisfacer requisitos de identidad del producto | Operar sin vehículo, contrato, controles y disponibilidad aprobados |
 | E5 · Capacidad | Contratos/consentimientos propios del producto | Capability aprobada y disponible | Operar sólo dentro de límites y controles | Inferir nuevas capacidades desde el mismo KYC |
@@ -81,19 +81,19 @@ Patrón aprendido de Revolut: propuesta de valor antes del formulario, continuid
 - Seis dígitos, autofill compatible, código de ejemplo, error corregible, expiración, rate limit y recuperación neutral.
 - Nunca decir “confirma que eres tú”; decir “confirma que controlas este canal”.
 
-### 04 · Nombre y RUT
+### 04 · Nombre visible
 
 - Nombre como preferencia visible de trato.
-- RUT validado localmente sólo en formato y dígito verificador.
-- Microcopy: dato declarado, no consulta Registro Civil y no significa identidad verificada.
-- Nombre/RUT no se guardan en localStorage ni analytics en esta demo.
+- El nombre sólo personaliza la experiencia demo y no significa identidad verificada.
+- El RUT se omite hasta que una capability futura lo justifique.
+- Nombre y contacto no se guardan en el snapshot ni en analytics.
 
 ### 05 · Entrada al producto
 
 - Resultado principal: `Ya puedes navegar`.
-- Primer CTA: `Ir al Acompañante financiero`.
-- Estado visible: canal confirmado, perfil declarado, verificación completa pendiente.
-- Segundo CTA: `Seguir con la verificación completa`.
+- El CTA depende de `return_to`: `Volver a tu gasto` o `Ir al Acompañante financiero`.
+- Estado visible: canal confirmado y perfil declarado; ninguna capacidad financiera activa.
+- La verificación completa no se ofrece sin una razón/capability concreta.
 
 ### 06–08 · Verificación completa demo
 
@@ -114,14 +114,14 @@ Patrones de referentes:
 | --- | --- |
 | Las historias aumentan comprensión de valor | % que puede explicar al menos una promesa sin mencionar “banco genérico” |
 | Pedir contacto después de las historias conserva intención | conversión historias vistas → OTP solicitado |
-| Nombre + RUT no se confunden con KYC | % que responde “perfil declarado, no identidad verificada” |
+| Canal + nombre no se confunden con KYC | % que responde “acceso demo, no identidad verificada” |
 | Entrar primero al asistente acelera activación | % que hace una primera pregunta o explora una recomendación |
 | KYC opcional/contextual reduce rechazo | inicio de verificación sólo desde una razón entendida y abandono por paso |
 
 ## 6. Decisiones reales para Felipe
 
 1. Confirmar el nombre de la tercera promesa: `Úsala bien` vs. una alternativa más natural.
-2. Confirmar si el RUT es obligatorio antes de entrar al asistente o si se puede pedir al primer uso que necesite personalización local.
+2. Definir la primera capability futura que justificaría pedir RUT y su explicación previa.
 3. Definir qué productos demo aparecen tras E2 y cuál es el orden de navegación.
 4. Definir la primera capability financiera real que justificaría iniciar E4.
 5. Confirmar si la verificación completa se ofrece proactivamente o sólo al activar esa capability.
@@ -137,7 +137,7 @@ Patrones de referentes:
 
 - Implementación reversible: `app/onboarding-progressive.tsx`, activada por un flag local en `app/page.tsx`; el flujo anterior sigue disponible como rollback.
 - Lógica nominal: `lib/onboarding-pivot-state-machine.ts`; el orden de eventos evita que OTP, perfil o biometría adelanten etapas.
-- Validación local: `lib/onboarding-validation.ts`; un RUT incorrecto queda asociado a su mensaje accesible y mantiene deshabilitado el CTA.
+- Validación local: `lib/onboarding-validation.ts`; el flujo activo valida canal y nombre. El validador RUT se conserva sólo para un gate futuro contextual.
 - Persistencia: el snapshot acepta `selected_capability: none` para registrar sólo avance demo, sin inventar intención material ni guardar PII.
 - QA visual/runtime: 320 × 568, 390 × 844 y 1440 × 900; recorrido completo hasta revisión KYC; controles móviles visibles con área táctil mínima de 44 px; consola sin errores ni advertencias.
 - Verificación técnica: 84 pruebas aprobadas, TypeScript sin errores y build de producción aprobado.

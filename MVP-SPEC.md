@@ -1,169 +1,120 @@
-# YOL1 Product Growth Lab — primera propuesta MVP
+# YOL1 Product Growth Lab — MVP vigente
 
-## 1. Norte del producto
+**Versión:** 26-ago-2026
+**Estado:** prototipo exploratorio con datos sintéticos. No conecta bancos ni proveedores, no mueve dinero y no representa capacidades disponibles o roadmap.
 
-YOL1 se explora como un asistente financiero cotidiano y explicable. Esta versión se rotula siempre como **prototipo exploratorio con datos sintéticos: no conecta bancos, no mueve dinero ni representa capacidades disponibles o roadmap**. La propuesta de valor a probar es: **“Encuentra dónde pierdes plata o desaprovechas beneficios y decide qué hacer”**. Es una preferencia fuerte y reversible de Felipe, no una propuesta validada ni un wedge decidido.
+## 1. Sistema de producto
 
-Principios que gobiernan todos los módulos:
+YOL1 prueba un ciclo único con tres responsabilidades complementarias:
 
-- **Valor antes que datos:** la experiencia entra directo a un ejemplo; una posible conexión solo se simula y su consentimiento aparece cuando desbloquearía una mejora concreta.
-- **Evidencia antes que conclusiones:** cada hallazgo declara qué lo activó, de qué fuente viene y cuánta certeza tiene.
-- **Control de la persona:** las acciones son confirmables, corregibles o reversibles; una sugerencia nunca se presenta como hecho consumado.
-- **Privacidad por defecto:** el Lab usa datos ficticios y no ejecuta conexiones, cargas, pagos ni envíos reales.
-- **Autoridad recommend-only:** YOL1 detecta, explica y recomienda. No disputa cargos, recupera fondos, cambia proveedores ni ejecuta automáticamente; cada acción pide confirmación.
-- **Transparencia comercial:** “YOL1 no recibe compensación en esta simulación; cualquier relación comercial futura se declarará en cada recomendación”.
+1. **Onboarding y KYC progresivo:** entrega valor, crea acceso mínimo para guardar o retomar una tarea y vuelve al punto exacto. OTP confirma un canal; no equivale a identidad, KYC o capability financiera.
+2. **Acompañante financiero:** interpreta movimientos, flujo mensual y deuda institucional sintética. Detecta, explica y propone un siguiente paso; no modifica el ledger social.
+3. **Cuentas Claras:** es la fuente de verdad de grupos, gastos, repartos, deudas entre personas, intentos y abonos simulados.
 
-## 2. Arquitectura de información
+Home Banking y Tarjetas permanecen en investigación; Remesas está pausado; Construir mi propio producto es un piloto reversible del Lab.
 
-La navegación principal está organizada por la intención de la persona, no por productos financieros:
+## 2. Principios
 
-1. **Inicio:** comprender qué hace YOL1, resolver señales de una bandeja y conversar con un chat financiero de demo.
-2. **Mis Finanzas:** entender el mes, las fuentes y los pendientes.
-3. **Cartola:** inspeccionar la evidencia y actuar sobre un movimiento.
-4. **Cobrar y pagar:** ordenar lo que te deben y lo que debes, y registrar/repartir un gasto ficticio.
-5. **Ahorrar:** evaluar oportunidades transparentes y verificables.
-6. **Ganar:** placeholder “Próximamente”.
-7. **Experimentos por explorar:** vitrina y feedback sin fechas, disponibilidad ni promesas; no construye banca ni remesas.
+- **Valor antes que datos.** La persona entiende la tarea antes de crear acceso.
+- **Evidencia antes que conclusión.** Cada inferencia declara fuente, frescura, certeza y límite.
+- **Un dueño por dato y acción.** Acompañante interpreta; Cuentas Claras administra el ledger; Onboarding administra acceso y retorno.
+- **Control humano.** Crear, marcar, ignorar y corregir son acciones explícitas y reversibles.
+- **Simulación local.** Floid y Belvo son fixtures sin credenciales, OAuth, webhooks o red.
+- **Privacidad por defecto.** Nada de OTP, RUT, contacto, token o payload financiero crudo entra a analytics.
 
-El **intake de feedback** es una utilidad transversal del Lab, no un octavo módulo de producto. Identifica automáticamente uno de los siete módulos activos y guarda comentarios locales para probar la experiencia de contribución.
+## 3. Navegación vigente
 
-## 3. MVP por módulo
+El selector superior muestra siete espacios: Onboarding, Acompañante, Cuentas Claras, Home Banking, Tarjetas, Remesas y Construir mi propio producto.
+
+El Acompañante navega por **Inicio, Finanzas, Cartola, Ahorrar, Tu plan de deuda y Mi banco**. No existe una pestaña operativa Cobrar/pagar ni una pestaña Ganar.
+
+Cuentas Claras tiene navegación propia: **Inicio, Grupos y Actividad**. La ruta pública del pagador no muestra el shell ni la navegación interna del Lab.
+
+## 4. Onboarding contextual
+
+### Trabajo
+
+Permitir explorar primero y crear acceso sólo cuando la persona quiere guardar o retomar un trabajo concreto.
+
+### Journey
+
+- Entrada directa: historias de valor → canal → OTP demo → nombre visible → Acompañante.
+- Desde Cuentas Claras: explicación contextual → canal → OTP demo → nombre visible → mismo borrador.
+- Pagador invitado: nunca pasa por Onboarding.
+
+`OnboardingEntryV1` conserva `entry_context`, `requested_job`, `return_to` y `draft_id` opaco. El borrador vive en sessionStorage y no viaja en la URL.
+
+### Gate
+
+El flujo activo permite nombre visible **sin pedir RUT, número de serie, biometría ni documentos en esta demo**. RUT y KYC sólo pueden aparecer frente a una capability futura aprobada que explique finalidad, dato, consecuencia y alternativa.
+
+## 5. Acompañante financiero
 
 ### Inicio
 
-**Trabajo a resolver:** entender qué hace YOL1 y resolver una señal cotidiana sin buscarla en varios módulos.
+Una bandeja priorizada muestra una situación dominante y siguientes acciones. Las cuentas compartidas aparecen una sola vez como resumen agregado de Cuentas Claras.
 
-Abre con la propuesta **“Entiende tus finanzas. Simplifica tu vida.”**. La bandeja horizontal reúne situaciones de ejemplo: posible duplicado Disney+, una cuenta por cobrar, una cuenta por pagar, un beneficio de tarjeta y un gasto posiblemente compartido. **Ignorar** archiva durante la sesión; **Revisar** abre evidencia o detalle; **Preparar reparto** o **Preparar cobro** aparece solo cuando corresponde. Los elementos archivados dejan una señal persistente y recuperable. La conversación parte disponible en demo; pasar a IA server-side exige una elección explícita y consentimiento. No se muestra micrófono porque no existe captura de audio.
+### Finanzas y Cartola
 
-**Aceptación:** una acción responde con confirmación visible en móvil y desktop; Ignorar retira una tarjeta, incrementa el contador persistente y permite deshacer durante la sesión; Revisar y cualquier acción contextual tienen destino útil. Si el fallback no reconoce una pregunta, ofrece preguntas concretas que sí puede responder. La IA no recibe texto antes de consentimiento, la clave vive solo en servidor, el request usa `store: false` y ningún camino usa audio real.
+Resultado del mes es flujo, no saldo. Movimientos muestran fuente y evidencia. Las acciones dependen de su tipo, no del signo del monto. Una señal social abre un handoff reversible a Cuentas Claras.
 
-### Bandeja de aprendizaje interna
+### Tu plan de deuda
 
-`/review` queda fuera de los siete módulos consumer. Con Postgres conectado reúne tres capas separadas: feedback de producto en Kanban editorial, conflictos de decisión y preguntas/respuestas de IA. Ningún estado modifica por sí solo el prompt o el conocimiento. Sin secretos configurados funciona en modo local explícito.
+Thin slice sintético “pagué pero todavía aparece”: cartola demo del 22 de agosto versus informe demo del 19. La coincidencia es `candidate`; no confirma pago, error o mora. La persona puede marcar el primer paso y deshacerlo. No hay score, CMF real, oferta o refinanciamiento.
 
-### Conocimiento conversacional interno
+### Frontera
 
-`knowledge/` organiza preguntas madre por dominio con estado, intención, variantes, respuesta esperada, evidencia, límites, siguientes preguntas y feedback conocido. El catálogo runtime conserva un vínculo a la ficha fuente. El router prioriza una regla de seguridad o una respuesta aprobada, después datos/operaciones deterministas y solo al final una eventual IA con consentimiento.
+La deuda institucional y la deuda entre personas son dominios separados. Ningún total los mezcla. El Acompañante puede leer `DebtCenterSummaryV1`, pero nunca crear, cobrar, pagar o cerrar una cuenta social.
 
-`/review/knowledge` es una vista editorial interna, no un octavo módulo consumer. Permite buscar fichas, revisar sus diez variantes y marcar localmente “para mejorar”; no edita Markdown, no cambia el router y no promueve contenido automáticamente.
+## 6. Cuentas Claras
 
-**Aceptación:** una pregunta aprobada responde con “Qué veo / Qué significa / Qué puedes hacer ahora”; una consulta fuera de alcance reconoce el límite y ofrece 2–3 preguntas útiles; los dictados de Felipe nacen como borrador y las variantes se agregan después de su aprobación.
+### Journey del administrador
 
-### Mis Finanzas
+Grupo → participantes → gasto → pagador → reparto igual/exacto → revisión → deuda → borrador WhatsApp. Crear un grupo abre su detalle y agregar gasto conserva el grupo y sus integrantes.
 
-**Trabajo a resolver:** entender de dónde vienen los números y qué merece atención.
+### Journey del pagador
 
-Incluye resultado mensual compacto, carrusel horizontal de cuentas, **Te entró/Gastaste** consolidado, por cobrar/pagar y últimos movimientos en filas densas. Cada métrica abre su detalle; por cobrar/pagar lleva al módulo correspondiente. **Ver cartola general** queda debajo de las cuentas. **Agregar banco** y **Agregar cartola** solo confirman que no existe integración ni carga.
+Link → acreedor/concepto/grupo/deudor asociado → pagar todo u otro monto → banco demo → autorización simulada → resultado y remanente. No requiere cuenta YOL1 o KYC.
 
-**Aceptación:** resultado no se confunde con saldo; fuentes se recorren horizontalmente; cada fuente y la cartola general tienen destino; Finanzas no duplica la bandeja de Inicio.
+### Reglas críticas
 
-### Cartola completa
+- gasto y abono son CLP enteros, seguros y positivos;
+- pagador pertenece al reparto y las partes suman el total;
+- $10.001 / 2 produce $5.001 + $5.000;
+- $10.000 → abono simulado $5.000 → saldo $5.000;
+- `failed`, `cancelled` y `expired` no cambian el saldo;
+- reintento o doble toque no duplica gasto, intento o settlement;
+- recargar conserva el monto reservado;
+- WhatsApp siempre es borrador no enviado;
+- un pagador exitoso cierra su tarea y no entra al dashboard privado.
 
-**Trabajo a resolver:** inspeccionar movimientos y convertirlos en acciones concretas.
+### Persistencia
 
-Incluye navegación General/BCI/MACH, fecha, hora, monto y fuente. El código técnico se conserva en el detalle, no en la fila principal. Cada fila ofrece **Marcar revisado** y **Revisar**; **Preparar reparto/cobro** aparece solo cuando existe evidencia compatible y nunca en transferencias propias o cargos sin contexto social. Revisar abre un asistente contextual de demo que explica evidencia y permite guardar o editar una nota durante la sesión.
+Repository adapter con memoria local o Neon/Postgres/Drizzle. Cada visitante usa una sesión demo opaca; un link público resuelve el workspace por token opaco. Esto es aislamiento de demo, no autenticación productiva.
 
-**Aceptación:** se puede cambiar de cartola, confirmar cualquier acción y ver feedback; Disney abre evidencia contextual; una transferencia propia permanece como clasificación revisable.
+### Proveedor
 
-### Cobrar y pagar
+`getPaymentProvider()` devuelve siempre `MockFloidPaymentProvider`. La simulación no lee credenciales ni hace red; el webhook responde `410`.
 
-**Trabajo a resolver:** entender lo pendiente en ambos sentidos y transformar un gasto en montos claros por persona.
+## 7. Aprendizaje y métricas
 
-La vista inicial alterna **Por persona** y **Por grupo/gasto**, pero mantiene dos bandejas verticales 50/50 del alto: **Por cobrar arriba** y **Por pagar abajo**. Cada lista se desplaza de manera independiente. Cada pendiente distingue **Preparar cobro**, **Preparar pago** y **Marcar como resuelto**; ninguna etiqueta implica envío o movimiento de dinero. **Nuevo gasto compartido** abre el flujo gasto → contacto → división → confirmación; **Agregar deuda pendiente** crea un borrador visible y reversible.
+El funnel de aprendizaje conserva cuatro niveles:
 
-Después de confirmar una solicitud, el prototipo muestra una superficie separada del marco YOL1: una **vista previa de mensaje** con texto ajustable, datos ficticios y URL `.example` sin vínculo. “Volver a YOL1” restaura la solicitud y el borrador de sesión. No se abre WhatsApp ni se copia, envía o cobra nada. Producción exigiría consentimiento explícito antes de compartir, generación server-side de un link de pago y un partner autorizado; ninguno se integra en este Lab.
+- **E1 — Exposición:** la persona ve el problema y la promesa.
+- **E2 — Comprensión:** puede explicar qué vio, qué significa y cuál es el límite.
+- **E3 — Acción voluntaria:** elige registrar, revisar, abrir un handoff o completar una simulación.
+- **E4 — Resultado / retorno:** ambos lados ven el mismo saldo y existe un motivo real para volver.
 
-**Aceptación:** se alternan las dos vistas; se puede completar y corregir el reparto; navegar a otro módulo y volver conserva el paso y datos durante la sesión; nunca se ofrece ejecución real.
+North Star candidata de Cuentas Claras: grupos con al menos una deuda creada y un cierre confirmado dentro de 30 días.
 
-### Ahorrar
+El Lab **No demuestra demanda, product-market fit, economics ni readiness**. Los modelos Directo y Embebido quedan fuera hasta que exista evidencia de repetición, confianza y operación.
 
-**Trabajo a resolver:** encontrar oportunidades cotidianas sin promesas opacas.
+## 8. Gates antes de publicar
 
-Abre con un rango grande de potencial estimado, no garantizado. Prioriza cargo dudoso → beneficio desaprovechado por tarjeta → cuenta o servicio posiblemente ineficiente → gasto posiblemente compartido. Cada tarjeta presenta primero una conclusión simple y conserva evidencia, fuente, certeza, estimación, acción reversible y disclosure bajo **Ver por qué**. Ignorar permanece como botón visible y deja un contador recuperable; el gesto lateral es solo un atajo secundario. Plan y división abren simulaciones explícitas, nunca una compra o cobro real.
-
-**Aceptación:** ninguna tarjeta afirma ahorro garantizado ni fraude; la persona puede abrir la explicación y decidir qué hacer.
-
-### Ganar
-
-Solo muestra “Próximamente”. No contiene flujo, promesa ni mecanismo de referidos.
-
-### Experimentos por explorar
-
-Vitrina de ideas ya conversadas y feedback simulado, sin fechas, fases, disponibilidad ni promesa de roadmap. Una posible etapa posterior del Lab permitiría que otras personas propongan mejoras sin GitHub mediante fichas comparables y revisión de Felipe. No se implementa esa capa, banca ni remesas en este MVP.
-
-### Feedback transversal del Lab
-
-**Trabajo a resolver:** capturar qué gustó, qué se mejoraría y qué idea o tema clave debería considerarse, manteniendo el contexto de la pantalla evaluada.
-
-En desktop reemplaza la fotografía editorial por un recuadro compacto siempre abierto al final del lateral, después de los botones de módulo y sin superposición; en móvil se abre desde un control compacto del encabezado. “Me gusta” permite comentario opcional; “Mejoraría” e “Idea” lo requieren. Cada entrada incluye módulo, tipo, comentario, temas clave, fecha y estado `new`, y se conserva únicamente en `localStorage` durante esta demo.
-
-**Aceptación:** el contexto cambia al navegar; el formulario puede abrirse/cerrarse; una entrada válida genera confirmación visible; no transmite datos, no solicita identidad ni finanzas personales y no concede acceso al repositorio. La arquitectura futura queda en `FEEDBACK-INTAKE.md`.
-
-## 4. Journeys prioritarios
-
-### Journey A — cargo dudoso
-
-Inicio → tarjeta Disney+ → Revisar → Cartola general con Disney+ → asistente contextual → guardar nota o marcar revisado.
-
-### Journey B — beneficio desaprovechado
-
-Inicio → Ahorrar → beneficio → evidencia, condiciones, certeza y rango de ahorro → acción informativa y reversible.
-
-### Journey C — recurrencia ineficiente
-
-Inicio → Ahorrar → plan móvil posiblemente ineficiente → revisar comparación demo, fuente, certeza y rango → comparar sin cambiar proveedor.
-
-### Journey secundario — repartir y solicitar
-
-Inicio o Cartola → Cobrar y pagar → Nuevo gasto → seleccionar/crear contacto ficticio → dividir → confirmar → guardar reparto de sesión. Cada transición permanece reversible y no cobra, paga ni envía mensajes.
-
-## 5. Datos y límites de la demo
-
-- Todas las personas, bancos, códigos, montos, estados y links son ficticios.
-- No existen proveedores, MCP, cuentas bancarias, cargas de archivos, pagos ni mensajes conectados.
-- Las comparaciones de consumo, si se incorporan después, usarán solo datos agregados/anónimos y explicarán la población comparada.
-- No se construye score crediticio. Cualquier evaluación futura debe mostrar evidencia, regla y nivel de certeza.
-- Open finance, subadquirencia, iniciación de pagos, MCP e infraestructura compartida no se presentan como construidos ni propios; son, a lo sumo, candidatos por evaluar.
-- Directo y Embebido quedan fuera de la selección de producto: son motions comparables y este Lab no declara un ganador.
-- El modo oscuro es inicial; el modo claro se puede elegir. La preferencia vive solo en `localStorage`, no requiere cuenta ni autenticación.
-
-## 6. Siguiente etapa del Lab
-
-Posible experimento posterior: una experiencia de propuestas sin GitHub donde una persona elige pantalla, describe problema e hipótesis, adjunta contexto y envía una propuesta a revisión. Felipe compara versión oficial y propuesta, comenta y decide aprobar o descartar. GitHub sigue siendo el respaldo, no la interfaz de colaboración. No es una capacidad disponible ni un compromiso de roadmap.
-
-## 7. Gates de aprendizaje
-
-- **E2 — Comprensión:** la persona explica con sus palabras qué detectó YOL1, qué evidencia usó, cuánta certeza tiene y qué no hará automáticamente.
-- **E3 — Acción voluntaria:** la persona decide avanzar, corregir o descartar una recomendación después de revisar evidencia y consecuencias.
-- **E4 — Resultado / retorno:** en pruebas posteriores se observa si la acción produjo un resultado verificable y si la persona vuelve por otra situación cotidiana.
-
-La navegabilidad de este dummy solo aporta evidencia de usabilidad y comprensión inicial. No demuestra demanda, product-market fit, economics ni readiness operacional o regulatoria.
-
-## 8. Onboarding y activación progresiva
-
-**Onboarding y KYC progresivo** es un prototipo para explorar. El recorrido de demo es: bienvenida → explorar el Acompañante sin datos → entender qué se desbloquearía → gate de activación → teléfono o email + OTP → pre-registro. OTP confirma un canal; no equivale a KYC ni habilita dinero.
-
-`Mi banco` vive dentro del Acompañante: recibe una intención material concreta sólo después del pre-registro y explica requisitos posibles sin pedir RUT, número de serie, biometría ni documentos en esta demo. Esos datos aplicarían únicamente con fundamento, partner y capacidad aprobados; KYC nunca habilita dinero por sí solo. La experiencia no valida identidad, abre una cuenta ni conecta banca. Cognito, API Gateway/Lambda y el resto de la arquitectura son referencias candidatas del discovery; proveedor KYC, ID definitivo y soporte/revisión manual siguen por definir.
-
-El menú de perfil se abre desde el logo superior izquierdo y muestra un checklist de información: lo completo, lo pendiente y qué capacidad desbloquearía cada paso.
-
-## 9. Arquitectura de portfolio vigente
-
-El producto principal del Lab se llama **Acompañante financiero** y contiene Mis finanzas, Cartola, Cobrar y pagar, Ahorrar, Ganar y Mi banco. El selector contiene exactamente seis espacios: Acompañante, Onboarding, Home Banking, Tarjetas, Remesas y Construir mi propio producto. La UI usa **Para explorar** y **En investigación**; ninguno equivale a readiness operacional.
-
-Tarjetas conserva un borrador local de discovery con datos sintéticos y gates explícitos; requiere decisión de Felipe sobre si sigue visible en el selector público o pasa a modo Equipo. Remesas permanece pausado y no se investiga ni prototipa en este ciclo. Builder guía una conversación externa y un envío local explícito; no sincroniza chats, crea branches ni publica.
-
-## 10. Ficha de producto y eventos propuestos
-
-La ficha contextual es material editorial interno del Lab y no se renderiza en la experiencia pública. Sus semillas son propuestas no definitivas:
-
-- evento de entrada o acción en `snake_case`; sus parámetros quedan como metadata separada;
-- arquitectura candidata con React Native y AWS como base a validar; datos separados entre qué guardar, qué consultar y cómo tratarlos;
-- KYC y licencias en Chile con estado `No aplica`, `Por validar` o `Requerido` y razón;
-- preguntas abiertas, feedback relacionado y bloque de QA interno “todo lo que puede salir mal”.
-
-Los eventos viven como atributos o mapeo local y no se envían a analytics. La ficha no reemplaza documentación técnica, legal ni regulatoria y debe residir en PRD, archivos de producto o una futura vista Equipo.
-
-## 11. Contradicciones y jerarquía de fuentes
-
-La bandeja interna usa esta prioridad: **decisión verbal de Felipe > decisión aprobada > reunión reciente > Notion/Second Brain > Jira > estrategia/contexto**. Los conflictos semilla son ejemplos no sensibles y se marcan como demo/por validar. Felipe puede elegir A, B o pedir más contexto con comentario; la resolución vive en el navegador, actualiza la ficha local y no edita archivos.
+- build, TypeScript, lint y suite completa en verde;
+- sesión demo aislada y mutaciones same-origin con límites;
+- cero credenciales o red en Floid/Belvo;
+- happy path, parcial, rechazo, cancelar, recargar, reintentar y volver probados;
+- foco, Escape, targets ≥44 px y un scroll a 440×956, 390×844 y 320×568;
+- fichas, README, MCP y conocimiento describen la misma frontera;
+- revisión visual de Felipe antes de commit, push o deploy.

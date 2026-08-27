@@ -2,10 +2,10 @@
 product_id: prod-onboarding
 name: Onboarding
 product_status: prototipo_exploratorio
-knowledge_status: semilla
+knowledge_status: ficha_viva
 owner: Felipe
-updated_at: 2026-08-18
-verified_through: null
+updated_at: 2026-08-26
+verified_through: 2026-08-26
 source_export_id: null
 decision_refs: []
 notion_refs: []
@@ -19,7 +19,7 @@ supersedes: []
 ## Resumen
 
 - **Promesa de exploración:** entregar valor antes de pedir más datos y explicar qué requisito desbloquearía una intención concreta.
-- **Resultado esperado:** pre-registro comprensible y siguiente gate explícito, sin pedir identidad sensible en la demo.
+- **Resultado esperado:** acceso demo comprensible, retorno exacto al trabajo que lo originó y siguiente gate explícito, sin pedir RUT en la primera sesión.
 - **No prometer:** apertura de cuenta, aprobación, conexión bancaria, KYC completado ni capacidad monetaria.
 
 ## Cobertura de frentes
@@ -29,7 +29,7 @@ supersedes: []
 | Producto / negocio | decidido | Para el prototipo: explorar primero; pedir canal y OTP después de elegir una ruta concreta. | [`PIVOTE-ONBOARDING-PROGRESIVO-CHILE-2026-08-18.md`](../../PIVOTE-ONBOARDING-PROGRESIVO-CHILE-2026-08-18.md) | Felipe | 2026-08-18 |
 | UX / accesibilidad | decidido | Para el prototipo: una decisión principal por pantalla; propósito, consecuencia y siguiente paso visibles. | [`PRD-ONBOARDING-KYC-PROGRESIVO.md`](../../PRD-ONBOARDING-KYC-PROGRESIVO.md) | Producto/Diseño | 2026-08-18 |
 | Reglas de negocio | candidato | Gate por `capability_key`; OTP, consentimiento, identidad y KYC son estados distintos. | [`PRD-ONBOARDING-KYC-PROGRESIVO.md`](../../PRD-ONBOARDING-KYC-PROGRESIVO.md) | Producto/Ingeniería | 2026-08-18 |
-| Requisitos funcionales | decidido | Definido para la demo: Bienvenida, exploración, gate, canal, OTP, pre-registro y handoff a Mi banco. | [`MVP-SPEC.md`](../../MVP-SPEC.md) | Producto | 2026-08-18 |
+| Requisitos funcionales | decidido | Entrada directa o contextual, canal, OTP demo, nombre visible y retorno al borrador o al Acompañante mediante `OnboardingEntryV1`. | [`lib/onboarding-entry-contract.ts`](../../lib/onboarding-entry-contract.ts) | Producto | 2026-08-26 |
 | Tecnología / arquitectura | candidato | Cognito y orquestación AWS son referencias, no selección cerrada. | [`ESTANDAR-QA-TECNICO-PRD.md`](../../ESTANDAR-QA-TECNICO-PRD.md) | Ingeniería por definir | 2026-08-18 |
 | Datos / analytics | por_validar | Identidad, consentimiento, KYC y analytics deben permanecer separados y versionados. | [`PRD-ONBOARDING-KYC-PROGRESIVO.md`](../../PRD-ONBOARDING-KYC-PROGRESIVO.md) | Datos por definir | 2026-08-18 |
 | Privacidad / seguridad | por_validar | Faltan threat model, scopes, deduplicación, recuperación y política de retención. | [`QA-TECNICO-PASADA-2.md`](../../QA-TECNICO-PASADA-2.md) | Seguridad por definir | 2026-08-18 |
@@ -42,9 +42,18 @@ supersedes: []
 ## Decisiones y reglas vigentes
 
 - Valor y exploración preceden a la captura de identidad.
+- Una tarea contextual puede omitir el carrusel general; conserva `entry_context`, `requested_job`, `return_to` y un `draft_id` opaco.
+- El pagador invitado de Cuentas Claras nunca pasa por Onboarding.
 - Los requisitos se piden por capacidad concreta, no por una escalera universal de KYC.
 - El resultado de un proveedor se normaliza; la UI no depende de sus estados crudos.
 - Analytics no es fuente de verdad para identidad, consentimiento o habilitación.
+
+## Métricas y aprendizaje
+
+- **Éxito del prototipo:** una entrada contextual conserva el borrador, recorre el acceso demo y vuelve al mismo trabajo editable.
+- **Activación candidata de Cuentas Claras:** `draft_restored → expense_created`; no el OTP aislado.
+- `otp_requested_demo` y `otp_submitted_demo` describen el funnel ficticio de acceso. No prueban control real del canal, identidad, retención ni PMF.
+- Cada evento debe declarar si está implementado y persistido, o si es sólo candidato. Los atributos visuales no equivalen a telemetría.
 
 ## Vacíos prioritarios
 

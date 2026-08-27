@@ -11,7 +11,11 @@
     "start": "next start",
     "test": "pnpm run build && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate --config=drizzle.debt-center.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.debt-center.config.ts",
+    "release:check": "node scripts/check-debt-center-release.mjs",
+    "release:check:env": "node scripts/check-debt-center-release.mjs --deployment-env",
+    "release:smoke": "node scripts/smoke-debt-center-release.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

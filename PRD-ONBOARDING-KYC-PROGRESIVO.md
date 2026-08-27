@@ -5,9 +5,9 @@
 
 ## Pivote conversacional activo · 18-ago-2026
 
-Felipe pidió probar localmente una nueva secuencia: historias de valor con swipe → email/teléfono + OTP → nombre y RUT declarados → entrada al Acompañante → verificación completa opcional/contextual. Se implementa como variante reversible y se documenta en `PIVOTE-ONBOARDING-PROGRESIVO-CHILE-2026-08-18.md`.
+El pivote activo quedó refinado a una secuencia mínima y contextual: valor → email/teléfono + OTP demo → nombre visible → retorno exacto a la tarea. Si la entrada viene desde un borrador de Cuentas Claras, salta el carrusel general, explica por qué necesita acceso y vuelve al mismo borrador.
 
-En esta variante, nombre + RUT crean un **perfil declarado, no una identidad verificada**. Sólo habilitan navegación y personalización de superficies demo; no cuenta, saldo, conexión bancaria ni capacidades de dinero. La ruta completa de documento/biometría permanece simulada y termina en revisión.
+En esta variante, OTP confirma sólo el canal y el nombre crea un **perfil básico declarado, no una identidad verificada**. El RUT no se pide en la primera sesión: queda reservado para una capability futura que lo justifique. Ningún paso habilita cuenta, saldo, conexión bancaria o capacidades de dinero.
 
 Cuando esta sección difiera del journey base documentado más abajo —que elige y explica una acción material antes del OTP—, manda el pivote activo sólo para esta prueba local. El journey base se conserva como rollback y sus `capability_key` no se asignan al perfil declarado por defecto.
 **Jurisdicción base:** Chile.  

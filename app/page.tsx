@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { localFeedbackIntake, type FeedbackKind } from "../lib/feedback-intake";
 import { localChatFeedbackIntake, type ChatFeedbackRating } from "../lib/chat-feedback";
 import { submitChatResponse, submitGeneralFeedback } from "../lib/shared-feedback-client";
@@ -12,56 +13,45 @@ import { validateAccessContact, type AccessMethod } from "../lib/onboarding-vali
 import { normalizeKycState, type NormalizedKycState } from "../lib/onboarding-safety";
 import type { PublicProjectDraft } from "../lib/project-draft-types";
 import { ProgressiveOnboardingFlow } from "./onboarding-progressive";
+import ClearAccountsApp from "./cuentas-claras/page";
+import { DebtHealthDemo } from "./debt-health-demo";
+import { DEBT_CENTER_DEMO_READ_MODEL } from "../lib/debt-center/demo-read-model";
+import type { DebtCenterCompanionSummary } from "../lib/debt-center/types";
+import { DEFAULT_ONBOARDING_ENTRY, parseOnboardingEntry, resolveOnboardingReturn, type OnboardingEntryV1 } from "../lib/onboarding-entry-contract";
+import { createExpenseDraftId, saveExpenseDraft } from "../lib/debt-center/draft-storage";
 
-type Tab = "inicio" | "finanzas" | "cartola" | "cobrar" | "ahorrar" | "ganar" | "banco";
+type Tab = "inicio" | "finanzas" | "cartola" | "ahorrar" | "deudas" | "banco";
 type Theme = "dark" | "light";
 type BuilderGuide = "chatgpt" | "claude" | "codex" | "how" | null;
-type MovementAction = "Marcar revisado" | "Revisar" | "Preparar reparto" | "Preparar cobro";
-type PendingView = "personas" | "grupos";
-type SplitMode = "equal" | "custom";
+type MovementAction = "Marcar revisado" | "Revisar" | "Dividir en Cuentas Claras" | "Ver en Cuentas Claras" | "Ver mi deuda";
+type MovementKind = "duplicate_candidate" | "shared_expense_candidate" | "own_transfer" | "ordinary_expense" | "formal_debt_payment_candidate";
 type ChatMessage = { id: string; role: "user" | "assistant"; text: string; mode?: "ai" | "demo" | "knowledge"; feedback?: ChatFeedbackRating; knowledgeVersion?: string };
-type MessagePreview = { name: string; alias?: string; amount: string; expense: string; direction: "collect" | "pay" };
 type OnboardingCapability = "financial_data_connect" | "receive_value";
 type InspectedAction = { eventId: string | null; label: string; productKey?: string; parameters: [string, string][] };
-type CollectDraft = {
-  step: number;
-  expense: string;
-  amount: number;
-  split: SplitMode;
-  contacts: string[];
-  participants: string[];
-  custom: Record<string, number>;
-  newContact: string;
-};
 
 const tabLabels: Record<Tab, string> = {
   inicio: "Inicio",
   finanzas: "Mis finanzas",
   cartola: "Cartola",
-  cobrar: "Cobrar y pagar",
   ahorrar: "Ahorrar",
-  ganar: "Gana más lucas",
+  deudas: "Tu plan de deuda",
   banco: "Mi banco",
 };
 
 const movements = [
-  { id: "disney-bci", date: "05 AGO", time: "10:43", name: "Disney+", code: "TX-81672", bank: "BCI", amount: -11990, hint: "Mismo monto y comercio en dos fuentes", tone: "warning", ownTransfer: false },
-  { id: "disney-mach", date: "05 AGO", time: "10:42", name: "Disney+", code: "TX-81665", bank: "MACH", amount: -11990, hint: "Posible duplicado; falta confirmar", tone: "warning", ownTransfer: false },
-  { id: "adam", date: "04 AGO", time: "13:16", name: "Dr. Adam", code: "TX-80811", bank: "BCI", amount: -70000, hint: "Podría ser un gasto compartido", tone: "info", ownTransfer: false },
-  { id: "own", date: "02 AGO", time: "09:31", name: "Transferencia propia", code: "TX-79845", bank: "BCI", amount: 17500, hint: "Clasificación simulada y revisable", tone: "muted", ownTransfer: true },
-  { id: "liguria", date: "01 AGO", time: "21:06", name: "Rest. Liguria", code: "TX-79122", bank: "BCI", amount: -41600, hint: "Beneficio público encontrado", tone: "good", ownTransfer: false },
-];
+  { id: "formal-payment-demo", kind: "formal_debt_payment_candidate", date: "22 AGO", time: "11:10", name: "Pago tarjeta demo", code: "TX-90014", bank: "BCI", amount: -75000, hint: "Podría corresponder a una deuda · falta confirmar", tone: "info", ownTransfer: false },
+  { id: "disney-bci", kind: "duplicate_candidate", date: "05 AGO", time: "10:43", name: "Disney+", code: "TX-81672", bank: "BCI", amount: -11990, hint: "Mismo monto y comercio en dos fuentes", tone: "warning", ownTransfer: false },
+  { id: "disney-mach", kind: "duplicate_candidate", date: "05 AGO", time: "10:42", name: "Disney+", code: "TX-81665", bank: "MACH", amount: -11990, hint: "Posible duplicado; falta confirmar", tone: "warning", ownTransfer: false },
+  { id: "adam", kind: "shared_expense_candidate", date: "04 AGO", time: "13:16", name: "Dr. Adam", code: "TX-80811", bank: "BCI", amount: -70000, hint: "Podría ser un gasto compartido", tone: "info", ownTransfer: false },
+  { id: "own", kind: "own_transfer", date: "02 AGO", time: "09:31", name: "Transferencia propia", code: "TX-79845", bank: "BCI", amount: 17500, hint: "Clasificación simulada y revisable", tone: "muted", ownTransfer: true },
+  { id: "liguria", kind: "shared_expense_candidate", date: "01 AGO", time: "21:06", name: "Rest. Liguria", code: "TX-79122", bank: "BCI", amount: -41600, hint: "Posible gasto compartido · falta confirmar", tone: "good", ownTransfer: false },
+] satisfies Array<{ id: string; kind: MovementKind; date: string; time: string; name: string; code: string; bank: string; amount: number; hint: string; tone: string; ownTransfer: boolean }>;
 
-const initialDraft: CollectDraft = {
-  step: 0,
-  expense: "Cena de equipo",
-  amount: 48000,
-  split: "equal",
-  contacts: ["Tú", "Josefa", "Martín", "Camila"],
-  participants: ["Tú", "Josefa", "Martín"],
-  custom: { Tú: 16000, Josefa: 16000, Martín: 16000, Camila: 0 },
-  newContact: "",
-};
+function thirdActionForMovement(kind: MovementKind): MovementAction | null {
+  if (kind === "shared_expense_candidate") return "Dividir en Cuentas Claras";
+  if (kind === "formal_debt_payment_candidate") return "Ver mi deuda";
+  return null;
+}
 
 const money = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
 const YOL1_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://yol1-product-growth-lab.vercel.app";
@@ -75,7 +65,7 @@ codex mcp add yol1 --url ${YOL1_MCP_URL}`;
 const ONBOARDING_PROGRESSIVE_PIVOT = true;
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <div className={compact ? "brand brand-compact" : "brand"}><img src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" /></div>;
+  return <div className={compact ? "brand brand-compact" : "brand"}><Image src={compact ? "/yol1-icon.png" : "/yol1-wordmark-dark.png"} alt="YOL1" width={compact ? 40 : 150} height={compact ? 40 : 54} priority /></div>;
 }
 
 export default function Home() {
@@ -90,11 +80,7 @@ export default function Home() {
   const [reviewedMovements, setReviewedMovements] = useState<string[]>([]);
   const [movementNotes, setMovementNotes] = useState<Record<string, string>>({});
   const [savedMovementNotes, setSavedMovementNotes] = useState<string[]>([]);
-  const [experimentVotes, setExperimentVotes] = useState<Record<string, boolean>>({});
-  const [collectDraft, setCollectDraft] = useState<CollectDraft>(initialDraft);
-  const [pendingView, setPendingView] = useState<PendingView>("personas");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [messagePreview, setMessagePreview] = useState<MessagePreview | null>(null);
   const [emptyStateIndex, setEmptyStateIndex] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
   const [onboardingStage, setOnboardingStage] = useState<OnboardingStage>("welcome");
@@ -107,28 +93,57 @@ export default function Home() {
   const [sharedProject, setSharedProject] = useState<PublicProjectDraft | null>(null);
   const [sharedProjectState, setSharedProjectState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [inspectedAction, setInspectedAction] = useState<InspectedAction | null>(null);
+  const [debtCenterSummary, setDebtCenterSummary] = useState<DebtCenterCompanionSummary | null>(null);
+  const [onboardingEntry, setOnboardingEntry] = useState<OnboardingEntryV1>(DEFAULT_ONBOARDING_ENTRY);
+  const [pendingCollectContext, setPendingCollectContext] = useState<string | null>(null);
   const appContentRef = useRef<HTMLDivElement>(null);
+  const handoffSheetRef = useRef<HTMLElement>(null);
+  const handoffReturnFocusRef = useRef<HTMLElement | null>(null);
   const resetAppContentScroll = useCallback(() => {
     if (appContentRef.current) appContentRef.current.scrollTop = 0;
   }, []);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("yol1-lab-theme");
-    setTheme(stored === "light" || stored === "dark" ? stored : "dark");
-    setDemoSnapshot(parseOnboardingDemoSnapshot(window.localStorage.getItem(ONBOARDING_DEMO_STORAGE_KEY)));
-    const requestedProduct = new URLSearchParams(window.location.search).get("product");
-    const requestedDraft = new URLSearchParams(window.location.search).get("draft");
-    if (PORTFOLIO_PRODUCTS.some((product) => product.id === requestedProduct)) {
-      setProductId(requestedProduct as ProductId);
-      setLabGuideOpen(false);
-    }
-    if (requestedDraft && /^prj_[a-f0-9]{32}$/.test(requestedDraft)) {
-      setProductId("builder");
-      setLabGuideOpen(false);
-      setSharedProjectId(requestedDraft);
-      setSharedProjectState("loading");
+  const refreshDebtCenterSummary = useCallback(async () => {
+    try {
+      const response = await fetch("/api/debt-center/summary", { cache: "no-store" });
+      const payload = await response.json() as { summary?: DebtCenterCompanionSummary };
+      if (response.ok && payload.summary?.source === "debt_center_ledger") setDebtCenterSummary(payload.summary);
+    } catch {
+      // La superficie sigue explicando la demo, pero no inventa que el read model está actualizado.
+      setDebtCenterSummary(null);
     }
   }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      const stored = window.localStorage.getItem("yol1-lab-theme");
+      setTheme(stored === "light" || stored === "dark" ? stored : "dark");
+      setDemoSnapshot(parseOnboardingDemoSnapshot(window.localStorage.getItem(ONBOARDING_DEMO_STORAGE_KEY)));
+      const requestedProduct = new URLSearchParams(window.location.search).get("product");
+      const requestedTab = new URLSearchParams(window.location.search).get("tab");
+      const requestedMovement = new URLSearchParams(window.location.search).get("selected");
+      const requestedDraft = new URLSearchParams(window.location.search).get("draft");
+      setOnboardingEntry(parseOnboardingEntry(window.location.search));
+      if (PORTFOLIO_PRODUCTS.some((product) => product.id === requestedProduct)) {
+        setProductId(requestedProduct as ProductId);
+        setLabGuideOpen(false);
+      }
+      if (requestedTab && ["inicio", "finanzas", "cartola", "ahorrar", "deudas", "banco"].includes(requestedTab)) setTab(requestedTab as Tab);
+      if (requestedMovement && movements.some((movement) => movement.id === requestedMovement)) setSelectedMovement(requestedMovement);
+      if (requestedDraft && /^prj_[a-f0-9]{32}$/.test(requestedDraft)) {
+        setProductId("builder");
+        setLabGuideOpen(false);
+        setSharedProjectId(requestedDraft);
+        setSharedProjectState("loading");
+      }
+    });
+  }, []);
+  useEffect(() => {
+    if (productId !== "companion") return;
+    queueMicrotask(() => void refreshDebtCenterSummary());
+    const refreshOnFocus = () => void refreshDebtCenterSummary();
+    window.addEventListener("focus", refreshOnFocus);
+    return () => window.removeEventListener("focus", refreshOnFocus);
+  }, [productId, refreshDebtCenterSummary]);
 
   useEffect(() => {
     if (!sharedProjectId) return;
@@ -149,6 +164,7 @@ export default function Home() {
 
   useEffect(() => {
     resetAppContentScroll();
+    window.scrollTo({ top: 0, behavior: "auto" });
   }, [bankCapability, onboardingStage, productId, resetAppContentScroll, tab]);
 
   useEffect(() => {
@@ -183,8 +199,18 @@ export default function Home() {
     setBankCapability("direct");
     notify("Pre-registro demo borrado de este navegador. No había contacto ni OTP guardados.");
   };
+  const syncLabRoute = (nextProduct: ProductId, nextTab?: Tab) => {
+    const params = new URLSearchParams({ product: nextProduct });
+    if (nextProduct === "companion" && nextTab) params.set("tab", nextTab);
+    window.history.replaceState({}, "", `/?${params.toString()}`);
+    resetAppContentScroll();
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
   const go = (next: Tab, message?: string) => {
+    setProductId("companion");
     setTab(next);
+    setNotice("");
+    syncLabRoute("companion", next);
     if (message) notify(message);
   };
 
@@ -194,9 +220,66 @@ export default function Home() {
     go("cartola");
   };
 
-  const openCollect = (expense?: string) => {
-    if (expense) setCollectDraft((draft) => ({ ...draft, step: 1, expense }));
-    go("cobrar");
+  const openCollect = (context?: string) => {
+    handoffReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setPendingCollectContext(context ?? "summary");
+  };
+
+  useEffect(() => {
+    if (!pendingCollectContext) return;
+    const sheet = handoffSheetRef.current;
+    const phone = sheet?.closest(".phone");
+    const background = phone ? [...phone.children].filter((child) => child !== sheet) as HTMLElement[] : [];
+    background.forEach((element) => element.setAttribute("inert", ""));
+    queueMicrotask(() => sheet?.querySelector<HTMLButtonElement>("button[data-primary='true']")?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPendingCollectContext(null);
+      if (event.key !== "Tab" || !sheet) return;
+      const controls = [...sheet.querySelectorAll<HTMLElement>("button:not([disabled]), a[href]")];
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      background.forEach((element) => element.removeAttribute("inert"));
+      queueMicrotask(() => handoffReturnFocusRef.current?.focus());
+    };
+  }, [pendingCollectContext]);
+
+  const confirmOpenCollect = () => {
+    const context = pendingCollectContext ?? "summary";
+    setPendingCollectContext(null);
+    const returnTab = ["inicio", "finanzas", "cartola", "ahorrar"].includes(tab) ? tab : "inicio";
+    const params = new URLSearchParams({ product: "clear_accounts", source: "companion", returnTo: `companion_${returnTab}` });
+    if (context?.toLocaleLowerCase("es").includes("liguria")) {
+      if (returnTab === "cartola") params.set("returnTo", "companion_cartola_liguria");
+      const draftId = createExpenseDraftId();
+      saveExpenseDraft(draftId, {
+        title: DEBT_CENTER_DEMO_READ_MODEL.companionDrafts.liguria.title,
+        amountText: String(DEBT_CENTER_DEMO_READ_MODEL.companionDrafts.liguria.amount),
+        groupId: "group_pucon",
+        paidBy: "person_felipe",
+        participantIds: ["person_felipe", "person_nico", "person_josefa"],
+        splitMode: "equal",
+        amounts: {},
+        receiptName: "",
+      });
+      params.set("intent", "create_expense");
+      params.set("draftId", draftId);
+      params.set("new", "expense");
+    } else if (context === "reconciliation") {
+      params.set("intent", "review_reconciliation");
+    } else if (context?.startsWith("debt_")) {
+      params.set("intent", "review_debt");
+      params.set("debtId", context);
+    } else {
+      params.set("intent", "view_receivables");
+    }
+    window.location.assign(`/?${params.toString()}`);
   };
 
   const archiveCard = (id: string, label: string) => {
@@ -205,14 +288,17 @@ export default function Home() {
   };
 
   const handleMovementAction = (action: MovementAction, movement: typeof movements[number]) => {
-    if (action === "Preparar reparto" || action === "Preparar cobro") {
+    if (action === "Dividir en Cuentas Claras" || action === "Ver en Cuentas Claras") {
       openCollect(movement.name);
-      notify(`${movement.name}: reparto preparado con datos ficticios.`);
       return;
     }
     if (action === "Marcar revisado") {
       setReviewedMovements((items) => items.includes(movement.id) ? items : [...items, movement.id]);
       notify(`${movement.name}: quedó marcado como revisado en esta sesión.`);
+      return;
+    }
+    if (action === "Ver mi deuda") {
+      go("deudas");
       return;
     }
     notify(`${movement.name}: detalle abierto para revisar.`);
@@ -225,19 +311,57 @@ export default function Home() {
     ? <>Tu plata,<br /><span>más clara.</span></>
     : productId === "kyc"
       ? <>Explora primero.<br /><span>Activa después.</span></>
+      : productId === "clear_accounts"
+        ? <>Divide fácil.<br /><span>Cierra en paz.</span></>
       : productId === "builder"
         ? <>El próximo producto<br /><span>lo construyes tú.</span></>
         : <>{activeProduct.name}<br /><span>en investigación.</span></>;
   const chooseProduct = (next: ProductId) => {
     setLabGuideOpen(false);
     setProductId(next);
+    setNotice("");
     setInspectedAction(null);
-    window.scrollTo({ top: 0, behavior: "auto" });
+    syncLabRoute(next, next === "companion" ? tab : undefined);
     const index = PORTFOLIO_PRODUCTS.findIndex((product) => product.id === next);
     setEmptyStateIndex(next === "builder" ? 1 : Math.max(0, index * 2));
     setFeedbackOpen(false);
     setProfileOpen(false);
   };
+  const navigateEmbeddedProduct = useCallback((href: string) => {
+    const target = new URL(href, window.location.origin);
+    const nextProduct = target.searchParams.get("product");
+    if (nextProduct !== "companion") {
+      window.location.assign(href);
+      return;
+    }
+    const requestedTab = target.searchParams.get("tab");
+    const nextTab = requestedTab && ["inicio", "finanzas", "cartola", "ahorrar", "deudas", "banco"].includes(requestedTab)
+      ? requestedTab as Tab
+      : "inicio";
+    const requestedMovement = target.searchParams.get("selected");
+    setLabGuideOpen(false);
+    setProductId("companion");
+    setTab(nextTab);
+    setSelectedMovement(requestedMovement && movements.some((movement) => movement.id === requestedMovement) ? requestedMovement : null);
+    setNotice("");
+    setInspectedAction(null);
+    setFeedbackOpen(false);
+    setProfileOpen(false);
+    window.history.replaceState({}, "", `${target.pathname}${target.search}${target.hash}`);
+    requestAnimationFrame(() => {
+      resetAppContentScroll();
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  }, [resetAppContentScroll]);
+  useEffect(() => {
+    const handleNavigate = (event: Event) => {
+      if (!(event instanceof CustomEvent) || typeof event.detail?.href !== "string") return;
+      event.preventDefault();
+      navigateEmbeddedProduct(event.detail.href);
+    };
+    window.addEventListener("yol1:lab-navigate", handleNavigate);
+    return () => window.removeEventListener("yol1:lab-navigate", handleNavigate);
+  }, [navigateEmbeddedProduct]);
   const inspectAction = (target: EventTarget | null) => {
     if (!(target instanceof Element)) return;
     const control = target.closest<HTMLElement>("button, a, [role='button'], input, select, textarea");
@@ -249,8 +373,6 @@ export default function Home() {
     const next = { eventId: control.dataset.eventId ?? null, label, productKey: control.dataset.productKey, parameters };
     setInspectedAction((current) => current?.eventId === next.eventId && current.label === next.label && current.productKey === next.productKey && JSON.stringify(current.parameters) === JSON.stringify(next.parameters) ? current : next);
   };
-
-  if (messagePreview) return <MessagePreviewScreen preview={messagePreview} theme={theme} onBack={() => setMessagePreview(null)} />;
 
   if (labGuideOpen) return <LabWelcome theme={theme} onTheme={() => chooseTheme(theme === "dark" ? "light" : "dark")} onChooseProduct={chooseProduct} />;
 
@@ -272,7 +394,7 @@ export default function Home() {
         <FeedbackPanel key={`desktop-feedback-${productId}-${activeTitle}`} product={activeProduct.name} screen={activeTitle} open={true} onToggle={() => undefined} variant="desktop" compact={false} onSubmitted={() => undefined} />
       </section>
 
-      {(productId === "companion" || productId === "kyc" || productId === "builder") ? <section className={`phone-wrap ${productId === "builder" ? "builder-phone-wrap" : ""}`} aria-label={`YOL1 — ${activeTitle}`}>
+      {(productId === "companion" || productId === "clear_accounts" || productId === "kyc" || productId === "builder") ? <section className={`phone-wrap ${productId === "builder" ? "builder-phone-wrap" : ""}`} aria-label={`YOL1 — ${activeTitle}`}>
         <span className="phone-halo" aria-hidden="true" />
         <div className={`phone phone-${productId}`}>
           <div className="phone-notch" />
@@ -281,30 +403,30 @@ export default function Home() {
             <span className="app-section">{activeTitle}</span>
             <div className="header-actions"><button className="feedback-mobile-trigger" data-event-id="feedback_panel_opened" onClick={() => setFeedbackOpen(true)} aria-label={`Dejar feedback sobre ${activeTitle}`}><span aria-hidden="true">✎</span> Feedback</button><button className="theme-toggle" data-event-id="theme_mode_toggled" onClick={() => chooseTheme(theme === "dark" ? "light" : "dark")} aria-label={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`} title={`Cambiar a modo ${theme === "dark" ? "claro" : "oscuro"}`}><span aria-hidden="true">{theme === "dark" ? "☀" : "◐"}</span> {theme === "dark" ? "Claro" : "Oscuro"}</button></div>
           </header>
-          <div ref={appContentRef} className={`app-content app-${productId === "companion" ? tab : productId === "kyc" ? "onboarding" : "builder"} ${productId === "companion" && tab === "cobrar" && collectDraft.step === 0 ? "collect-home-mode" : ""}`}>
+          <div ref={appContentRef} className={`app-content app-${productId === "companion" ? tab : productId === "clear_accounts" ? "clear_accounts" : productId === "kyc" ? "onboarding" : "builder"}`}>
             <>
               {productId === "kyc" && (ONBOARDING_PROGRESSIVE_PIVOT
-                ? <ProgressiveOnboardingFlow key={`pivot-${onboardingResetKey}`} onSnapshotChange={setDemoSnapshot} onStepChange={resetAppContentScroll} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Ya puedes explorar tu acompañante financiero."); }} />
+                ? <ProgressiveOnboardingFlow key={`pivot-${onboardingResetKey}-${onboardingEntry.requested_job}-${onboardingEntry.draft_id ?? "direct"}`} entry={onboardingEntry} onSnapshotChange={setDemoSnapshot} onStepChange={resetAppContentScroll} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Puedes explorar con datos ficticios sin registrarte."); }} onComplete={(entry) => window.location.assign(resolveOnboardingReturn(entry))} />
                 : <OnboardingFlow key={onboardingResetKey} stage={onboardingStage} setStage={setOnboardingStage} onSnapshotChange={setDemoSnapshot} onEnterAdvisor={() => { setProductId("companion"); go("inicio", "Ya puedes explorar tu acompañante financiero."); }} onOpenBank={() => { setBankCapability("receive_value"); setProductId("companion"); go("banco", "Handoff demo: revisa los requisitos posibles sin entregar identidad."); }} />)}
               {productId === "builder" && <ProjectBuilderScreen guide={builderGuide} onGuide={setBuilderGuide} project={sharedProject} projectState={sharedProjectState} />}
-              {productId === "companion" && tab === "inicio" && <Start archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
-              {productId === "companion" && tab === "finanzas" && <Finances onLedger={openLedger} onMove={go} onNotice={notify} />}
+              {productId === "clear_accounts" && <ClearAccountsApp />}
+              {productId === "companion" && tab === "inicio" && <Start debtSummary={debtCenterSummary} archived={archivedCards} onArchive={archiveCard} onRestore={(id) => setArchivedCards((cards) => cards.filter((card) => card !== id))} onMove={go} onCollect={openCollect} onLedger={openLedger} onNotice={notify} />}
+              {productId === "companion" && tab === "finanzas" && <Finances debtSummary={debtCenterSummary} onLedger={openLedger} onCollect={openCollect} onNotice={notify} />}
               {productId === "companion" && tab === "cartola" && <Ledger source={source} setSource={setSource} selected={selectedMovement} setSelected={setSelectedMovement} reviewed={reviewedMovements} onUnreview={(id) => setReviewedMovements((items) => items.filter((item) => item !== id))} notes={movementNotes} setNotes={setMovementNotes} savedNotes={savedMovementNotes} setSavedNotes={setSavedMovementNotes} onAction={handleMovementAction} onNotice={notify} />}
-              {productId === "companion" && tab === "cobrar" && <Collect draft={collectDraft} setDraft={setCollectDraft} view={pendingView} setView={setPendingView} onNotice={notify} onPreview={setMessagePreview} />}
-              {productId === "companion" && tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} onCollect={openCollect} />}
-              {productId === "companion" && tab === "ganar" && <EarnMore onBack={() => go("inicio")} />}
+              {productId === "companion" && tab === "ahorrar" && <Save onNotice={notify} onLedger={openLedger} />}
+              {productId === "companion" && tab === "deudas" && <DebtHealthDemo onLedger={openLedger} onNotice={notify} />}
               {productId === "companion" && tab === "banco" && <MyBank capability={bankCapability} onNotice={notify} onClearContext={() => setBankCapability("direct")} onResetScroll={resetAppContentScroll} />}
             </>
           </div>
           {notice && <div className="phone-toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Cerrar confirmación">×</button></div>}
+          {pendingCollectContext && <section ref={handoffSheetRef} className="product-handoff-sheet" role="dialog" aria-modal="true" aria-labelledby="handoff-title"><span>CAMBIO DE PRODUCTO</span><h3 id="handoff-title">Vas a abrir Cuentas Claras.</h3><p>Llevaremos sólo el contexto de esta señal para que lo revises. Nada se guardará hasta que tú lo confirmes.</p><div><button onClick={() => setPendingCollectContext(null)}>Seguir aquí</button><button data-primary="true" onClick={confirmOpenCollect}>Abrir Cuentas Claras</button></div></section>}
           <FeedbackPanel key={`mobile-feedback-${productId}-${activeTitle}`} product={activeProduct.name} screen={activeTitle} open={feedbackOpen} onToggle={() => setFeedbackOpen(false)} variant="mobile" onSubmitted={() => undefined} />
-          {profileOpen && <ProfileMenu snapshot={demoSnapshot} onClose={() => setProfileOpen(false)} onOnboarding={() => { setProfileOpen(false); setProductId("kyc"); }} onBank={() => { setProfileOpen(false); setProductId("companion"); setBankCapability(demoSnapshot?.selected_capability === "receive_value" ? "receive_value" : "direct"); go("banco"); }} onClearDemo={() => { clearDemoFromLedger(); setProfileOpen(false); }} />}
-          {productId === "companion" && <nav className="bottom-nav bottom-nav-six" aria-label="Navegación principal">
+          {profileOpen && <ProfileMenu snapshot={demoSnapshot} onClose={() => setProfileOpen(false)} onOnboarding={() => { setProfileOpen(false); chooseProduct("kyc"); }} onBank={() => { setProfileOpen(false); setBankCapability(demoSnapshot?.selected_capability === "receive_value" ? "receive_value" : "direct"); go("banco"); }} onClearDemo={() => { clearDemoFromLedger(); setProfileOpen(false); }} />}
+          {productId === "companion" && <nav className="bottom-nav bottom-nav-five" aria-label="Navegación principal">
             <NavButton icon="⌂" label="Inicio" current={tab === "inicio"} onClick={() => go("inicio")} />
             <NavButton icon="💵" label="Finanzas" current={tab === "finanzas" || tab === "cartola"} onClick={() => go("finanzas")} />
-            <NavButton icon="👥" label="Cobrar/pagar" current={tab === "cobrar"} onClick={() => go("cobrar")} />
             <NavButton icon="🪙" label="Ahorrar" current={tab === "ahorrar"} onClick={() => go("ahorrar")} />
-            <NavButton icon="✦" label="Ganar" current={tab === "ganar"} onClick={() => go("ganar")} />
+            <NavButton icon="▤" label="Deudas" current={tab === "deudas"} onClick={() => go("deudas")} />
             <NavButton icon="⌂" label="Mi banco" current={tab === "banco"} onClick={() => { setBankCapability("direct"); go("banco"); }} />
           </nav>}
         </div>
@@ -322,9 +444,8 @@ function productSpecScreen(product: ProductDefinition, screen: string) {
   const normalized = screen.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   if (normalized.includes("finanzas")) return "finanzas";
   if (normalized.includes("cartola")) return "cartola";
-  if (normalized.includes("cobrar")) return "cobrar";
   if (normalized.includes("ahorrar")) return "ahorrar";
-  if (normalized.includes("ganar")) return "ganar";
+  if (normalized.includes("deuda")) return "deudas";
   if (normalized.includes("banco")) return "banco";
   return "inicio";
 }
@@ -365,7 +486,11 @@ function ProductSpecPanel({ product, screen, inspectedAction }: { product: Produ
     readModel: spec.data.query,
     writeModel: spec.data.store,
     sourceOfTruth: spec.data.sources,
-    operationalRecord: "BD operacional por definir · conservar origen, frescura y versión de regla",
+    operationalRecord: product.id === "clear_accounts"
+      ? "Repository adapter del Lab · memoria volátil o Neon/Postgres con Drizzle; el ledger es la fuente de verdad y MockFloid sólo produce evidencia simulada"
+      : product.id === "companion"
+        ? "Read models sintéticos separados por dominio en el prototipo; sistema operacional productivo todavía por definir (Prop.)"
+        : "BD operacional por definir (Prop.) · conservar origen, frescura y versión de regla",
     analytics: "CDP / warehouse por definir · enviar sólo evento allowlisted, IDs pseudónimos y consentimiento",
     observability: "Logs estructurados + correlation_id · sin PII, OTP, credenciales ni payloads financieros crudos",
   };
@@ -376,11 +501,16 @@ function ProductSpecPanel({ product, screen, inspectedAction }: { product: Produ
     ["Observabilidad", `Instrumentar ${spec.event} con IDs pseudónimos, consent_analytics y schema_version. Errores operativos van a logs estructurados; datos sensibles quedan fuera.`],
     ["Definition of ready", `Owner asignado: ${spec.governance.owner}. Fuente y gate confirmados, estados vacío/carga/error/reintento definidos, y rollback o feature flag disponible antes de habilitar acciones materiales.`],
   ];
-  const architectureGuide = [
-    "React Native: componentes reutilizables, navegación tipada, estado de carga/error/vacío y accesibilidad desde el componente.",
-    "BFF / API: contrato versionado por pantalla; valida autorización y devuelve sólo el read model que necesita la vista.",
-    "AWS: API Gateway → Lambda por dominio candidato; DynamoDB/RDS según patrón de acceso y auditoría; EventBridge para eventos asíncronos sólo cuando exista una integración aprobada.",
-    "Operación: feature flag por capability, trazabilidad con correlation_id, observabilidad y rollback antes de habilitar una acción material.",
+  const architectureGuide = product.id === "clear_accounts" ? [
+    "Prototipo actual: Next.js mobile-only dentro del Lab; API Routes para comandos/consultas y componentes accesibles con estados vacío, carga, error y reintento.",
+    "Persistencia actual: repository adapter con agregado versionado; memoria cuando no existe DATABASE_URL y Neon/Postgres + Drizzle cuando está configurado.",
+    "Pagos actuales: getPaymentProvider() retorna siempre MockFloidPaymentProvider. No existe selector, credenciales, OAuth, webhook entrante ni llamada de red a Floid.",
+    "Objetivo productivo (Prop.): modelo relacional normalizado, aislamiento por workspace, outbox/idempotencia y observabilidad antes de evaluar cualquier proveedor real.",
+  ] : [
+    "Objetivo cliente (Prop.): React Native con componentes reutilizables, navegación tipada, estados de carga/error/vacío y accesibilidad desde el componente.",
+    "Objetivo BFF/API (Prop.): contrato versionado por pantalla; valida autorización y devuelve sólo el read model que necesita la vista.",
+    "Objetivo plataforma (Prop.): API Gateway → Lambda por dominio; DynamoDB/RDS según patrón de acceso y auditoría; asincronía sólo con integración aprobada.",
+    "Operación (Prop.): feature flag por capability, correlation_id, observabilidad y rollback antes de habilitar una acción material.",
   ];
   const sections = [
     { title: "Evento y metadata", content: <><p className="team-spec-inspector"><span>{inspectedAction ? "INSPECCIONANDO ACCIÓN" : "EVENTO BASE DE ESTA PANTALLA"}</span><strong>{inspectedAction?.label ?? simpleEventName(spec.event, product, screen)}</strong></p><p className="team-spec-event">{hasEvent ? simpleEventName(inspectedEvent, product, screen) : "Sin evento definido"}</p><code>{hasEvent ? inspectedEvent : "instrumentación pendiente"}</code>{!hasEvent && inspectedAction && <p className="team-spec-warning">Esta acción aún no tiene <code>data-event-id</code>. La ficha no inventa un evento: queda como deuda de instrumentación.</p>}<dl>{metadata.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl>{inspectedAction?.parameters.length ? <><p className="team-spec-parameters-label">Parámetros de esta interacción</p><dl>{inspectedAction.parameters.map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></> : null}</> },
@@ -391,20 +521,20 @@ function ProductSpecPanel({ product, screen, inspectedAction }: { product: Produ
   return <section className="team-spec" aria-label={`Ficha técnica de ${screen}`}>
     <header><div><p className="eyebrow">FICHA DE PRODUCTO · PARA DESARROLLO</p><h2>{screen}</h2><p>De decisión técnica a experiencia: contrato de datos, arquitectura candidata, instrumentación y QA para que el equipo pueda construir sin adivinar.</p></div><aside><small>OWNER</small><strong>{spec.governance.owner}</strong><small>REVISAR</small><span>{spec.governance.reviewBy}</span></aside></header>
     <div className="team-spec-accordion">{sections.slice(0, 1).map((section) => <details key={section.title} open><summary>{section.title}<span>+</span></summary><div>{section.content}</div></details>)}</div>
-    {spec.technicalFlow && <OnboardingTechnicalDeck flow={spec.technicalFlow} />}
+    {spec.technicalFlow && <TechnicalFlowDeck flow={spec.technicalFlow} productName={product.name} />}
     <div className="team-spec-accordion">{sections.slice(1).map((section) => <details key={section.title}><summary>{section.title}<span>+</span></summary><div>{section.content}</div></details>)}</div>
   </section>;
 }
 
-type OnboardingTechnicalScreen = NonNullable<LivingSpec["technicalFlow"]>[number];
+type TechnicalFlowScreen = NonNullable<LivingSpec["technicalFlow"]>[number];
 
-function OnboardingTechnicalDeck({ flow }: { flow: OnboardingTechnicalScreen[] }) {
+function TechnicalFlowDeck({ flow, productName }: { flow: TechnicalFlowScreen[]; productName: string }) {
   const [selected, setSelected] = useState(0);
   const current = flow[selected];
   const navigate = (direction: -1 | 1) => setSelected((value) => Math.min(flow.length - 1, Math.max(0, value + direction)));
-  return <section className="onboarding-technical-deck" aria-label="Ficha de flujo pantalla por pantalla">
-    <header><div><p className="eyebrow">FICHA DE FLUJO · ONBOARDING V2</p><h3>Pantallas, bifurcaciones y contrato técnico.</h3><p>Selecciona una pantalla: abajo queda la historia de usuario que un equipo de ingeniería necesita para construirla.</p></div><div className="flow-deck-controls"><button type="button" onClick={() => navigate(-1)} disabled={selected === 0} aria-label="Pantalla anterior">←</button><strong>{String(selected + 1).padStart(2, "0")} / {String(flow.length).padStart(2, "0")}</strong><button type="button" onClick={() => navigate(1)} disabled={selected === flow.length - 1} aria-label="Pantalla siguiente">→</button></div></header>
-    <div className="flow-deck-rail" role="tablist" aria-label="Pantallas del onboarding">{flow.map((item, index) => <button key={item.screen} role="tab" aria-selected={selected === index} className={selected === index ? "selected" : ""} onClick={() => setSelected(index)}><span>{item.screen}</span><strong>{item.ui}</strong><small>{item.next}</small></button>)}</div>
+  return <section className="onboarding-technical-deck" aria-label={`Ficha de flujo de ${productName}`}>
+    <header><div><p className="eyebrow">FICHA DE FLUJO · {productName.toUpperCase()}</p><h3>Pantallas, bifurcaciones y contrato técnico.</h3><p>Selecciona una pantalla: abajo queda la historia de usuario que un equipo de ingeniería necesita para construirla.</p></div><div className="flow-deck-controls"><button type="button" onClick={() => navigate(-1)} disabled={selected === 0} aria-label="Pantalla anterior">←</button><strong>{String(selected + 1).padStart(2, "0")} / {String(flow.length).padStart(2, "0")}</strong><button type="button" onClick={() => navigate(1)} disabled={selected === flow.length - 1} aria-label="Pantalla siguiente">→</button></div></header>
+    <div className="flow-deck-rail" role="tablist" aria-label={`Pantallas de ${productName}`}>{flow.map((item, index) => <button key={item.screen} role="tab" aria-selected={selected === index} className={selected === index ? "selected" : ""} onClick={() => setSelected(index)}><span>{item.screen}</span><strong>{item.ui}</strong><small>{item.next}</small></button>)}</div>
     <article className="flow-deck-detail" aria-live="polite"><header><div><p className="eyebrow">{current.screen}</p><h3>{current.ui}</h3><p><b>Bifurcación:</b> {current.next}</p></div><code>{current.command}</code></header><div className="flow-deck-detail-grid"><FlowDetail label="Microservicios / componentes" values={current.services} /><FlowDetail label="Lee" values={current.reads} /><FlowDetail label="Escribe" values={current.writes} /><FlowDetail label="Tablas / colecciones" values={current.records} /><FlowDetail label="Eventos" values={current.events} /></div><div className="flow-deck-qa"><p><b>Error y recuperación:</b> {current.failure}</p><p><b>Definition of done:</b> {current.acceptance}</p></div></article>
   </section>;
 }
@@ -517,13 +647,15 @@ function OnboardingFlow({ stage, setStage, onSnapshotChange, onEnterAdvisor, onO
   };
   useEffect(() => {
     const restored = parseOnboardingDemoSnapshot(window.localStorage.getItem(ONBOARDING_DEMO_STORAGE_KEY));
-    if (restored && restored.selected_capability !== "none") {
-      setCapability(restored.selected_capability);
-      setMethod(restored.channel_type);
-      setStage(restored.resume_stage);
-    }
-    onSnapshotChange(restored);
-    setStorageReady(true);
+    queueMicrotask(() => {
+      if (restored && restored.selected_capability !== "none") {
+        setCapability(restored.selected_capability);
+        setMethod(restored.channel_type);
+        setStage(restored.resume_stage);
+      }
+      onSnapshotChange(restored);
+      setStorageReady(true);
+    });
   }, [onSnapshotChange, setStage]);
   useEffect(() => {
     if (!storageReady || (stage !== "preregistered_demo" && stage !== "consent_preview")) return;
@@ -820,46 +952,19 @@ function ResearchStage({ product, stateIndex }: { product: ProductDefinition; st
 }
 
 function ResearchProduct({ product, stateIndex }: { product: ProductDefinition; stateIndex: number }) {
-  const fixedState: Record<Exclude<ProductId, "companion">, number> = { kyc: 1, banking: 0, cards: 2, remittances: 5, builder: 3 };
+  const fixedState: Record<Exclude<ProductId, "companion">, number> = { clear_accounts: 0, kyc: 1, banking: 0, cards: 2, remittances: 5, builder: 3 };
   const empty = EMPTY_STATE_LIBRARY[fixedState[product.id as Exclude<ProductId, "companion">] ?? (stateIndex % EMPTY_STATE_LIBRARY.length)];
   const stageLabel = maturityLabel(product);
   const availabilityLabel = product.maturity === "paused" ? "SIN TRABAJO ACTIVO" : "SIN FLUJO DISPONIBLE";
   return <section className={`product-empty product-${product.id} gesture-${empty.gesture}`} aria-label={`${product.name}, en investigación`}>
     <div className="empty-status"><span>{stageLabel}</span><small>{availabilityLabel}</small></div>
     <div className="empty-gesture" aria-hidden="true">
-      {empty.gesture === "dog" ? <div className="tail-dog"><i className="dog-ear" /><i className="dog-eye" /><i className="dog-body" /><i className="dog-tail" /><i className="dog-paw" /></div> : empty.gesture === "cat" ? <div className="typing-cat"><i className="cat-head" /><i className="cat-ear left" /><i className="cat-ear right" /><i className="cat-eye left" /><i className="cat-eye right" /><i className="cat-paw left" /><i className="cat-paw right" /><i className="cat-keyboard" /></div> : empty.gesture === "robot" ? <div className="idea-robot"><i className="robot-head" /><i className="robot-eye left" /><i className="robot-eye right" /><i className="robot-arm left" /><i className="robot-arm right" /><i className="robot-note note-one" /><i className="robot-note note-two" /><i className="robot-note note-three" /></div> : empty.gesture === "coffee" ? <img className="empty-photo" src="/felipe-coffee-break.png" alt="Máquina de café en pausa" /> : <span>{empty.icon}</span>}
+      {empty.gesture === "dog" ? <div className="tail-dog"><i className="dog-ear" /><i className="dog-eye" /><i className="dog-body" /><i className="dog-tail" /><i className="dog-paw" /></div> : empty.gesture === "cat" ? <div className="typing-cat"><i className="cat-head" /><i className="cat-ear left" /><i className="cat-ear right" /><i className="cat-eye left" /><i className="cat-eye right" /><i className="cat-paw left" /><i className="cat-paw right" /><i className="cat-keyboard" /></div> : empty.gesture === "robot" ? <div className="idea-robot"><i className="robot-head" /><i className="robot-eye left" /><i className="robot-eye right" /><i className="robot-arm left" /><i className="robot-arm right" /><i className="robot-note note-one" /><i className="robot-note note-two" /><i className="robot-note note-three" /></div> : empty.gesture === "coffee" ? <Image className="empty-photo" src="/felipe-coffee-break.png" alt="Máquina de café en pausa" width={560} height={420} /> : <span>{empty.icon}</span>}
     </div>
     <p className="kicker">{empty.eyebrow}</p>
     <h2>{empty.title}</h2>
     <p>{empty.body}</p>
   </section>;
-}
-
-function MessagePreviewScreen({ preview, theme, onBack }: { preview: MessagePreview; theme: Theme; onBack: () => void }) {
-  const initialMessage = preview.direction === "collect"
-    ? `Hola ${preview.name}, tengo pendiente ${preview.amount} por ${preview.expense}. Este es un texto de ejemplo: todavía no envié una solicitud ni un enlace de pago.`
-    : `Hola ${preview.name}, tengo pendiente pagarte ${preview.amount} por ${preview.expense}. Este es un texto de ejemplo: todavía no inicié un pago.`;
-  const [message, setMessage] = useState(initialMessage);
-  const [copyNotice, setCopyNotice] = useState("");
-  return <main className="message-preview-shell" data-theme={theme} aria-label="Vista previa de mensaje ficticio">
-    <section className="message-preview-stage">
-      <p className="message-context-note"><strong>Vista previa del mensaje</strong><span>Sigues dentro de YOL1. Nada se envió.</span></p>
-      <header className="message-preview-top"><div><small>VISTA PREVIA DE MENSAJE</small><strong>{preview.name} {preview.alias}</strong></div><span>DEMO · NO ENVIADO</span></header>
-      <div className="message-date">HOY · EJEMPLO</div>
-      <div className="message-bubble">
-        <textarea aria-label="Mensaje ficticio ajustable" value={message} onChange={(event) => setMessage(event.target.value)} />
-        {preview.direction === "collect" && <code>https://paga.yol1.example/s/demo-2841</code>}
-        <time>10:42 ✓</time>
-      </div>
-      <div className="message-demo-note"><strong>Este enlace es ficticio y no se puede abrir.</strong><span>No inicia pagos, no conecta bancos y no envía nada por WhatsApp.</span></div>
-      <div className="message-preview-actions">
-        <button className="message-back" onClick={onBack}>← Volver a YOL1</button>
-        <button onClick={() => setCopyNotice("Este es solo un texto de ejemplo. No usamos el portapapeles ni abrimos otra app.")}>Ver texto de ejemplo</button>
-      </div>
-      {copyNotice && <p className="message-copy-notice" role="status">{copyNotice}</p>}
-      <p className="message-production-note">En producción, compartir requeriría tu consentimiento explícito, un link generado en servidor y un partner de pagos autorizado.</p>
-    </section>
-  </main>;
 }
 
 function FeedbackPanel({ product, screen, open, onToggle, variant, compact = false, onSubmitted }: { product: string; screen: string; open: boolean; onToggle: () => void; variant: "desktop" | "mobile"; compact?: boolean; onSubmitted: () => void }) {
@@ -919,7 +1024,7 @@ function NavButton({ icon, label, current, onClick }: { icon: string; label: str
   return <button className={current ? "nav-active" : ""} data-event-id="companion_navigation_selected" data-destination={label} onClick={onClick}><span aria-hidden="true">{icon}</span><small>{label}</small></button>;
 }
 
-function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, onNotice }: { archived: string[]; onArchive: (id: string, label: string) => void; onRestore: (id: string) => void; onMove: (target: Tab) => void; onCollect: (expense?: string) => void; onLedger: (filter?: string, selected?: string) => void; onNotice: (message: string) => void }) {
+function Start({ debtSummary, archived, onArchive, onRestore, onMove, onCollect, onLedger, onNotice }: { debtSummary: DebtCenterCompanionSummary | null; archived: string[]; onArchive: (id: string, label: string) => void; onRestore: (id: string) => void; onMove: (target: Tab) => void; onCollect: (expense?: string) => void; onLedger: (filter?: string, selected?: string) => void; onNotice: (message: string) => void }) {
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([{ id: "welcome", role: "assistant", text: "Hola. Puedo ayudarte a entender el mes, ordenar pendientes o revisar una oportunidad del ejemplo.", mode: "demo" }]);
   const [chatBusy, setChatBusy] = useState(false);
@@ -944,18 +1049,30 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
       })
       .catch(() => setAiChoice("demo"));
   }, []);
+  const socialPendingCount = debtSummary ? debtSummary.receivableCount + debtSummary.payableCount : 0;
+  const socialCards = debtSummary
+    ? socialPendingCount > 0
+      ? [{ id: "clear-accounts-summary", tag: "CUENTAS COMPARTIDAS", title: "Tienes cuentas sin cerrar.", detail: `Te deben ${money.format(debtSummary.receivableOutstanding)} · debes ${money.format(debtSummary.payableOutstanding)}`, amount: `${socialPendingCount} pendientes`, tone: "social", actions: [{ label: "Ahora no", run: () => onArchive("clear-accounts-summary", "Cuentas compartidas") }, { label: "Abrir Cuentas Claras", run: () => onCollect() }] }]
+      : []
+    : [{ id: "clear-accounts-unavailable", tag: "CUENTAS COMPARTIDAS", title: "No pudimos actualizar tus cuentas.", detail: "El ledger sigue disponible en Cuentas Claras.", amount: "Sin resumen", tone: "social", actions: [{ label: "Abrir Cuentas Claras", run: () => onCollect() }] }];
+  const reconciliationCards = debtSummary?.reconciliation.latestResult
+    ? [{ id: "clear-accounts-reconciliation", tag: "CARTOLA DEMO · CUENTAS CLARAS", title: `${debtSummary.reconciliation.latestResult.debtorName}: encontramos un abono ficticio.`, detail: `${debtSummary.reconciliation.latestResult.source === "automatic_rule" ? "Referencia exacta conciliada por regla local" : "Registrado por ti"} · aún faltan ${money.format(debtSummary.reconciliation.latestResult.outstandingAmount)}`, amount: money.format(debtSummary.reconciliation.latestResult.amount), tone: "social", actions: [{ label: "Ahora no", run: () => onArchive("clear-accounts-reconciliation", "Conciliación demo") }, { label: "Revisar en Cuentas Claras", run: () => onCollect("reconciliation") }] }]
+    : debtSummary?.reconciliation.pendingCount
+      ? [{ id: "clear-accounts-reconciliation-pending", tag: "CARTOLA DEMO · POR REVISAR", title: `${debtSummary.reconciliation.pendingCount} movimiento podría corresponder a una cuenta.`, detail: "Cuentas Claras necesita tu decisión; ningún saldo cambió.", amount: "Revisar", tone: "social", actions: [{ label: "Abrir Cuentas Claras", run: () => onCollect("reconciliation") }] }]
+      : [];
   const actionCards = [
+    { id: "debt-payment-not-reflected", tag: "DEUDA · REVISAR", title: "Un pago todavía no aparece reflejado.", detail: "Cartola más nueva que el informe · puede ser un desfase", amount: "$75.000", tone: "alert", actions: [{ label: "Ahora no", run: () => onArchive("debt-payment-not-reflected", "Pago por confirmar") }, { label: "Revisar mi deuda", run: () => onMove("deudas") }] },
     { id: "disney", tag: "CARGO DUDOSO", title: "Disney+ aparece dos veces", detail: "Mismo monto · 1 minuto", amount: "$11.990", tone: "alert", actions: [{ label: "Ignorar", run: () => onArchive("disney", "Disney+") }, { label: "Revisar", run: () => onLedger("General", "disney-bci") }] },
-    { id: "maria", tag: "POR COBRAR", title: "María te debe del almuerzo", detail: "Pendiente desde el viernes", amount: "$18.000", tone: "social", actions: [{ label: "Preparar cobro", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("maria", "Cobro de María") }] },
-    { id: "camila", tag: "POR PAGAR", title: "Le debes a Camila", detail: "Depto agosto · @camila", amount: "$42.000", tone: "social", actions: [{ label: "Preparar pago", run: () => onMove("cobrar") }, { label: "Ignorar", run: () => onArchive("camila", "Deuda con Camila") }] },
+    ...reconciliationCards,
+    ...socialCards,
     { id: "benefit", tag: "BENEFICIO", title: "Tu tarjeta tiene restaurantes con descuento", detail: "BCI Visa · ejemplo de esta semana", amount: "20%", tone: "benefit", actions: [{ label: "Ignorar", run: () => onArchive("benefit", "Beneficio") }, { label: "Revisar", run: () => onMove("ahorrar") }] },
-    { id: "liguria", tag: "PARA DIVIDIR", title: "La cuenta de Liguria parece compartida", detail: "Boleta mayor a tu consumo habitual", amount: "$41.600", tone: "split", actions: [{ label: "Ignorar", run: () => onArchive("liguria", "Cuenta de Liguria") }, { label: "Revisar", run: () => onLedger("General", "liguria") }, { label: "Preparar reparto", run: () => onCollect("Liguria") }] },
+    { id: "liguria", tag: "POSIBLE GASTO COMPARTIDO", title: "La cuenta de Liguria parece compartida", detail: "Señal de baja certeza · tú decides", amount: "$41.600", tone: "split", actions: [{ label: "Ignorar", run: () => onArchive("liguria", "Cuenta de Liguria") }, { label: "Revisar", run: () => onLedger("General", "liguria") }, { label: "Dividir en Cuentas Claras", run: () => onCollect("Liguria") }] },
   ];
   const visibleCards = actionCards.filter((card) => !archived.includes(card.id));
   const archivedLabels = actionCards.filter((card) => archived.includes(card.id));
 
   useEffect(() => {
-    setCarouselIndex((current) => Math.min(current, Math.max(visibleCards.length - 1, 0)));
+    queueMicrotask(() => setCarouselIndex((current) => Math.min(current, Math.max(visibleCards.length - 1, 0))));
   }, [visibleCards.length]);
 
   const chooseAiMode = (choice: "ai" | "demo") => {
@@ -1050,7 +1167,7 @@ function Start({ archived, onArchive, onRestore, onMove, onCollect, onLedger, on
   </>;
 }
 
-function Finances({ onLedger, onMove, onNotice }: { onLedger: (filter?: string, selected?: string) => void; onMove: (target: Tab) => void; onNotice: (message: string) => void }) {
+function Finances({ debtSummary, onLedger, onCollect, onNotice }: { debtSummary: DebtCenterCompanionSummary | null; onLedger: (filter?: string, selected?: string) => void; onCollect: (expense?: string) => void; onNotice: (message: string) => void }) {
   const sources = [
     { id: "BCI", logo: "BCI", name: "Cuenta corriente", detail: "Actualizada hace 8 min" },
     { id: "MACH", logo: "M", name: "Cuenta digital", detail: "Actualizada hace 12 min" },
@@ -1060,7 +1177,7 @@ function Finances({ onLedger, onMove, onNotice }: { onLedger: (filter?: string, 
     <div className="control-heading"><h3>Tus cuentas</h3></div>
     <div className="source-carousel" aria-label="Fuentes ficticias registradas">{sources.map((item) => <button className="source-card" key={item.id} onClick={() => onLedger(item.id)}><span className="source-logo">{item.logo}</span><span><strong>{item.name}</strong><small>{item.detail}</small></span><b>→</b></button>)}</div>
     <div className="accounts-under"><div className="source-actions"><button onClick={() => onNotice("Agregar banco es una simulación: no se conecta ninguna cuenta.")}>＋ Agregar banco</button><button onClick={() => onNotice("Agregar cartola es una simulación: no se carga ningún archivo.")}>↑ Agregar cartola</button></div><button className="ledger-link" onClick={() => onLedger("General")}>∑ Ver cartola general →</button></div>
-    <div className="metrics"><Metric label="Te entró" value="$2.450.000" note="Este mes" onClick={() => onLedger("Te entró")} /><Metric label="Gastaste" value="$1.620.000" note="Este mes" onClick={() => onLedger("Gastaste")} /><Metric label="Por cobrar" value="$228.000" note="2 personas" onClick={() => onMove("cobrar")} /><Metric label="Por pagar" value="$42.000" note="1 persona" onClick={() => onMove("cobrar")} /></div>
+    <div className="metrics"><Metric label="Te entró" value="$2.450.000" note="Este mes" onClick={() => onLedger("Te entró")} /><Metric label="Gastaste" value="$1.620.000" note="Este mes" onClick={() => onLedger("Gastaste")} /><Metric label="Te deben personas" value={debtSummary ? money.format(debtSummary.receivableOutstanding) : "—"} note={debtSummary ? "Cuentas Claras · lectura actual" : "Resumen temporalmente no disponible"} onClick={() => onCollect()} /><Metric label="Debes a personas" value={debtSummary ? money.format(debtSummary.payableOutstanding) : "—"} note={debtSummary ? "Cuentas Claras · lectura actual" : "Resumen temporalmente no disponible"} onClick={() => onCollect()} /></div>
     <section className="recent-movements"><div className="control-heading"><h3>Últimos movimientos</h3><button onClick={() => onLedger("General")}>Ver todos</button></div>{movements.slice(0, 4).map((movement) => <button className="recent-row" key={movement.id} onClick={() => onLedger("General", movement.id)}><time>{movement.time}</time><span><strong>{movement.name}</strong><small>{movement.bank}</small></span><b className={movement.amount > 0 ? "positive" : ""}>{movement.amount > 0 ? "+" : "−"}{money.format(Math.abs(movement.amount))}</b></button>)}</section>
     <button className="finance-rule" onClick={() => onNotice("Criterio marcado para revisar; nada cambia sin confirmación.")}>Ejemplo · BCI + MACH · agosto · transferencias propias excluidas por regla revisable</button>
   </>;
@@ -1084,7 +1201,7 @@ function Ledger({ source, setSource, selected, setSelected, reviewed, onUnreview
     <div className="filter-row" aria-label="Navegar cartolas">{["General", "BCI", "MACH"].map((filter) => <button key={filter} className={source === filter ? "filter-active" : ""} onClick={() => { setSource(filter); setSelected(null); }}>{filter}</button>)}</div>
     <div className="table-head"><span>FECHA</span><span>MOVIMIENTO</span><span>MONTO</span></div>
     <div className="ledger">{filtered.map((movement) => {
-      const thirdAction: MovementAction | null = movement.ownTransfer || movement.name === "Disney+" ? null : movement.amount > 0 ? "Preparar cobro" : "Preparar reparto";
+      const thirdAction = thirdActionForMovement(movement.kind);
       const isReviewed = reviewed.includes(movement.id);
       return <article className={`movement${selected === movement.id ? " selected" : ""}${isReviewed ? " reviewed" : ""}`} key={movement.id}>
         <button className="row-main" onClick={() => setSelected(selected === movement.id ? null : movement.id)} aria-expanded={selected === movement.id}><time>{movement.date}<small>{movement.time}</small></time><span><strong>{movement.name}</strong><small className={movement.tone}>{movement.bank}</small>{isReviewed && <em>✓ Revisado</em>}</span><b className={movement.amount > 0 ? "positive" : ""}>{movement.amount > 0 ? "+" : "−"}{money.format(Math.abs(movement.amount))}</b></button>
@@ -1097,63 +1214,7 @@ function Ledger({ source, setSource, selected, setSelected, reviewed, onUnreview
   </>;
 }
 
-function Collect({ draft, setDraft, view, setView, onNotice, onPreview }: { draft: CollectDraft; setDraft: (draft: CollectDraft | ((draft: CollectDraft) => CollectDraft)) => void; view: PendingView; setView: (view: PendingView) => void; onNotice: (message: string) => void; onPreview: (preview: MessagePreview) => void }) {
-  const [selectedPending, setSelectedPending] = useState<string | null>(null);
-  const [settled, setSettled] = useState<string[]>([]);
-  const [payableDraftAdded, setPayableDraftAdded] = useState(false);
-  const [splitAutoFilled, setSplitAutoFilled] = useState(false);
-  const update = (patch: Partial<CollectDraft>) => setDraft((current) => ({ ...current, ...patch }));
-  const peopleRows = [
-    { id: "josefa", name: "Josefa", alias: "@josefa", direction: "collect" as const, amount: "$210.000", meta: "Viaje a Pucón" },
-    { id: "maria", name: "María", alias: "@maria", direction: "collect" as const, amount: "$18.000", meta: "Almuerzo viernes" },
-    { id: "camila", name: "Camila", alias: "@camila", direction: "pay" as const, amount: "$42.000", meta: "Depto agosto" },
-  ];
-  const groupRows = [
-    { id: "pucon", name: "Viaje a Pucón", alias: undefined, direction: "collect" as const, amount: "$210.000", meta: "Josefa · Martín · tú" },
-    { id: "almuerzo", name: "Almuerzo viernes", alias: undefined, direction: "collect" as const, amount: "$18.000", meta: "María" },
-    { id: "depto", name: "Depto agosto", alias: undefined, direction: "pay" as const, amount: "$42.000", meta: "Camila" },
-  ];
-  const rows = (view === "personas" ? peopleRows : groupRows).filter((row) => !settled.includes(row.id));
-  const receivableRows = rows.filter((row) => row.direction === "collect");
-  const payableRows = rows.filter((row) => row.direction === "pay");
-  const participants = draft.participants;
-  const equalAmount = Math.round(draft.amount / Math.max(participants.length, 1));
-  const assigned = participants.reduce((sum, person) => sum + (draft.custom[person] ?? 0), 0);
-  const distributeRemaining = () => {
-    const remaining = draft.amount - assigned;
-    if (remaining <= 0 || participants.length === 0) return;
-    const each = Math.floor(remaining / participants.length);
-    const extra = remaining - each * participants.length;
-    const next = { ...draft.custom };
-    participants.forEach((person, index) => { next[person] = (next[person] ?? 0) + each + (index < extra ? 1 : 0); });
-    update({ custom: next });
-    setSplitAutoFilled(true);
-    onNotice("La diferencia se repartió por igual entre las personas seleccionadas.");
-  };
-
-  if (draft.step === 0) return <div className="collect-home">
-    <section className="collect-hero"><p className="kicker">COBRAR Y PAGAR · EJEMPLO</p><h2 className="compact-title">Lo pendiente,<br />por ambos lados.</h2><div className="pending-totals"><span><small>ME DEBEN</small><strong>$228.000</strong></span><span><small>LE DEBO</small><strong>$42.000</strong></span></div></section>
-    <div className="pending-view"><button className={view === "personas" ? "selected-option" : ""} onClick={() => setView("personas")}>Por persona</button><button className={view === "grupos" ? "selected-option" : ""} onClick={() => setView("grupos")}>Por grupo / gasto</button></div>
-    <div className="pending-board">
-      <section className="pending-lane"><div className="lane-heading"><div><small>POR COBRAR</small><strong>$228.000</strong></div><button onClick={() => setDraft({ ...initialDraft, step: 1 })}>＋ Nuevo gasto compartido</button></div><div className="pending-lane-track">{receivableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio preparado para ${row.name}. No se envió nada.`)}>Recordar</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "collect" })}>Preparar cobro</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pendiente marcado como resuelto. YOL1 buscará una coincidencia solo en las cartolas ficticias.`); }}>Marcar como resuelto</button></div>}</article>)}</div></section>
-      <section className="pending-lane"><div className="lane-heading"><div><small>POR PAGAR</small><strong>$42.000</strong></div><button onClick={() => { setPayableDraftAdded(true); onNotice("Borrador de deuda pendiente guardado en esta sesión. No se cargó ni transfirió dinero."); }}>＋ Agregar deuda pendiente</button></div><div className="pending-lane-track">{payableDraftAdded && <div className="lane-state"><span>✓ Borrador guardado</span><button onClick={() => setPayableDraftAdded(false)}>Deshacer</button></div>}{payableRows.map((row) => <article className={selectedPending === row.id ? "pending-item pending-item-open" : "pending-item"} key={row.id}><button className="pending-main" onClick={() => setSelectedPending(selectedPending === row.id ? null : row.id)}><span className="pending-avatar">{row.name[0]}</span><span><strong>{row.name}</strong><small>{row.alias ? `${row.alias} · ` : ""}{row.meta}</small></span><b>{row.amount}</b></button>{selectedPending === row.id && <div className="pending-actions"><button onClick={() => onNotice(`Recordatorio personal creado para pagar a ${row.name}.`)}>Recordarme</button><button onClick={() => onPreview({ name: row.name, alias: row.alias, amount: row.amount, expense: row.meta, direction: "pay" })}>Preparar pago</button><button onClick={() => { setSettled([...settled, row.id]); setSelectedPending(null); onNotice(`${row.name}: pendiente marcado como resuelto; YOL1 revisará si aparece una coincidencia ficticia.`); }}>Marcar como resuelto</button></div>}</article>)}</div></section>
-    </div>
-    <div className="reconcile-note"><span>↻</span><p><strong>Revisar si este pago ya quedó resuelto</strong>Cuando marcas un pago, YOL1 busca una coincidencia en las cartolas ficticias antes de cerrarlo.</p></div>
-  </div>;
-
-  const goBack = () => update({ step: Math.max(0, draft.step - 1) });
-  return <>
-    <button className="back-link" onClick={goBack}>← {draft.step === 1 ? "Volver a pendientes" : "Atrás"}</button>
-    <div className="progress" aria-label={`Paso ${Math.min(draft.step, 4)} de 4`}><span style={{ width: `${Math.min(draft.step, 4) * 25}%` }} /></div>
-    {draft.step === 1 && <section className="flow-step"><p className="kicker">PASO 1 DE 4</p><h2 className="compact-title">Nuevo gasto</h2><label>¿Qué pagaste?<input value={draft.expense} onChange={(event) => update({ expense: event.target.value })} /></label><label>Monto total<input type="number" min="0" value={draft.amount} onChange={(event) => update({ amount: Number(event.target.value) })} /></label><button className="primary-action" onClick={() => update({ step: 2 })}>Elegir personas →</button></section>}
-    {draft.step === 2 && <section className="flow-step"><p className="kicker">PASO 2 DE 4</p><h2 className="compact-title">¿Quiénes participaron?</h2><div className="participants">{draft.contacts.map((person) => <label key={person}><input type="checkbox" checked={participants.includes(person)} onChange={() => update({ participants: participants.includes(person) ? participants.filter((item) => item !== person) : [...participants, person] })} /><span className="avatar">{person[0]}</span><strong>{person}</strong><small>{person === "Tú" ? "Pagaste tú" : "Contacto demo"}</small></label>)}</div><div className="new-contact"><input value={draft.newContact} onChange={(event) => update({ newContact: event.target.value })} placeholder="Crear contacto demo" /><button onClick={() => { const name = draft.newContact.trim(); if (!name) return; update({ contacts: [...draft.contacts, name], participants: [...participants, name], custom: { ...draft.custom, [name]: 0 }, newContact: "" }); onNotice(`${name}: contacto ficticio agregado.`); }}>＋</button></div><button className="primary-action" disabled={participants.length < 2} onClick={() => update({ step: 3 })}>Definir división →</button></section>}
-    {draft.step === 3 && <section className="flow-step"><p className="kicker">PASO 3 DE 4</p><h2 className="compact-title">Divide {money.format(draft.amount)}</h2><div className="segmented"><button className={draft.split === "equal" ? "selected-option" : ""} onClick={() => update({ split: "equal" })}>Partes iguales</button><button className={draft.split === "custom" ? "selected-option" : ""} onClick={() => update({ split: "custom" })}>Montos distintos</button></div>{draft.split === "custom" && <p className="split-help">Los montos deben sumar el total porque este ejemplo reparte el gasto completo.</p>}<div className="split-list">{participants.map((person) => <label key={person}><span>{person}</span>{draft.split === "equal" ? <strong>{money.format(equalAmount)}</strong> : <input type="number" min="0" value={draft.custom[person] ?? 0} onChange={(event) => { setSplitAutoFilled(false); update({ custom: { ...draft.custom, [person]: Number(event.target.value) } }); }} />}</label>)}</div>{draft.split === "custom" && <><p className={assigned === draft.amount ? "sum-ok" : "sum-warn"}>Asignado: {money.format(assigned)} de {money.format(draft.amount)} {assigned === draft.amount ? "✓" : assigned < draft.amount ? `· faltan ${money.format(draft.amount - assigned)}` : `· sobra ${money.format(assigned - draft.amount)}`}</p>{assigned < draft.amount && <button className="secondary-action" onClick={distributeRemaining}>Repartir lo que falta</button>}{splitAutoFilled && assigned === draft.amount && <p className="split-confirmation">✓ Diferencia repartida por igual</p>}</>}<button className="primary-action" disabled={draft.split === "custom" && assigned !== draft.amount} onClick={() => update({ step: 4 })}>Revisar reparto →</button></section>}
-    {draft.step === 4 && <section className="flow-step"><p className="kicker">PASO 4 DE 4</p><h2 className="compact-title">Confirma el reparto</h2><div className="summary-card"><span>{draft.expense}</span><strong>{money.format(draft.amount)}</strong><small>{draft.split === "equal" ? "Partes iguales" : "Montos personalizados"}</small></div><div className="split-list compact">{participants.filter((person) => person !== "Tú").map((person) => <div key={person}><span>{person}</span><strong>{money.format(draft.split === "equal" ? equalAmount : draft.custom[person] ?? 0)}</strong></div>)}</div><div className="consent-box"><strong>Confirmación de demo</strong><span>Guardar ordena el reparto solo durante esta sesión. No cobra, paga ni contacta a nadie.</span></div><button className="primary-action" onClick={() => { const recipient = participants.find((person) => person !== "Tú") ?? "Contacto demo"; const amount = money.format(draft.split === "equal" ? equalAmount : draft.custom[recipient] ?? 0); update({ step: 5 }); onPreview({ name: recipient, amount, expense: draft.expense, direction: "collect" }); }}>Guardar y ver mensaje demo →</button></section>}
-    {draft.step === 5 && <section className="success-step"><span className="success-mark">✓</span><p className="kicker">REPARTO GUARDADO</p><h2 className="compact-title">Quedó ordenado.</h2><p>El estado vive solo durante esta sesión demo. No existe link, pago ni mensaje real.</p><button className="primary-action" onClick={() => update({ step: 0 })}>Volver a pendientes</button></section>}
-  </>;
-}
-
-function Save({ onNotice, onLedger, onCollect }: { onNotice: (message: string) => void; onLedger: (filter?: string, selected?: string) => void; onCollect: (expense?: string) => void }) {
+function Save({ onNotice, onLedger }: { onNotice: (message: string) => void; onLedger: (filter?: string, selected?: string) => void }) {
   const [open, setOpen] = useState<string | null>(null);
   const [hidden, setHidden] = useState<string[]>([]);
   const [purchasePreview, setPurchasePreview] = useState(false);
@@ -1162,26 +1223,12 @@ function Save({ onNotice, onLedger, onCollect }: { onNotice: (message: string) =
     { id: "duplicate", tag: "REVISAR", title: "Dos cargos de Disney+", value: "$0–$11.990 estimados", tone: "warn-bg", conclusion: "Vale la pena revisarlo, pero no sabemos si es un duplicado.", signal: "Mismo comercio y monto con un minuto de diferencia.", source: "BCI + MACH · 5 ago", certainty: "Media", estimate: "$0 si ambos son válidos; hasta $11.990 si confirmas un duplicado", reversible: "Solo revisar y marcar; YOL1 no disputa ni recupera fondos", disclosure: "YOL1 no recibe compensación en esta simulación; cualquier relación futura se declarará aquí.", action: "Ver movimientos" },
     { id: "benefit", tag: "BENEFICIO BCI", title: "20% en restaurantes · BCI Visa", value: "$0–$12.000 estimados", tone: "good-bg", conclusion: "Puede convenirte, pero confirma el día, el local y el tope.", signal: "En el ejemplo comiste recientemente en Liguria y tienes una tarjeta BCI Visa con un beneficio ficticio esta semana.", source: "Locales de ejemplo: Liguria, Baco y Ambrosía · jueves · tope ficticio $12.000", certainty: "Alta solo si se cumplen día, local, tarjeta y tope", estimate: "Entre $0 y $12.000 según compra y condiciones", reversible: "Revisar locales y condiciones; no se activa ni compra nada", disclosure: "YOL1 no recibe compensación en esta simulación; cualquier relación futura se declarará aquí.", action: "Revisar beneficio" },
     { id: "alternative", tag: "CUENTAS Y SERVICIOS", title: "Tu plan móvil podría costar menos", value: "$0–$4.000/mes estimados", tone: "info-bg", conclusion: "Podría costar menos, pero compara cobertura y permanencia primero.", signal: "Una alternativa ficticia tiene menor precio de lista y prestaciones comparables.", source: "Comparación demo · sin datos personales", certainty: "Media; precio, cobertura y permanencia deben verificarse", estimate: "Entre $0 y $4.000 mensuales después de validar condiciones", reversible: "Comparar primero; YOL1 no cambia proveedores", disclosure: "YOL1 no recibe compensación en esta simulación; cualquier relación futura se declarará aquí.", action: "Simular compra" },
-    { id: "split", tag: "PARA DIVIDIR", title: "Liguria podría haber sido compartido", value: "$41.600 · gasto observado", tone: "info-bg", conclusion: "Solo tú puedes confirmar si pagaste por otras personas.", signal: "El monto supera tu consumo individual habitual en restaurantes dentro del ejemplo.", source: "Cartola BCI ficticia · 1 ago", certainty: "Baja; solo tú sabes si pagaste por otras personas", estimate: "No es ahorro: podría convertirse en un pendiente por cobrar", reversible: "Preparar un reparto y confirmarlo antes de guardar", disclosure: "YOL1 no contactará ni cobrará a nadie.", action: "Sí, dividir" },
   ];
   const dismiss = (id: string, title: string) => { setHidden([...hidden, id]); setOpen(null); onNotice(`${title}: ignorado durante esta sesión. Puedes recuperarlo aquí mismo.`); };
   const act = (id: string, action: string) => {
     if (id === "duplicate") return onLedger("General", "disney-bci");
-    if (id === "split") return onCollect("Liguria");
     if (id === "alternative") return setPurchasePreview(true);
     onNotice(`${action}: condiciones ficticias abiertas; no se activó ni compró nada.`);
   };
   return <><section className="save-heading"><p className="kicker">POTENCIAL DE ESTE EJEMPLO</p><strong className="saving-total">$0–$28.000</strong><h2 className="compact-title">Ya entendimos cómo se mueve tu plata.<br /><span>Ahora te guiamos para hacerla rendir mejor.</span></h2><p>Rango estimado, no ahorro real ni garantizado.</p></section>{hidden.length > 0 && <div className="ignored-strip"><span>✓ {hidden.length} {hidden.length === 1 ? "oportunidad ignorada" : "oportunidades ignoradas"}</span><button onClick={() => setHidden((items) => items.slice(0, -1))}>Recuperar última</button></div>}<p className="swipe-hint swipe-hint-top">Usa el botón Ignorar. También puedes deslizar a la izquierda.</p><div className="opportunity-list">{opportunities.filter((item) => !hidden.includes(item.id)).map((item, index) => <article key={item.id} className={`opportunity ${open === item.id ? "opportunity-open" : ""}`} onPointerDown={(event) => { swipeStart.current = event.clientX; }} onPointerUp={(event) => { if (swipeStart.current !== null && event.clientX - swipeStart.current < -70) dismiss(item.id, item.title); swipeStart.current = null; }}><button className="opportunity-toggle" onClick={() => setOpen(open === item.id ? null : item.id)}><span className="opportunity-index">0{index + 1}</span><span><span className={`issue-tag ${item.tone}`}>{item.tag}</span><strong>{item.title}</strong><small>{item.value}</small></span><b>{open === item.id ? "−" : "+"}</b></button><button className="opportunity-dismiss" onClick={() => dismiss(item.id, item.title)} aria-label={`Ignorar ${item.title}`}>Ignorar</button>{open === item.id && <div className="opportunity-detail"><p className="opportunity-conclusion">{item.conclusion}</p><details className="opportunity-evidence"><summary>Ver por qué</summary><dl><div><dt>Evidencia</dt><dd>{item.signal}</dd></div><div><dt>Fuente</dt><dd>{item.source}</dd></div><div><dt>Certeza</dt><dd>{item.certainty}</dd></div><div><dt>Estimación</dt><dd>{item.estimate}</dd></div><div><dt>Acción</dt><dd>{item.reversible}</dd></div><div><dt>Disclosure</dt><dd>{item.disclosure}</dd></div></dl></details><div className="opportunity-actions"><button onClick={() => act(item.id, item.action)}>{item.action} →</button><button onClick={() => dismiss(item.id, item.title)}>Ignorar</button></div></div>}</article>)}</div>{purchasePreview && <section className="purchase-sheet"><div><p className="kicker">COMPRA SIMULADA</p><button onClick={() => setPurchasePreview(false)}>×</button></div><h3>Plan móvil alternativo</h3><strong>$14.990 / mes</strong><ul><li>Precio y prestaciones ficticias</li><li>Falta revisar cobertura y permanencia</li><li>YOL1 no recibe compensación en esta simulación</li></ul><button onClick={() => { setPurchasePreview(false); onNotice("Simulación cerrada: no se abrió un comercio, no se contrató el plan y no se inició un pago real."); }}>Confirmar simulación</button><small>No abre un comercio ni inicia un pago real.</small></section>}</>;
-}
-
-function EarnMore({ onBack }: { onBack: () => void }) {
-  return <section className="empty-state earn-more"><span className="empty-icon">＋</span><p className="kicker">GANA MÁS LUCAS</p><h2>Ideas para ganar más,<br />sin vender humo.</h2><p>Este espacio va a ordenar oportunidades que sean relevantes para ti. Todavía no activa programas ni promete ingresos.</p><button className="primary-action" onClick={onBack}>Volver al acompañante</button></section>;
-}
-
-function Future({ votes, setVotes, onNotice }: { votes: Record<string, boolean>; setVotes: (votes: Record<string, boolean>) => void; onNotice: (message: string) => void }) {
-  const capabilities = [
-    { id: "alerts", title: "Alertas que tú controlas", detail: "Elegir qué señales importan y con qué frecuencia recibirlas." },
-    { id: "compare", title: "Comparar con referencias agregadas", detail: "Solo existiría con muestra suficiente y población comparable visible." },
-  ];
-  return <><section className="future-heading"><p className="kicker">EXPERIMENTOS POR EXPLORAR</p><h2 className="compact-title">¿Qué te serviría<br />de verdad?</h2><p>Ideas para aprender antes de construir. No son roadmap ni capacidades disponibles.</p></section>{Object.values(votes).some(Boolean) && <p className="vote-state">✓ Tu interés queda marcado durante esta sesión</p>}<div className="roadmap-list">{capabilities.map((item, index) => <article key={item.id}><span className="experiment-number">0{index + 1}</span><div><span className="experiment-status">POR EXPLORAR</span><h3>{item.title}</h3><p>{item.detail}</p></div><button className={votes[item.id] ? "voted" : ""} onClick={() => { setVotes({ ...votes, [item.id]: !votes[item.id] }); onNotice(votes[item.id] ? "Feedback retirado en esta sesión." : "Feedback guardado durante esta sesión demo."); }}>{votes[item.id] ? "✓ Me interesa" : "Me interesa"}</button></article>)}</div><a className="knowledge-review-link" href="/review/knowledge"><span>INTERNO · CONTENIDO APROBADO</span><strong>Conocimiento del Lab</strong><small>Ver preguntas, variantes y fichas para mejorar →</small></a><section className="scope-box"><strong>Fuera de este MVP</strong><p>No estamos desarrollando banca, remesas, pagos reales ni una capa operativa de propuestas.</p></section></>;
 }

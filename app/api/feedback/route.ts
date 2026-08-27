@@ -6,8 +6,8 @@ import { isReviewAuthorized, isReviewConfigured } from "../../../lib/server/revi
 
 export const runtime = "nodejs";
 
-const screens = new Set(["Inicio", "Mis finanzas", "Cartola", "Cobrar y pagar", "Ahorrar", "Ganar", "Experimentos", "Mi banco"]);
-const products = new Set(["Acompañante financiero", "Onboarding y KYC progresivo", "Home Banking", "Tarjetas", "Remesas", "Construir mi propio producto"]);
+const screens = new Set(["Inicio", "Mis finanzas", "Cartola", "Ahorrar", "Tu plan de deuda", "Experimentos", "Mi banco", "Cuentas Claras"]);
+const products = new Set(["Acompañante financiero", "Cuentas Claras", "Onboarding y KYC progresivo", "Home Banking", "Tarjetas", "Remesas", "Construir mi propio producto"]);
 const kinds = new Set(["like", "improve", "idea"]);
 const ratings = new Set<ChatReviewRating>(["unrated", "useful", "improve"]);
 const statuses = new Set<SharedFeedbackStatus>(["new", "reviewing", "later", "resolved", "learning_ready", "ignored", "wrong"]);

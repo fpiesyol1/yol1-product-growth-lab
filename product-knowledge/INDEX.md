@@ -1,15 +1,16 @@
 # Índice de conocimiento de producto
 
-**Versión del índice:** `product-kb-2026-08-18.1`
-**Última exportación de Notion identificada:** 4 de agosto de 2026
-**Última exportación procesada en esta carpeta:** ninguna; se espera el próximo paquete de Felipe.
+**Versión del índice:** `product-kb-2026-08-26.1`
+**Última exportación de Notion identificada:** snapshot local del 11 de agosto de 2026, fuera de esta carpeta.
+**Última exportación procesada en esta carpeta:** ninguna; el snapshot del 11 de agosto está disponible, pero todavía requiere confirmar alcance, registrar manifiesto y completar la reconciliación.
 
 ## Productos
 
 | ID | Producto | Estado de producto | Estado de ficha | Verificado hasta | Ficha |
 |---|---|---|---|---|---|
-| `prod-acompanante` | Acompañante financiero | exploración activa | semilla | pendiente | [`accompanante-financiero.md`](products/accompanante-financiero.md) |
-| `prod-onboarding` | Onboarding | prototipo exploratorio | semilla | pendiente | [`onboarding.md`](products/onboarding.md) |
+| `prod-acompanante` | Acompañante financiero | exploración activa | ficha viva | 2026-08-26 | [`accompanante-financiero.md`](products/accompanante-financiero.md) |
+| `prod-cuentas-claras` | Cuentas Claras | prototipo exploratorio | ficha viva | 2026-08-26 | [`cuentas-claras.md`](products/cuentas-claras.md) |
+| `prod-onboarding` | Onboarding | prototipo exploratorio | ficha viva | 2026-08-26 | [`onboarding.md`](products/onboarding.md) |
 | `prod-home-banking` | Home Banking | investigación | semilla | pendiente | [`home-banking.md`](products/home-banking.md) |
 | `prod-tarjetas` | Tarjetas | investigación | semilla | pendiente | [`tarjetas.md`](products/tarjetas.md) |
 | `prod-remesas` | Remesas | pausado | semilla | pendiente | [`remesas.md`](products/remesas.md) |
@@ -32,6 +33,6 @@ Los paquetes revisados que deben volver a Notion se preparan en [`outbox/notion/
 
 - Definir la base o página maestra de Notion que indexará decisiones.
 - Definir owners de Producto, Ingeniería, Datos, Seguridad, Legal/Compliance y Operaciones.
-- Recibir y registrar una exportación completa posterior al 4 de agosto de 2026.
+- Confirmar el alcance del snapshot local del 11 de agosto de 2026, registrarlo mediante `imports/notion/` y reconciliarlo sin tratarlo como versión viva de Notion.
 - Elegir si el futuro archivo S3 guardará el paquete original, el manifiesto y el diff aprobado.
 - Conectar las fichas al Lab solo después de estabilizar el esquema; la vista debe leerlas, no duplicarlas.

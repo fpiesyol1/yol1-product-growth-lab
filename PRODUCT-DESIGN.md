@@ -26,8 +26,8 @@ Cada pantalla usa un solo color emocional dominante. Los demás colores aparecen
 - **Mis Finanzas — Aqua/petróleo:** control, calma y trazabilidad. Coral se reserva para una anomalía concreta.
 - **Cartola — Navy/aqua:** precisión, selección y confianza. Coral indica alerta; amarillo, decisión pendiente.
 - **Ahorrar — Acid:** valor potencial y rango estimado, nunca ahorro garantizado. Amarillo identifica algo por revisar.
-- **Cobrar/Repartir — Neón suave:** cercanía, personas y recordatorios. Acid queda para avanzar o confirmar un resultado positivo.
-- **Ganar — Neón suave:** gesto editorial de placeholder, con acid concentrado; no sugiere una capacidad construida.
+- **Cuentas Claras — Acid/aqua:** acuerdos, equilibrio y cierre. Neón suave queda para personas; coral sólo para fallas explícitas.
+- **Tu plan de deuda — Aqua/amarillo:** evidencia, calma e información faltante; nunca usa verde como score de salud.
 - **Experimentos — Violeta suave:** curiosidad y feedback. No comunica roadmap, fase ni disponibilidad.
 
 Los tokens viven en `app/globals.css`: `--neon-pink`, `--violet-soft` y `--violet-ink`. Texto Night sobre rosa/violeta mantiene contraste; estos acentos no se usan para información financiera crítica.
@@ -77,7 +77,7 @@ Los nuevos tokens `--decision-bg` y `--decision-text` conservan contraste del es
 1. Una pantalla debe tener una tarea principal y una acción clara.
 2. Cada alerta debe mostrar qué la activó, de dónde vienen los datos y qué puede hacer la persona.
 3. Las transferencias entre cuentas propias no inflan ingresos ni egresos.
-4. "Por cobrar" y "por pagar" son compromisos visibles; una persona puede confirmar, rechazar o corregir un cobro.
+4. El Acompañante muestra sólo un resumen social; personas, grupos, cobros y abonos viven en Cuentas Claras.
 5. La cartola conserva evidencia: fecha, hora, código, fuente, monto y una acción contextual. La fila principal prioriza fecha, movimiento y monto; banco, código y hora viven en el detalle.
 6. Los datos del laboratorio son ficticios. No se integra ninguna cuenta ni pago desde este repositorio.
 7. Una acción no termina en un toast: revisar, guardar nota, ignorar o votar deja una señal visible durante la sesión y, cuando es sencillo, una vía para deshacer.
@@ -89,10 +89,10 @@ Los nuevos tokens `--decision-bg` y `--decision-text` conservan contraste del es
 - Inicio: propuesta de valor ampliada, cinco pendientes accionables en carrusel con contador/puntos y conversación financiera con selector IA/demo. Consentimiento y privacidad se concentran dentro del chat, sin crear un banner global. “Ya lo vi” archiva con estado recuperable; no se muestra micrófono sin una función real.
 - Mis Finanzas: resultado compacto, carrusel de cuentas, métricas con destino, cartola general y últimos movimientos densos.
 - Cartola: tabla densa General/BCI/MACH, tres acciones por fila y asistente contextual de demo. Código/hora aparecen en el panel de detalle; revisado y nota guardada quedan señalizados de forma persistente.
-- Cobrar y pagar: bandejas apiladas 50/50 — por cobrar arriba y por pagar abajo — con scroll interno independiente, persona/grupo, aliases y reparto persistente durante sesión. El contenedor principal no desplaza cabecera, selector ni navegación. En móvil pequeño se reduce la densidad de encabezados sin convertir las bandejas en carrusel o columnas laterales.
-- La vista previa de mensaje es deliberadamente una superficie externa al teléfono YOL1: fondo, estructura y controles propios, sin logo oficial de WhatsApp. Conserva el rosa como gesto humano, el amarillo como disclosure y el acid solo para volver a YOL1. La URL ficticia se presenta como texto no navegable.
+- Cuentas Claras: app complementaria con Inicio, Grupos y Actividad. El ledger social es su fuente de verdad; nuevo grupo/gasto, reparto, deuda, abono parcial y comprobante son una sola continuidad.
+- La vista previa de mensaje replica el lenguaje visual de WhatsApp únicamente para que se entienda el destino. Siempre dice `BORRADOR · NO ENVIADO`; copiar no equivale a abrir WhatsApp ni entregar el mensaje.
 - Ahorrar: rango potencial protagonista, conclusión simple primero y transparencia completa en “Ver por qué”. Ignorar es una acción visible y recuperable; el swipe nunca es la única vía.
-- Ganar: tratamiento editorial “Próximamente”, sin flujo.
+- Tu plan de deuda: recorrido sintético que compara evidencia con fechas distintas, conserva el resultado como candidato y propone un paso reversible sin score ni oferta.
 - Experimentos por explorar: feedback sin fechas, disponibilidad ni promesas de roadmap.
 - Feedback del Lab: tarjeta editorial de baja intensidad en el lateral desktop; en móvil se presenta como hoja sobre el teléfono. Usa violeta como señal de exploración, conserva superficies Night/Mist y no compite con Acid, aqua o rosa de los módulos.
 - Bandeja `/review`: superficie editorial interna, sin marco de teléfono y sin competir con la experiencia B2C. Violeta identifica origen/aprendizaje, amarillo indica pendiente o Equivocado, Acid confirma Aprobar y Descartar usa tinta neutra; coral queda reservado para errores operativos. El editor de Equivocado aparece solo cuando se necesita explicar la corrección.

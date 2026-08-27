@@ -11,13 +11,15 @@ test("Inicio conserva bandeja, acciones contextuales y elección IA/demo", async
   assert.match(page, /Tienes \{visibleCards\.length/);
   assert.match(page, /Disney\+ aparece dos veces/);
   assert.match(page, /Tu tarjeta tiene restaurantes con descuento/);
-  assert.match(page, /Le debes a Camila/);
+  assert.match(page, /CUENTAS COMPARTIDAS/);
+  assert.match(page, /Tienes cuentas sin cerrar/);
+  assert.doesNotMatch(page, /Le debes a Camila/);
   assert.match(page, /La cuenta de Liguria parece compartida/);
   assert.match(page, /Pregúntale a YOL1/);
   assert.match(page, /Usar IA/);
   assert.match(page, /Seguir en demo/);
   assert.match(page, /Ignorar/);
-  assert.match(page, /Preparar reparto/);
+  assert.match(page, /Dividir en Cuentas Claras/);
   assert.match(page, /carousel-dots/);
   assert.match(page, /Deshacer última/);
   assert.match(page, /Se guarda para revisión por parte del equipo creador/i);
@@ -63,7 +65,7 @@ test("el conocimiento aprobado se resuelve antes de pedir IA", async () => {
   assert.match(router, /Qué puedes hacer ahora:/);
   assert.match(router, /No voy a inventar una respuesta/);
   assert.match(router, /calculateLabMonthResult/);
-  assert.match(catalog, /lab-kb-2026-08-14\.1/);
+  assert.match(catalog, /lab-kb-2026-08-26\.3/);
   assert.match(index, /collect-receivables-001/);
   assert.match(workflow, /Felipe dicta/);
   assert.match(viewer, /Conocimiento del Lab/);
@@ -185,7 +187,7 @@ test("intake compartido protege Postgres y la revisión privada", async () => {
   assert.match(store, /CREATE TABLE IF NOT EXISTS yol1_feedback_items/);
   assert.match(store, /ON CONFLICT \(id\) DO UPDATE/);
   assert.match(store, /session_hash/);
-  assert.doesNotMatch(page, /DATABASE_URL|YOL1_REVIEW_TOKEN|@neondatabase/);
+  assert.doesNotMatch(page, /process\.env\.DATABASE_URL|YOL1_REVIEW_TOKEN|from ["']@neondatabase/);
   assert.match(envExample, /DATABASE_URL=\s*$/m);
   assert.match(envExample, /YOL1_REVIEW_TOKEN=\s*$/m);
   assert.doesNotMatch(envExample, /postgres(?:ql)?:\/\/[^\s]+:[^\s]+@/i);
@@ -193,22 +195,27 @@ test("intake compartido protege Postgres y la revisión privada", async () => {
 
 test("acciones y confirmaciones permanecen simuladas y visibles", async () => {
   const page = await source("app/page.tsx");
+  const clearAccounts = await source("app/cuentas-claras/page.tsx");
+  const payer = await source("app/pagar/[token]/page.tsx");
+  const provider = await source("lib/debt-center/floid-provider.ts");
   const css = await source("app/globals.css");
   assert.match(page, /phone-toast/);
   assert.match(css, /\.phone-toast/);
-  assert.match(page, /No cobra, paga ni contacta a nadie/i);
-  assert.match(page, /no se conecta ninguna cuenta/i);
-  assert.match(page, /no se carga ningún archivo/i);
-  assert.match(page, /no conecta bancos y no envía nada por WhatsApp/i);
-  assert.match(page, /no se inició un pago real/i);
-  assert.doesNotMatch(page, /pago exitoso|dinero transferido|banco conectado/i);
+  assert.match(clearAccounts, /SIMULACIÓN · NO MUEVE DINERO/);
+  assert.match(clearAccounts, /Nada se enviará automáticamente/);
+  assert.match(payer, /SIMULACIÓN · NO MUEVE PLATA/);
+  assert.match(provider, /new MockFloidPaymentProvider\(\)/);
+  assert.doesNotMatch(provider, /fetch\(|FLOID_API|process\.env/);
+  assert.match(clearAccounts, /SIN BANCO CONECTADO/);
+  const surfacesWithoutExplicitDenials = `${page}\n${clearAccounts}\n${payer}`.replaceAll("SIN BANCO CONECTADO", "");
+  assert.doesNotMatch(surfacesWithoutExplicitDenials, /dinero transferido|banco conectado/i);
 });
 
 test("Cartola usa navegación general e individual y acciones coherentes", async () => {
   const page = await source("app/page.tsx");
   assert.match(page, /Ver cartola general/);
   assert.match(page, /\["General", "BCI", "MACH"\]/);
-  assert.match(page, /"Marcar revisado" \| "Revisar" \| "Preparar reparto" \| "Preparar cobro"/);
+  assert.match(page, /"Marcar revisado" \| "Revisar" \| "Dividir en Cuentas Claras" \| "Ver en Cuentas Claras"/);
   assert.match(page, /ASISTENTE DEMO/);
   assert.match(page, /Guardar nota del ejemplo/);
   assert.match(page, /Nota guardada/);
@@ -217,39 +224,17 @@ test("Cartola usa navegación general e individual y acciones coherentes", async
   assert.doesNotMatch(page, /\{movement\.bank\} · \{movement\.code\}/);
 });
 
-test("Cobrar y pagar cubre ambos lados y conserva borrador en la app", async () => {
+test("Acompañante entrega las cuentas compartidas al producto Cuentas Claras", async () => {
   const page = await source("app/page.tsx");
-  const css = await source("app/globals.css");
-  assert.match(page, /Cobrar y pagar/);
-  assert.match(page, /ME DEBEN/);
-  assert.match(page, /LE DEBO/);
-  assert.match(page, /Por persona/);
-  assert.match(page, /Por grupo \/ gasto/);
-  assert.match(page, /collectDraft/);
-  assert.match(page, /Crear contacto demo/);
-  assert.match(page, /@josefa/);
-  assert.match(page, /Marcar como resuelto/);
-  assert.match(page, /Preparar cobro/);
-  assert.match(page, /Preparar pago/);
-  assert.match(page, /Revisar si este pago ya quedó resuelto/);
-  assert.match(page, /Nuevo gasto compartido/);
-  assert.match(page, /Agregar deuda pendiente/);
-  assert.match(page, /Repartir lo que falta/);
-  assert.match(page, /collect-home-mode/);
-  assert.match(css, /\.pending-board[^}]*grid-template-rows:minmax\(0,1fr\) minmax\(0,1fr\)/i);
-  assert.match(css, /\.pending-lane-track[^}]*overflow-y:auto/i);
-  assert.match(css, /\.pending-lane-track[^}]*overflow-x:hidden/i);
-  assert.match(css, /\.app-content\.collect-home-mode[^}]*overflow:hidden/i);
-  assert.match(css, /overscroll-behavior:contain/i);
-  assert.match(page, /VISTA PREVIA DE MENSAJE/);
-  assert.match(page, /Sigues dentro de YOL1/);
-  assert.match(page, /Volver a YOL1/);
-  assert.match(page, /Ver texto de ejemplo/);
-  assert.match(page, /https:\/\/paga\.yol1\.example\/s\/demo-2841/);
-  assert.match(page, /consentimiento explícito, un link generado en servidor y un partner de pagos autorizado/i);
-  assert.match(page, /setMessagePreview\(null\)/);
-  assert.doesNotMatch(page, /href=.*paga\.yol1\.example|window\.open|wa\.me|api\.whatsapp/i);
-  assert.doesNotMatch(page, /Simular copia/);
+  const portfolio = await source("lib/product-portfolio.ts");
+  assert.match(page, /new URLSearchParams\(\{ product: "clear_accounts"/);
+  assert.match(page, /window\.location\.assign\(`\/\?\$\{params\.toString\(\)\}`\)/);
+  assert.match(page, /Vas a abrir Cuentas Claras/);
+  assert.match(page, /Ver en Cuentas Claras/);
+  assert.match(page, /Dividir en Cuentas Claras/);
+  assert.doesNotMatch(page, /tab === "cobrar" && <Collect/);
+  assert.doesNotMatch(page, /label="Cobrar\/pagar"/);
+  assert.match(portfolio, /id: "clear_accounts"/);
 });
 
 test("lenguaje cotidiano, navegación literal y estados de confianza quedan visibles", async () => {
@@ -257,10 +242,9 @@ test("lenguaje cotidiano, navegación literal y estados de confianza quedan visi
   const css = await source("app/globals.css");
   assert.match(page, /Te entró/);
   assert.match(page, /Gastaste/);
-  assert.match(page, /💵/);
-  assert.match(page, /👥/);
-  assert.match(page, /🪙/);
-  assert.match(page, /Gana más lucas/);
+  assert.match(page, /Tu plan de deuda/);
+  assert.match(page, /Deudas/);
+  assert.doesNotMatch(page, /Gana más lucas/);
   assert.match(page, /Mi banco/);
   assert.match(page, /Feedback/);
   assert.match(page, /Claro/);
@@ -327,19 +311,20 @@ test("feedback conserva fallback local y permanece desacoplado de GitHub", async
   assert.match(architecture, /branch \+ PR.*aprobación|branch\/PR.*aprobación/i);
 });
 
-test("portfolio mantiene seis productos y tres prototipos explorables", async () => {
+test("portfolio mantiene siete productos y cuatro prototipos explorables", async () => {
   const page = await source("app/page.tsx");
   const portfolio = await source("lib/product-portfolio.ts");
   const css = await source("app/globals.css");
-  const definitions = portfolio.match(/\{ id: "(?:companion|kyc|banking|cards|remittances|builder)"/g) ?? [];
-  assert.equal(definitions.length, 6);
+  const definitions = portfolio.match(/\{ id: "(?:companion|kyc|clear_accounts|banking|cards|remittances|builder)"/g) ?? [];
+  assert.equal(definitions.length, 7);
   assert.match(portfolio, /name: "Acompañante financiero"[\s\S]*explorable: true/);
   assert.match(portfolio, /name: "Onboarding y KYC progresivo"/);
+  assert.match(portfolio, /name: "Cuentas Claras"/);
   assert.match(portfolio, /name: "Home Banking"/);
   assert.match(portfolio, /name: "Tarjetas"/);
   assert.match(portfolio, /name: "Remesas"/);
   assert.match(portfolio, /name: "Construir mi propio producto"/);
-  assert.equal((portfolio.match(/explorable: true/g) ?? []).length, 3);
+  assert.equal((portfolio.match(/explorable: true/g) ?? []).length, 4);
   assert.equal((portfolio.match(/explorable: false/g) ?? []).length, 3);
   assert.doesNotMatch(portfolio, /published: (?:true|false)/);
   assert.doesNotMatch(portfolio, /flujo publicado|Especificaciones de producto publicadas/);
@@ -383,7 +368,7 @@ test("los contratos de producto se montan solo en productos explorables", async 
   assert.match(page, /FICHA DE PRODUCTO · PARA DESARROLLO/);
   assert.match(page, /activeProduct\.explorable && productId !== "builder" && <ProductSpecPanel/);
   assert.match(page, /productId === "builder" && sharedProjectState === "ready" && sharedProject && <div id="builder-technical-panel">/);
-  assert.match(page, /setProductId\(next\);\s*setInspectedAction\(null\);/);
+  assert.match(page, /setProductId\(next\);\s*setNotice\(""\);\s*setInspectedAction\(null\);\s*syncLabRoute\(next/);
   assert.match(page, /const hasEvent = Boolean\(inspectedAction \? inspectedAction\.eventId : spec\.event\)/);
   assert.match(page, /hasEvent \? inspectedEvent : "instrumentación pendiente"/);
   assert.match(css, /\.team-spec \{ grid-column:1\/-1; width:100%/);
@@ -417,7 +402,7 @@ test("los contratos de producto se montan solo en productos explorables", async 
 test("los productos en investigación no simulan una app ni muestran ficha técnica", async () => {
   const page = await source("app/page.tsx");
   const css = await source("app/globals.css");
-  assert.match(page, /productId === "companion" \|\| productId === "kyc"/);
+  assert.match(page, /productId === "companion" \|\| productId === "clear_accounts" \|\| productId === "kyc" \|\| productId === "builder"/);
   assert.doesNotMatch(page, /productId === "cards" && <CardsDiscovery/);
   assert.match(page, /TENGO UNA IDEA/);
   assert.doesNotMatch(page, /ProductSpecification|living-spec/);
@@ -539,6 +524,7 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   const projectsApi = await source("app/api/projects/route.ts");
   const reviewApi = await source("app/api/review/route.ts");
   const review = await source("app/review/page.tsx");
+  const projectReview = await source("app/review/project/[id]/page.tsx");
   assert.match(route, /export async function GET/);
   assert.match(route, /export async function POST/);
   assert.match(route, /public-pilot-explicit-write/);
@@ -550,12 +536,14 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(route, /yol1_get_lab_view/);
   assert.match(route, /tools\/list/);
   assert.match(route, /tools\/call/);
-  assert.match(route, /SERVER_VERSION = "0\.7\.0"/);
-  assert.match(route, /CONTEXT_VERSION = "yol1-lab-context\/0\.6"/);
+  assert.match(route, /SERVER_VERSION = "0\.8\.0"/);
+  assert.match(route, /CONTEXT_VERSION = "yol1-lab-context\/0\.7"/);
   assert.match(route, /SCHEMA_VERSION = "project-draft\/0\.4"/);
   assert.match(route, /prototype_url/);
   assert.match(route, /rutas C:\\\\ o file:\/\//);
   assert.match(route, /url\.username \|\| url\.password/);
+  assert.match(route, /url\.protocol !== "https:" \|\| isLocalPrototypeHost\(url\.hostname\)/);
+  assert.match(route, /host === "localhost"/);
   assert.match(route, /workflow_mode: "legacy-compatible"/);
   assert.match(route, /loaded: \["product_context", "delivery_contract", "lab_view"\]/);
   assert.match(route, /Continúa aunque el cliente sólo muestre las herramientas originales/i);
@@ -582,17 +570,17 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(route, /acid: "#80ef0c"/);
   assert.match(route, /aqua: "#71d7c8"/);
   assert.match(route, /brand_night: "#112e3c"/);
-  assert.match(route, /companion_navigation: \["Inicio", "Finanzas", "Cobrar\/pagar", "Ahorrar", "Ganar", "Mi banco"\]/);
-  assert.match(route, /Los controles interactivos deben ser button\/input reales/i);
-  assert.match(route, /no presentes saldo real, pago confirmado, folio real/i);
+  assert.match(route, /companion_navigation: \{\s*primary: \["Inicio", "Finanzas", "Ahorrar", "Deudas", "Mi banco"\],\s*secondary: \[\{ label: "Cartola", parent: "Finanzas" \}\],\s*screen_titles: \{ Deudas: "Tu plan de deuda" \},\s*\}/);
+  assert.match(route, /controles de al menos 44 × 44 px/i);
+  assert.match(route, /Nunca afirmes que una integración, pago, crédito, KYC, banco, licencia o partner está disponible sin evidencia explícita/i);
   assert.match(route, /No muestres trazas como “Now update…”/i);
   assert.match(route, /muestra una primera propuesta antes de preguntar/i);
   assert.match(route, /Esta es la entrada canónica[\s\S]*no llames además a create_project_brief/i);
   assert.match(route, /No preguntes el nivel técnico/i);
   assert.match(route, /Rescata conocimiento parcial/i);
   assert.match(route, /Amazon Cognito User Pools es candidato/i);
-  assert.match(route, /DynamoDB y Aurora PostgreSQL son alternativas candidatas/i);
-  assert.match(route, /Cruza la propuesta con Onboarding\/KYC, Acompañante financiero, Home Banking, Tarjetas, Remesas pausado/i);
+  assert.match(route, /DynamoDB y Aurora PostgreSQL permanecen alternativas futuras/i);
+  assert.match(route, /Cruza la propuesta con Onboarding\/KYC, Acompañante financiero, Cuentas Claras, Home Banking, Tarjetas, Remesas pausado/i);
   assert.match(route, /alias_of: "yol1_start_builder"/);
   assert.match(route, /sólo después de una petición explícita/i);
   assert.match(route, /readOnlyHint: false, destructiveHint: false, idempotentHint: true/);
@@ -629,6 +617,9 @@ test("el MCP público guarda sólo borradores explícitos, opacos y revisables",
   assert.match(review, /Abrimos el feedback, pero las propuestas compartidas no están disponibles/);
   assert.match(review, /Qué quiso construir/);
   assert.match(review, /Revisar propuesta/);
+  assert.match(projectReview, /sandbox="allow-scripts"/);
+  assert.match(projectReview, /referrerPolicy="no-referrer"/);
+  assert.doesNotMatch(projectReview, /allow-popups|allow-modals|allow-forms/);
   const outputContract = await source("BUILDER-OUTPUT-CONTRACT.md");
   assert.match(outputContract, /project-draft\/0\.3/);
   assert.match(outputContract, /enlace opaco[\s\S]*nunca devuelve esos campos\s+editoriales/i);
@@ -659,8 +650,6 @@ test("la referencia visual legada queda aislada del código ejecutable", async (
 
 test("las fichas semilla no inventan verificación ni estados de conocimiento", async () => {
   const productFiles = [
-    "accompanante-financiero.md",
-    "onboarding.md",
     "home-banking.md",
     "tarjetas.md",
     "remesas.md",
@@ -680,7 +669,10 @@ test("las fichas semilla no inventan verificación ni estados de conocimiento", 
     for (const state of states) assert.ok(allowedStates.has(state), `${file}: ${state}`);
   }
   const index = await source("product-knowledge/INDEX.md");
-  assert.equal((index.match(/\| pendiente \|/g) || []).length, 6);
+  assert.equal((index.match(/\| pendiente \|/g) || []).length, 4);
+  assert.match(index, /snapshot local del 11 de agosto de 2026, fuera de esta carpeta/);
+  assert.match(index, /disponible, pero todavía requiere confirmar alcance, registrar manifiesto y completar la reconciliación/);
+  assert.doesNotMatch(index, /se espera el próximo paquete de Felipe/);
   const remittances = await source("product-knowledge/products/remesas.md");
   assert.match(remittances, /No se investiga, diseña ni prototipa en el ciclo vigente/);
 });

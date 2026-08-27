@@ -20,7 +20,7 @@
 - Reducir el espacio de cuentas conectadas y aumentar protagonismo de las cuatro cifras.
 - Subir “Últimos movimientos” y habilitar scroll interno para la lista.
 - Eliminar bloque final de ejemplo/conexión simulada para ganar realismo y espacio.
-- Mantener Mi banco y Ganar como secciones que se desarrollarán después.
+- Mantener Mi banco como gate futuro y reemplazar Ganar por el thin slice sintético `Tu plan de deuda`.
 
 ## 3. Onboarding y KYC progresivo
 
@@ -82,7 +82,7 @@ La persona recibe valor antes de identificarse: puede explorar, conversar con el
 
 ### Acompañante financiero
 
-El hábito nace de dos trabajos unidos: leer/ordenar las finanzas y manejar lo que debe o le deben. Debe evolucionar hacia una alternativa social y cotidiana a Splitwise, donde ordenar, cobrar, pagar, mover dinero con una cuenta secundaria y encontrar oportunidades de “Ganar” se relacionan, sin prometer ejecución real antes de tener partners, permisos y decisiones aprobadas.
+El hábito nace de dos productos complementarios: el Acompañante interpreta finanzas personales y deuda institucional; Cuentas Claras administra acuerdos y deudas entre personas. Se conectan mediante resúmenes y handoffs explícitos, sin mover dinero ni mantener dos fuentes de verdad.
 
 ### Home Banking
 
@@ -117,7 +117,8 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 
 ### P2 — investigación que guía los siguientes diseños
 
-- **Acompañante:** probar primero el loop cartola + cobrar/pagar, no dashboards decorativos.
+- **Acompañante:** probar el loop conectar/leer cartola → explicar una señal → entregar la acción a Cuentas Claras; no operar un segundo ledger social.
+- **Cuentas Claras:** probar grupo/gasto → reparto → cobro sin presión → abono parcial/total → confirmación y conciliación dummy.
 - **Home Banking:** validar momentos contextuales antes de un chat persistente o catálogo de productos.
 - **Tarjetas:** elegir primero una intención dominante (pagar, ver datos, revisar movimiento o beneficio) y no declarar QR/NFC/emisión/listo sin partner, esquema, permiso y validación.
 - **Remesas:** fuera de alcance hasta nueva instrucción.
@@ -2681,3 +2682,46 @@ La persona debe llegar rápido a una primera versión visual basada en el design
 1. **Notion maestro:** definir la base o página que funcionará como índice humano de decisiones y fichas.
 2. **Primer corte verificable:** entregar una exportación completa posterior al 4 de agosto de 2026 y confirmar su alcance para reconciliar las seis fichas.
 3. **Owners funcionales:** asignar responsables de Ingeniería, Datos, Seguridad, Legal/Compliance y Operaciones antes de declarar una ficha `al_dia`.
+
+## 102. Revisión nocturna incremental — 18 de agosto de 2026, 16:58 CLT
+
+**Alcance ejecutado:** revisión de los cuatro commits posteriores al cierre 15:58 CLT (`ea8292d`, `aff4a2d`, `2bfd23e` y `9825e92`). El delta consolida propuestas MCP dentro de Reviews, simplifica su clasificación, añade una vista individual con mockup navegable y versiona la capa `product-knowledge/` ya revisada. Se preservó el trabajo concurrente; esta pasada no hizo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- La bandeja mantiene el acceso privado, separa disponibilidad de feedback y propuestas, y permite revisar el brief aunque no exista vista visual. La propuesta continúa siendo un borrador: la decisión editorial no publica ni modifica producto.
+- Se cerró un **P1 de seguridad del revisor**: `prototype_url` aceptaba HTTP y hosts locales o de red privada, y el iframe habilitaba formularios, modales y ventanas emergentes. Una propuesta podía hacer que el navegador del revisor contactara un destino interno o ejecutara más capacidades de las necesarias.
+- El contrato acepta ahora sólo URLs HTTPS públicas, sin credenciales, parámetros sensibles ni hosts locales/privados evidentes. El visor conserva JavaScript para prototipos interactivos, elimina formularios/popups/modales, no envía referrer y carga de forma diferida. El copy y los guardrails quedaron alineados.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; doce rutas, incluida `/review/project/[id]`.
+- Suite completa final: **87/87 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- No se conectó Postgres ni se abrió una URL externa. Por eso no se atribuye una prueba compartida ni visual real del iframe; se validaron compilación, contratos y aislamiento declarativo.
+
+### Pregunta abierta nueva
+
+1. **Orígenes de mockups:** definir si el piloto mantendrá cualquier host HTTPS público o usará una lista explícita de proveedores/orígenes aprobados antes de operar con múltiples colaboradores.
+
+## 103. Revisión nocturna incremental — 19 de agosto de 2026, 00:11 CLT
+
+**Alcance ejecutado:** revisión del delta posterior al cierre 23:07 CLT. Apareció `knowledge-bluebook/` como trabajo concurrente: storyline ejecutivo vivo, TL;DR separado, inventario de fuentes, catálogo por etapas, research de referentes y una side quest explícitamente aislada del Second Brain personal. Se preservaron íntegros sus documentos y artefactos de inspección; esta pasada no hizo commit, push, despliegue, cambios de secretos ni conexiones externas.
+
+### Resultado de producto / PRD / consistencia
+
+- El Bluebook conserva las fronteras actuales: es un borrador `work_confidential`, distingue hecho/inferencia/hipótesis/decisión, no presenta S3, catálogo, MCP corporativo, partners o capacidades financieras como operativos y no autoriza cambios de Notion, Git, producto o infraestructura. B2C permanece como thin slice reversible; SMB/enterprise requiere evidencia y gates propios.
+- La pausa de Remesas del Lab no fue alterada. El snapshot de Notion contiene material histórico/estratégico sobre Remesas y otras capacidades, pero el inventario lo trata como evidencia fechada, no como una instrucción para reactivar producto.
+- Se cerró un **P1 de procedencia**: `product-knowledge/INDEX.md` seguía declarando que la última exportación identificada era del 4 de agosto y esperaba un paquete nuevo, mientras el nuevo inventario señalaba un snapshot local del 11 de agosto que efectivamente existe. El índice ahora distingue `identificado y disponible` de `procesado`: no actualiza `verified_through`, no promueve contenido y exige confirmar alcance, registrar manifiesto y reconciliar.
+- El storyline quedó alineado con ese estado: el snapshot del 11 de agosto existe, pero todavía no tiene manifiesto ni reconciliación dentro de `product-knowledge/`. Se añadió un guardrail para evitar que disponibilidad vuelva a confundirse con procesamiento.
+
+### Validación ejecutada
+
+- Build Next.js 16.2.6 + TypeScript: **PASS**; doce rutas.
+- Suite completa final: **87/87 PASS**, 0 fallidos.
+- `git diff --check`: **PASS** antes de este registro; se repite después del cierre.
+- No se procesó ni copió la exportación a `product-knowledge/imports/notion/`, no se leyó como canon vivo y no se modificó Notion. Los artefactos concurrentes de `knowledge-bluebook/build/` se preservaron sin clasificar ni eliminar.
+
+### Pregunta abierta modificada
+
+1. **Primer corte verificable:** ya no falta localizar una exportación posterior al 4 de agosto. Falta confirmar el alcance del snapshot local del 11 de agosto, crear su manifiesto y ejecutar una reconciliación controlada antes de actualizar las seis fichas o declarar vigencia.

@@ -4,18 +4,20 @@ Prototipo exploratorio con datos ficticios para recorrer una experiencia cotidia
 
 La propuesta que explora esta versión es: **“Con YOL1 entiendes tus finanzas y simplificas tu vida financiera.”** YOL1 detecta señales, explica evidencia y recomienda; la persona decide y confirma.
 
-El producto principal se llama oficialmente **Acompañante financiero**. El selector superior organiza exactamente seis espacios: Acompañante, Onboarding, Home Banking, Tarjetas, Remesas y Construir mi propio producto. La interfaz usa **Para explorar** para prototipos de aprendizaje y **En investigación** cuando no hay una capacidad disponible. Tarjetas conserva un borrador local de discovery con datos sintéticos; no representa emisión, pago, QR/NFC ni readiness. Remesas está pausado y no se investiga ni prototipa en este ciclo.
+El selector superior organiza siete espacios: Onboarding, Acompañante financiero, Cuentas Claras, Home Banking, Tarjetas, Remesas y Construir mi propio producto. **Acompañante** interpreta cartolas y explica señales; **Cuentas Claras** es dueño de grupos, gastos, repartos, deudas, cobros y pagos simulados. Son productos complementarios y no duplican acciones.
 
 ## Qué incluye
 
-- **Inicio:** propuesta de valor ampliada, cinco pendientes de ejemplo —cargo dudoso, por cobrar, por pagar, beneficio y gasto posiblemente compartido— en un carrusel con contador/puntos, y una conversación financiera que parte en demo. **Ignorar**, **Revisar** y **Preparar reparto** aparecen según el contexto.
-- **Mis Finanzas:** resultado mensual, carrusel de cuentas, acceso a cartola general, cuatro métricas accionables y últimos movimientos compactos.
-- **Cartola:** cartola General, BCI o MACH; fecha, hora y monto en la fila principal, con banco/código disponibles en el detalle. **Marcar revisado** y **Revisar** están siempre disponibles; **Preparar reparto/cobro** aparece solo cuando la evidencia lo permite.
-- **Cobrar y pagar:** separa por cobrar arriba y por pagar abajo en dos bandejas que dividen el alto 50/50, por persona o grupo. Cada lista tiene scroll interno independiente mientras cabecera, selector y navegación permanecen estables. Distingue **Preparar cobro**, **Preparar pago** y **Marcar como resuelto**. La vista previa usa texto y URL de ejemplo no navegable, y conserva el borrador de sesión al volver.
+- **Belvo Chile Lab local:** side project interno en `/belvo-lab` que reproduce con fixtures deterministas el contrato candidato de instituciones fiscales y facturas. No autentica, no llama el sandbox, no acepta credenciales y no retorna datos identificables.
 
-La vista de mensaje no abre WhatsApp, no copia al portapapeles, no genera links ni inicia pagos. Una implementación productiva requeriría consentimiento explícito antes de compartir, generación server-side del link y un partner de pagos autorizado.
-- **Ahorrar:** presenta potencial estimado y cuatro oportunidades: cargo dudoso, beneficio por tarjeta, cuenta/servicio y gasto posiblemente compartido. Primero muestra una conclusión cotidiana; evidencia, fuente, certeza, rango y disclosure siguen disponibles en “Ver por qué”. Ignorar es siempre visible y reversible durante la sesión.
-- **Ganar:** espacio en investigación, sin promesa operativa.
+- **Inicio:** propuesta de valor ampliada y señales financieras de ejemplo. **Ignorar**, **Revisar** y **Abrir/Dividir en Cuentas Claras** aparecen según el contexto.
+- **Mis Finanzas:** resultado mensual, carrusel de cuentas, acceso a cartola general, cuatro métricas accionables y últimos movimientos compactos.
+- **Cartola:** cartola General, BCI o MACH; fecha, hora y monto en la fila principal, con banco/código disponibles en el detalle. El Acompañante explica; si corresponde actuar sobre una cuenta compartida, entrega un borrador a Cuentas Claras.
+- **Cuentas Claras:** app mobile-only dentro del mismo shell del Lab. Incluye grupos, gastos, reparto igual, por montos, porcentajes o partes, gastos habituales mensuales siempre confirmados por la persona, seguimiento durable de cobros compartidos, saldo por cobrar/pagar, abonos parciales, actividad, link público de pago simulado, MockFloid local y una cartola completamente ficticia que prueba conciliación exacta/ambigua y reversa auditable. No conecta bancos, no custodia ni mueve dinero; ninguna plantilla crea deudas o mensajes automáticamente.
+
+La vista de mensajería replica un borrador reconocible de WhatsApp, pero siempre muestra “no enviado”. Copiar el texto requiere acción explícita y no cambia el ledger. Sólo “Sí, ya lo compartí” guarda una declaración atribuida a la persona; nunca simula entrega, lectura ni movimiento de dinero.
+- **Ahorrar:** presenta potencial estimado y tres oportunidades: cargo dudoso, beneficio por tarjeta y cuenta/servicio. Primero muestra una conclusión cotidiana; evidencia, fuente, certeza, rango y disclosure siguen disponibles en “Ver por qué”. Ignorar es siempre visible y reversible durante la sesión.
+- **Tu plan de deuda:** thin slice sintético que separa obligaciones institucionales de cuentas entre personas. Compara un pago observado con un informe anterior, lo mantiene como candidato y propone un primer paso reversible; no es score, informe CMF ni recomendación de crédito.
 - **Tarjetas:** borrador local de discovery para probar intención, acceso protegido ficticio, último movimiento y beneficio contextual; nunca paga ni expone datos reales.
 - **Construir mi propio producto:** guía a la persona para trabajar en su ChatGPT o Claude, copiar un prompt y traer explícitamente un resumen; no lee ni sincroniza conversaciones.
 - **Experimentos:** feedback local sobre ideas ya conversadas, sin fechas ni disponibilidad.
@@ -36,20 +38,26 @@ npm run dev
 
 La app funciona sin clave en modo demo. Para habilitar IA, copia `.env.example` como `.env.local`, agrega `OPENAI_API_KEY` y reinicia el servidor. Cada visitante debe elegir explícitamente IA antes de que su texto sea procesado por OpenAI; la petición usa `store: false` y la clave permanece en el servidor.
 
-Para recibir feedback de otros navegadores, conecta Neon Postgres desde Vercel y define `DATABASE_URL` + `YOL1_REVIEW_TOKEN`. La guía completa está en `POSTGRES-GUIDE.md`.
+Para recibir feedback de otros navegadores y conservar links de Cuentas Claras entre instancias, conecta Neon Postgres desde Vercel y define `DATABASE_URL` + `YOL1_REVIEW_TOKEN`. En producción Cuentas Claras falla cerrado si Neon falta; memoria se usa únicamente en desarrollo local. Cada workspace demo expira tras siete días sin actividad y tiene límites de tamaño y volumen. La guía completa está en `POSTGRES-GUIDE.md`.
 
-Abre `http://localhost:3000`. Recorridos sugeridos:
+El primer preview debe permanecer protegido por acceso de Vercel. Todavía no es un demo público abierto: antes de quitar esa protección hay que limitar de forma durable la creación de sesiones anónimas y las búsquedas fallidas de links de pago, para evitar crecimiento no controlado de Neon y consultas costosas por bots.
+
+Las migraciones versionadas de Cuentas Claras viven en `drizzle/debt-center`. `pnpm run db:generate` actualiza el SQL desde el esquema Drizzle y `pnpm run db:migrate` lo aplica a la base indicada por `DATABASE_URL`. La migración debe ejecutarse explícitamente antes de publicar; el Lab no depende de crear tablas durante una visita.
+
+Abre `http://localhost:3017`. Recorridos sugeridos:
 
 1. Inicio → Disney+ → Revisar → asistente contextual → dejar nota.
 2. Inicio → Ignorar una tarjeta → confirmar que desaparece, aumenta el contador y se puede deshacer.
 3. Inicio → usar la demo inmediata → probar preguntas sobre mes, deudas, beneficios y ahorro → opcionalmente elegir IA con consentimiento → marcar una respuesta Útil/Mejoraría.
-4. Finanzas → Te entró/Gastaste → detalle filtrado; Por cobrar/Por pagar → módulo social.
-5. Cobrar y pagar → abrir Josefa/Camila → preparar cobro o pago → verificar el guardrail y volver sin enviar; alternar persona/grupo sin mover toda la pantalla.
-6. Ahorrar → beneficio BCI, plan móvil o Liguria → revisar evidencia → simular o ignorar.
-7. Cambiar entre oscuro y claro en Inicio, Finanzas, Cartola y Cobrar y pagar.
-8. Abrir Feedback, cambiar de módulo y comprobar que la pantalla se actualiza. “Mejoraría” e “Idea” requieren comentario; “Me gusta” permite un envío rápido.
-9. Abrir `http://localhost:3000/review`, mover un feedback entre Nuevo, En revisión, Para después, Resuelto o Ignorado; luego revisar un conflicto y un hallazgo de IA.
-10. Abrir `http://localhost:3000/review/knowledge`, buscar “Disney” o “Camila”, revisar variantes y marcar una ficha para mejorar.
+4. Finanzas → Te entró/Gastaste → detalle filtrado; Te deben personas/Debes a personas → handoff explícito a Cuentas Claras.
+5. Cuentas Claras → crear un gasto → revisar la cola de obligaciones nuevas → preparar un borrador individual de WhatsApp → copiar sin registrar envío → confirmar manualmente “Sí, ya lo compartí” → recargar y comprobar que el estado persiste → preparar seguimiento por el remanente → al cerrar, decidir desde Inicio si el gasto se repetirá → comprobar que guardar la plantilla no crea deudas → simular un abono parcial → recargar el comprobante y verificar que conserva abono y remanente → abrir un gasto propio vacío desde el resultado.
+6. Cuentas Claras → crear un gasto sin abonos → “Hay un error en este gasto” → anular y preparar corrección → comprobar que el original queda en el historial, que el link anterior dice **Cobro anulado** y que sólo puede crearse una copia corregida en el mismo grupo.
+7. Tu plan de deuda → revisar el desfase ficticio entre cartola e informe → marcar el primer paso → deshacerlo y confirmar que nunca se presenta como pago aplicado.
+8. Ahorrar → beneficio BCI o plan móvil → revisar evidencia → simular o ignorar.
+9. Cambiar entre oscuro y claro en Inicio, Finanzas y Cartola; verificar Cuentas Claras en el shell mobile-only.
+10. Abrir Feedback, cambiar de módulo y comprobar que la pantalla se actualiza. “Mejoraría” e “Idea” requieren comentario; “Me gusta” permite un envío rápido.
+11. Abrir `http://localhost:3017/review`, mover un feedback entre Nuevo, En revisión, Para después, Resuelto o Ignorado; luego revisar un conflicto y un hallazgo de IA.
+12. Abrir `http://localhost:3017/review/knowledge`, buscar “Disney” o “Camila”, revisar variantes y marcar una ficha para mejorar.
 
 Para verificar build y guardrails:
 

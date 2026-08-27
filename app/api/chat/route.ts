@@ -3,6 +3,8 @@ import { createDemoResponse } from "../../../lib/ai/demo-response";
 import { YOL1_KNOWLEDGE_VERSION } from "../../../lib/ai/knowledge";
 import { routeKnowledge } from "../../../lib/ai/knowledge-router";
 import { buildYol1Instructions } from "../../../lib/ai/yol1-prompt";
+import { getDebtCenterCompanionSummary } from "../../../lib/debt-center/service";
+import { debtCenterSessionHeaders, getDebtCenterSession } from "../../../lib/debt-center/session";
 
 type InputMessage = { role: "user" | "assistant"; text: string };
 
@@ -34,6 +36,27 @@ function extractOutputText(payload: unknown) {
   }).join("\n").trim();
 }
 
+const clp = new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", maximumFractionDigits: 0 });
+
+async function liveDebtAnswer(sessionId: string, knowledgeId?: string) {
+  if (knowledgeId !== "collect-receivables-001" && knowledgeId !== "collect-payables-001") return null;
+  try {
+    const summary = await getDebtCenterCompanionSummary(sessionId);
+    if (knowledgeId === "collect-receivables-001") {
+      const detail = summary.receivables.length
+        ? summary.receivables.map((debt) => `${debt.debtorName} ${clp.format(debt.outstandingAmount)}`).join(" y ")
+        : "no aparecen pendientes por cobrar";
+      return `Qué veo: En Cuentas Claras ${detail}. Total pendiente: ${clp.format(summary.receivableOutstanding)}.\n\nQué significa: Es el resumen actual del ledger simulado; el Acompañante no crea ni modifica estos acuerdos.\n\nQué puedes hacer ahora: Abre Cuentas Claras para revisar el pendiente exacto y decidir qué hacer.`;
+    }
+    const detail = summary.payables.length
+      ? summary.payables.map((debt) => `${debt.creditorName} ${clp.format(debt.outstandingAmount)}`).join(" y ")
+      : "no aparecen pendientes por pagar";
+    return `Qué veo: En Cuentas Claras ${detail}. Total pendiente: ${clp.format(summary.payableOutstanding)}.\n\nQué significa: Es el resumen actual del ledger simulado; todavía no confirma una transferencia real.\n\nQué puedes hacer ahora: Abre Cuentas Claras para revisar el acuerdo y probar el pago simulado.`;
+  } catch {
+    return "No pude leer el resumen actual de Cuentas Claras. Prefiero no inventar cifras. Puedes abrir Cuentas Claras y revisar el estado directamente.";
+  }
+}
+
 export async function GET() {
   return NextResponse.json({ configured: Boolean(process.env.OPENAI_API_KEY) });
 }
@@ -58,12 +81,14 @@ export async function POST(request: Request) {
   const localRoute = routeKnowledge(lastQuestion);
 
   if (localRoute.kind !== "fallback") {
+    const session = getDebtCenterSession(request);
+    const dynamicDebtText = await liveDebtAnswer(session.id, localRoute.knowledgeId);
     return NextResponse.json({
-      message: { id: crypto.randomUUID(), role: "assistant", text: localRoute.text, mode: localRoute.kind === "approved" ? "knowledge" : "demo" },
+      message: { id: crypto.randomUUID(), role: "assistant", text: dynamicDebtText ?? localRoute.text, mode: localRoute.kind === "approved" ? "knowledge" : "demo" },
       knowledgeVersion: YOL1_KNOWLEDGE_VERSION,
       matchedKnowledgeId: localRoute.knowledgeId,
       resolvedBy: localRoute.kind,
-    });
+    }, { headers: debtCenterSessionHeaders(session) });
   }
 
   if (!apiKey || typedBody.aiConsent !== true) {

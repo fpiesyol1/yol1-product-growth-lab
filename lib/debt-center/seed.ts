@@ -1,0 +1,138 @@
+import type { DebtCenterState } from "./types";
+import { DEBT_CENTER_DEMO_READ_MODEL } from "./demo-read-model.ts";
+
+export function createDebtCenterSeed(): DebtCenterState {
+  const createdAt = "2026-08-25T22:10:00.000Z";
+  const [nicoDebt, josefaDebt] = DEBT_CENTER_DEMO_READ_MODEL.receivables;
+  const [camilaDebt] = DEBT_CENTER_DEMO_READ_MODEL.payables;
+  return {
+    version: 4,
+    generationId: "seed_fixture",
+    currentParticipantId: "person_felipe",
+    participants: [
+      { id: "person_felipe", name: "Felipe", contact: "+56 9 1111 1111 · demo", initials: "FP" },
+      { id: "person_nico", name: "Nico", contact: "+56 9 2222 2222 · demo", initials: "NC" },
+      { id: "person_josefa", name: "Josefa", contact: "josefa@demo.yol1.cl", initials: "JP" },
+      { id: "person_camila", name: "Camila", contact: "+56 9 4444 4444 · demo", initials: "CM" },
+    ],
+    groups: [
+      { id: "group_pucon", name: "Viaje a Pucón", category: "trip", currency: "CLP", participantIds: ["person_felipe", "person_nico", "person_josefa"], createdAt },
+      { id: "group_depto", name: "Depto agosto", category: "monthly", currency: "CLP", participantIds: ["person_felipe", "person_camila"], createdAt: "2026-08-20T12:00:00.000Z" },
+    ],
+    expenses: [
+      {
+        id: "expense_cabana",
+        groupId: "group_pucon",
+        title: "Reserva de la cabaña",
+        totalAmount: 20_000 + nicoDebt.originalAmount + josefaDebt.originalAmount,
+        paidByParticipantId: "person_felipe",
+        createdByParticipantId: "person_felipe",
+        lifecycle: "active",
+        splitMode: "amount",
+        shares: [
+          { participantId: "person_felipe", amount: 20_000 },
+          { participantId: "person_nico", amount: nicoDebt.originalAmount },
+          { participantId: "person_josefa", amount: josefaDebt.originalAmount },
+        ],
+        receipt: { name: "boleta-cabana-demo.jpg", extraction: "mock", confidence: 0.94 },
+        createdAt,
+      },
+      {
+        id: "expense_depto",
+        groupId: "group_depto",
+        title: "Gastos comunes agosto",
+        totalAmount: camilaDebt.originalAmount * 2,
+        paidByParticipantId: "person_camila",
+        createdByParticipantId: "person_camila",
+        lifecycle: "active",
+        splitMode: "equal",
+        shares: [
+          { participantId: "person_felipe", amount: camilaDebt.originalAmount },
+          { participantId: "person_camila", amount: camilaDebt.originalAmount },
+        ],
+        createdAt: "2026-08-20T12:00:00.000Z",
+      },
+    ],
+    debts: [
+      {
+        id: nicoDebt.debtId,
+        publicToken: nicoDebt.publicToken,
+        groupId: "group_pucon",
+        expenseId: "expense_cabana",
+        creditorParticipantId: "person_felipe",
+        debtorParticipantId: "person_nico",
+        originalAmount: nicoDebt.originalAmount,
+        reconciliationRef: "demo_ref_nico_cabana",
+        status: "open",
+        createdAt,
+        updatedAt: createdAt,
+      },
+      {
+        id: josefaDebt.debtId,
+        publicToken: josefaDebt.publicToken,
+        groupId: "group_pucon",
+        expenseId: "expense_cabana",
+        creditorParticipantId: "person_felipe",
+        debtorParticipantId: "person_josefa",
+        originalAmount: josefaDebt.originalAmount,
+        reconciliationRef: "demo_ref_josefa_cabana",
+        status: "partially_paid",
+        createdAt,
+        updatedAt: "2026-08-26T01:05:00.000Z",
+      },
+      {
+        id: camilaDebt.debtId,
+        publicToken: camilaDebt.publicToken,
+        groupId: "group_depto",
+        expenseId: "expense_depto",
+        creditorParticipantId: "person_camila",
+        debtorParticipantId: "person_felipe",
+        originalAmount: camilaDebt.originalAmount,
+        reconciliationRef: "demo_ref_felipe_depto",
+        status: "open",
+        createdAt: "2026-08-20T12:00:00.000Z",
+        updatedAt: "2026-08-20T12:00:00.000Z",
+      },
+    ],
+    paymentAttempts: [
+      {
+        id: "attempt_josefa_12000",
+        debtId: josefaDebt.debtId,
+        amount: josefaDebt.paidAmount,
+        provider: "mock_floid",
+        providerPaymentToken: "mock_floid_seed_josefa",
+        providerPaymentId: "mock_payment_seed_josefa",
+        paymentUrl: "/pagar/pay_demo_josefa_30000",
+        status: "succeeded",
+        providerStep: "FINISHED",
+        idempotencyKey: "seed-josefa-12000",
+        createdAt: "2026-08-26T01:03:00.000Z",
+        updatedAt: "2026-08-26T01:05:00.000Z",
+      },
+    ],
+    settlements: [
+      {
+        id: "settlement_josefa_12000",
+        debtId: josefaDebt.debtId,
+        source: "payment_attempt",
+        paymentAttemptId: "attempt_josefa_12000",
+        amount: josefaDebt.paidAmount,
+        providerPaymentId: "mock_payment_seed_josefa",
+        settledAt: "2026-08-26T01:05:00.000Z",
+        recordedAt: "2026-08-26T01:05:00.000Z",
+      },
+    ],
+    activities: [
+      { id: "activity_josefa_paid", debtId: "debt_josefa_30000", type: "payment_succeeded", title: "Josefa abonó $12.000", detail: "Quedan $18.000 pendientes.", occurredAt: "2026-08-26T01:05:00.000Z" },
+      { id: "activity_request", debtId: "debt_nico_10000", type: "request_opened", title: "Cobro demo listo para Nico", detail: "El link permite elegir un abono de hasta $10.000.", occurredAt: "2026-08-25T22:15:00.000Z" },
+      { id: "activity_expense", type: "expense_created", title: "Reserva de la cabaña dividida", detail: "$60.000 entre Felipe, Nico y Josefa.", occurredAt: createdAt },
+    ],
+    recurringTemplates: [],
+    recurringOccurrences: [],
+    collectionConfirmations: [],
+    mockStatements: [],
+    mockStatementEntries: [],
+    reconciliationCandidates: [],
+    reconciliationDecisions: [],
+  };
+}

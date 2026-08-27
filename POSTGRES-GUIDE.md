@@ -18,11 +18,23 @@ La tabla se llama `yol1_feedback_items`. El navegador nunca se conecta directame
 3. Selecciona **Neon Postgres** desde Marketplace.
 4. Elige un plan y una región cercana a las Functions del proyecto. Revisa precio y límites antes de confirmar.
 5. Conecta el recurso a Production y Preview. Vercel agregará `DATABASE_URL` automáticamente.
-6. En **Settings → Environment Variables**, crea `YOL1_REVIEW_TOKEN` como secreto. Usa una clave larga generada por un gestor de contraseñas; no reutilices una contraseña personal.
-7. Opcional: agrega `YOL1_FEEDBACK_ALLOWED_ORIGIN` con el dominio público si el formulario vive en otro origen.
-8. Haz redeploy. La primera escritura crea automáticamente la tabla e índices.
+6. Antes del deploy, ejecuta `pnpm run db:migrate` contra esa misma `DATABASE_URL`. Cuentas Claras falla cerrado si falta la tabla `yol1_debt_center_states`; una visita nunca crea ni modifica el esquema.
+7. En **Settings → Environment Variables**, crea `YOL1_REVIEW_TOKEN` como secreto. Usa una clave larga generada por un gestor de contraseñas; no reutilices una contraseña personal.
+8. Define `DEBT_CENTER_SIMULATOR_ENABLED=true` y `NEXT_PUBLIC_SITE_URL` con el dominio HTTPS exacto del preview.
+9. Opcional: agrega `YOL1_FEEDBACK_ALLOWED_ORIGIN` con el dominio público si el formulario vive en otro origen.
+10. Mantén el primer preview bajo **Vercel Deployment Protection**. No lo abras a tráfico anónimo hasta contar con límites durables para creación de sesiones y búsquedas fallidas de links.
+11. Haz redeploy. La bandeja de feedback conserva su inicialización actual; el estado de Cuentas Claras depende exclusivamente de las migraciones Drizzle versionadas en `drizzle/debt-center`.
 
 No copies `DATABASE_URL` ni `YOL1_REVIEW_TOKEN` al código, GitHub, un chat o una captura.
+
+Antes de publicar, ejecuta también:
+
+```bash
+pnpm run release:check
+pnpm run release:check:env
+```
+
+El primer comando prueba contratos locales. El segundo exige que `DATABASE_URL`, `DEBT_CENTER_SIMULATOR_ENABLED=true` y una `NEXT_PUBLIC_SITE_URL` HTTPS estén presentes; no imprime sus valores.
 
 ## Cómo comprobar que funciona
 

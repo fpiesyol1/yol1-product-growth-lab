@@ -1,5 +1,5 @@
 // This optional Cloudflare D1 adapter is not part of the Vercel prototype.
-// @ts-nocheck
+// @ts-expect-error -- The Cloudflare-only module is unavailable in the Vercel prototype toolchain.
 import { env } from "cloudflare:workers";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";

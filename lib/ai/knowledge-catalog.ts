@@ -1,5 +1,5 @@
 export type KnowledgeStatus = "draft" | "approved";
-export type KnowledgeDomain = "finanzas" | "cartola" | "cobrar-y-pagar" | "ahorrar";
+export type KnowledgeDomain = "finanzas" | "cartola" | "cuentas-claras" | "deudas" | "ahorrar";
 
 export type KnowledgeCard = {
   id: string;
@@ -17,7 +17,7 @@ export type KnowledgeCard = {
   tags: readonly string[];
 };
 
-export const YOL1_KNOWLEDGE_VERSION = "lab-kb-2026-08-14.1";
+export const YOL1_KNOWLEDGE_VERSION = "lab-kb-2026-08-26.3";
 
 export const knowledgeCatalog: readonly KnowledgeCard[] = [
   {
@@ -38,18 +38,18 @@ export const knowledgeCatalog: readonly KnowledgeCard[] = [
     requiredContext: ["Dos cargos por $11.990", "BCI 10:43", "MACH 10:42", "Códigos disponibles solo en detalle"], limits: ["No afirmar duplicado o fraude", "No prometer reclamo, reversa o devolución"], nextQuestions: ["¿Qué evidencia comparo?", "¿Dónde veo el código de cada cargo?"], knownFeedback: "La conclusión debe ser evidencia primero y la persona decide; los códigos no van en la fila principal.", source: "knowledge/cartola.md", tags: ["disney", "cargo", "duplicado", "doble", "11.990", "bci", "mach", "suscripción"],
   },
   {
-    id: "collect-receivables-001", status: "approved", domain: "cobrar-y-pagar", intent: "quien-me-debe",
+    id: "collect-receivables-001", status: "approved", domain: "cuentas-claras", intent: "quien-me-debe",
     canonicalQuestion: "¿Quién me debe plata?",
-    variants: ["¿Quién me debe?", "¿Cuánto tengo por cobrar?", "Muéstrame lo que me deben", "¿Qué cobros tengo pendientes?", "¿Josefa todavía me debe?", "¿María me pagó el almuerzo?", "¿Cuánto me deben entre todos?", "¿Qué personas aparecen por cobrar?", "¿Tengo algo pendiente del viaje a Pucón?", "¿Puedo recordarles que me paguen?"],
-    expectedAnswer: { see: "En el ejemplo te deben $228.000: Josefa $210.000 por Viaje a Pucón y María $18.000 por Almuerzo viernes.", meaning: "Son pendientes ficticios ordenados por persona; YOL1 no sabe si ya fueron pagados hasta que tú lo confirmes y revises la cartola de ejemplo.", next: "Abre Cobrar y pagar para revisar a cada persona, preparar un recordatorio o marcar el pendiente como resuelto." },
-    requiredContext: ["Josefa: $210.000", "María: $18.000", "Total: $228.000", "Aliases ficticios"], limits: ["No afirmar que la deuda es real", "No enviar mensajes ni iniciar cobros"], nextQuestions: ["¿Qué me debe Josefa?", "¿Cómo se vería un recordatorio?"], knownFeedback: "Cobrar debe mostrar personas y grupos sin convertir la solicitud en un pago real.", source: "knowledge/cobrar-y-pagar.md", tags: ["me debe", "me deben", "cobrar", "por cobrar", "josefa", "maría", "pucón", "almuerzo"],
+    variants: ["¿Quién me debe?", "¿Cuánto tengo por cobrar?", "Muéstrame lo que me deben", "¿Qué cobros tengo pendientes?", "¿Nico todavía me debe?", "¿Josefa terminó de pagar?", "¿Cuánto me deben entre todos?", "¿Qué personas aparecen por cobrar?", "¿Tengo algo pendiente del viaje a Pucón?", "¿Puedo recordarles que me paguen?"],
+    expectedAnswer: { see: "Veo dos pendientes ficticios registrados en Cuentas Claras: Nico $10.000 y Josefa $18.000.", meaning: "Josefa ya abonó $12.000 de $30.000. El Acompañante sólo resume y explica; Cuentas Claras conserva el acuerdo y confirma los abonos.", next: "Abre Cuentas Claras para revisar el pendiente exacto y decidir qué hacer." },
+    requiredContext: ["Nico: $10.000 pendientes", "Josefa: $18.000 pendientes de $30.000", "Total por cobrar: $28.000", "Fuente: Cuentas Claras demo"], limits: ["No afirmar que la deuda es real", "No enviar mensajes ni iniciar cobros desde el Acompañante"], nextQuestions: ["¿Qué me debe Nico?", "¿Cómo funciona Cuentas Claras?"], knownFeedback: "El Acompañante sólo resume; Cuentas Claras administra el ledger y los cobros.", source: "knowledge/cuentas-claras.md", tags: ["me debe", "me deben", "cobrar", "por cobrar", "nico", "josefa", "pucón", "cabaña"],
   },
   {
-    id: "collect-payables-001", status: "approved", domain: "cobrar-y-pagar", intent: "a-quien-debo",
+    id: "collect-payables-001", status: "approved", domain: "cuentas-claras", intent: "a-quien-debo",
     canonicalQuestion: "¿A quién le debo plata?",
     variants: ["¿A quién le debo?", "¿Cuánto tengo por pagar?", "Muéstrame lo que debo", "¿Qué pagos tengo pendientes?", "¿Le debo algo a Camila?", "¿Cuánto debo del departamento?", "¿Qué persona aparece por pagar?", "¿Tengo deudas pendientes en el ejemplo?", "¿Ya le pagué a Camila?", "¿Cómo ordeno lo que tengo que pagar?"],
-    expectedAnswer: { see: "En el ejemplo le debes $42.000 a Camila por Depto agosto.", meaning: "Es un pendiente ficticio; no confirma que siga abierto ni que haya que transferir ahora.", next: "Abre Cobrar y pagar para revisarlo, crear un recordatorio personal o marcar el pendiente como resuelto y contrastarlo con la cartola ficticia." },
-    requiredContext: ["Camila: $42.000", "Concepto: Depto agosto", "Alias ficticio: @camila"], limits: ["No pagar ni iniciar transferencia", "No afirmar que el pago quedó conciliado"], nextQuestions: ["¿Por qué le debo a Camila?", "¿Cómo marco el pendiente como resuelto?"], knownFeedback: "Felipe pidió separar claramente ME DEBEN y LE DEBO y usar texto cotidiano.", source: "knowledge/cobrar-y-pagar.md", tags: ["le debo", "debo a", "por pagar", "pagar", "camila", "departamento", "depto", "42.000"],
+    expectedAnswer: { see: "En Cuentas Claras aparece que le debes $42.000 a Camila por Depto agosto.", meaning: "Es un pendiente ficticio leído por el Acompañante; no confirma por sí solo una transferencia.", next: "Abre Cuentas Claras para ver el acuerdo y, si corresponde, probar el pago simulado." },
+    requiredContext: ["Camila: $42.000", "Concepto: Depto agosto", "Alias ficticio: @camila"], limits: ["No pagar ni iniciar transferencia desde el Acompañante", "No afirmar que el pago quedó conciliado"], nextQuestions: ["¿Por qué le debo a Camila?", "¿Cómo funciona el pago simulado?"], knownFeedback: "Felipe pidió separar claramente Acompañante y Cuentas Claras.", source: "knowledge/cuentas-claras.md", tags: ["le debo", "debo a", "por pagar", "pagar", "camila", "departamento", "depto", "42.000"],
   },
   {
     id: "save-restaurant-benefit-001", status: "approved", domain: "ahorrar", intent: "beneficio-restaurante",
@@ -59,11 +59,18 @@ export const knowledgeCatalog: readonly KnowledgeCard[] = [
     requiredContext: ["Beneficio demo: 20%", "Tarjeta demo: BCI Visa", "Gasto reciente en restaurantes"], limits: ["No inventar locales, vigencia o tope", "No afirmar compensación comercial ni ahorro garantizado"], nextQuestions: ["¿Qué condiciones faltan confirmar?", "¿Qué tarjeta aparece asociada?"], knownFeedback: "Felipe pidió mostrar tarjeta y condiciones concretas, sin afirmar beneficios no verificados.", source: "knowledge/ahorrar.md", tags: ["beneficio", "descuento", "restaurante", "20%", "tarjeta", "bci", "visa", "ahorrar"],
   },
   {
-    id: "split-liguria-001", status: "approved", domain: "cobrar-y-pagar", intent: "repartir-liguria",
+    id: "split-liguria-001", status: "approved", domain: "cuentas-claras", intent: "repartir-liguria",
     canonicalQuestion: "¿Conviene dividir el gasto de Liguria?",
     variants: ["¿Qué pasó con Liguria?", "¿La cuenta de Liguria era compartida?", "¿Puedo dividir los $41.600?", "¿Por qué YOL1 sugiere repartir Liguria?", "¿Pagamos entre varios en Liguria?", "¿Ese gasto parece de más de una persona?", "¿Cómo reparto la cuenta del restaurante?", "¿A quién le cobro Liguria?", "¿Debo crear un gasto compartido por Liguria?", "Ignoré Liguria, ¿puedo recuperarlo?"],
-    expectedAnswer: { see: "La boleta ficticia de Liguria fue de $41.600 y supera el consumo individual habitual del ejemplo.", meaning: "Eso solo sugiere que podría haber sido compartida; YOL1 no sabe quién comió ni si corresponde cobrar.", next: "Si tú confirmas que pagaste por otras personas, abre el reparto, elige participantes y revisa los montos antes de guardar." },
-    requiredContext: ["Rest. Liguria: $41.600", "Fuente ficticia: BCI", "Certeza baja"], limits: ["No inferir participantes", "No crear ni enviar cobros automáticamente"], nextQuestions: ["¿Cómo reparto en partes iguales?", "¿Qué pasa si los montos son distintos?"], knownFeedback: "La sugerencia debe explicar que el monto es solo una pista y mantener Ignorar visible.", source: "knowledge/cobrar-y-pagar.md", tags: ["liguria", "dividir", "repartir", "compartido", "41.600", "restaurante", "cuenta"],
+    expectedAnswer: { see: "La boleta ficticia de Liguria fue de $41.600 y supera el consumo individual habitual del ejemplo.", meaning: "Eso sólo sugiere que podría haber sido compartida; el Acompañante no crea el gasto ni asume participantes.", next: "Si lo confirmas, abre Cuentas Claras con el borrador y revisa personas y montos antes de guardar." },
+    requiredContext: ["Rest. Liguria: $41.600", "Fuente ficticia: BCI", "Certeza baja"], limits: ["No inferir participantes", "No crear ni enviar cobros automáticamente"], nextQuestions: ["¿Cómo reparto en partes iguales?", "¿Qué pasa si los montos son distintos?"], knownFeedback: "La sugerencia debe explicar que el monto es sólo una pista y hacer explícito el cambio de producto.", source: "knowledge/cuentas-claras.md", tags: ["liguria", "dividir", "repartir", "compartido", "41.600", "restaurante", "cuenta"],
+  },
+  {
+    id: "formal-payment-not-reflected-001", status: "approved", domain: "deudas", intent: "pago-no-reflejado",
+    canonicalQuestion: "¿Por qué un pago todavía aparece en mi deuda?",
+    variants: ["Pagué pero todavía aparece", "¿Mi pago de deuda no se aplicó?", "¿Por qué el informe sigue mostrando el saldo?", "Veo un pago en la cartola y la deuda igual aparece", "¿Tengo un error en mi deuda?", "¿Ese pago de $75.000 cuenta?", "¿La cartola está más actualizada que el informe?", "¿Sigo en mora después de pagar?", "¿Qué debo confirmar del pago?", "¿Cuál es mi primer paso con esta deuda?"],
+    expectedAnswer: { see: "En el ejemplo, la cartola del 22 de agosto muestra un pago ficticio de $75.000 y el informe demo tiene fecha de corte 19 de agosto.", meaning: "La diferencia de fechas es compatible con un desfase. No demuestra un error, una mora ni que el acreedor haya aplicado el pago.", next: "Abre Tu plan de deuda y busca un saldo actualizado o estado de cuenta antes de decidir qué hacer." },
+    requiredContext: ["Cartola demo: 22 de agosto", "Informe demo: 19 de agosto", "Pago candidato: $75.000", "Cobertura parcial"], limits: ["No confirmar el pago", "No inferir mora o error", "No ofrecer refinanciamiento o score"], nextQuestions: ["¿Qué evidencia necesito?", "¿Qué información falta del costo?"], knownFeedback: "Felipe pidió que el Acompañante ayude a manejar deuda sin mezclarla con las cuentas sociales.", source: "knowledge/deudas.md", tags: ["deuda", "pagué", "pago", "no aparece", "informe", "cartola", "75.000", "desfase", "mora", "confirmar"],
   },
 ] as const;
 
