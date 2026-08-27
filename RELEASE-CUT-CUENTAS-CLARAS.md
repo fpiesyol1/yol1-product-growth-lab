@@ -1,6 +1,6 @@
 # Corte selectivo — Cuentas Claras y continuidad YOL1
 
-Estado: candidato local, sin commit ni publicación. Fecha de corte: 2026-08-27.
+Estado: corte local validado y comprometido en `codex/cuentas-claras-lab-2026-08-27` (`aa983bd`); push y Preview protegidos pendientes. Fecha de corte: 2026-08-27.
 
 ## Qué entra en el corte
 
@@ -22,16 +22,18 @@ Estado: candidato local, sin commit ni publicación. Fecha de corte: 2026-08-27.
 ## Gates antes de publicar
 
 - [ ] Felipe revisa el módulo en `http://localhost:3017/?product=clear_accounts`.
-- [ ] Provisionar Neon y definir `DATABASE_URL` en el preview.
+- [x] Confirmar la integración Neon existente y la disponibilidad de `DATABASE_URL` para Preview.
 - [ ] Ejecutar `pnpm run db:migrate` antes de abrir el preview.
-- [ ] Definir `NEXT_PUBLIC_SITE_URL` con el dominio exacto del preview y `DEBT_CENTER_SIMULATOR_ENABLED=true`.
-- [ ] Mantener el preview bajo Vercel Deployment Protection. No abrirlo públicamente hasta contar con un límite durable de creación de sesiones y de búsquedas fallidas de tokens públicos.
+- [ ] Definir `NEXT_PUBLIC_SITE_URL` con el dominio exacto del preview cuando exista la URL.
+- [x] Definir `DEBT_CENTER_SIMULATOR_ENABLED=true` exclusivamente para Preview.
+- [x] Confirmar Vercel Standard Deployment Protection con login obligatorio para Preview. No abrirlo públicamente hasta contar con un límite durable de creación de sesiones y de búsquedas fallidas de tokens públicos.
 - [ ] Verificar que ningún visitante anónimo pueda crear filas ilimitadas y que un token inexistente tenga protección de abuso antes de autorizar tráfico público.
 - [ ] Repetir smoke en preview: grupo → gasto → cobro → copia → confirmación manual → abono parcial → reload → saldo restante.
 - [ ] Repetir smoke de corrección: gasto sin abonos → anular → link anterior cerrado → borrador prellenado → único reemplazo en el mismo grupo.
 - [ ] Confirmar que webhook Floid responde cerrado y que no existe ninguna llamada externa.
-- [ ] Crear una rama `codex/...` y stagear sólo los paths aprobados; nunca usar `git add .`.
-- [ ] Revisar el diff staged, recién entonces hacer commit y push.
+- [x] Crear la rama `codex/cuentas-claras-lab-2026-08-27` y stagear sólo los paths aprobados; nunca usar `git add .`.
+- [x] Revisar el diff staged y crear el commit selectivo `aa983bd`.
+- [ ] Publicar la rama remota y crear el Preview protegido; producción permanece sin cambios.
 
 ## Evidencia del corte local
 
