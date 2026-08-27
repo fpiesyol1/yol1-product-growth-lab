@@ -42,3 +42,6 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Local research corpus; never include it in product release commits.
+/knowledge-bluebook/
